@@ -1,36 +1,24 @@
-// **********************************abdelrahman tarek *********************************//
-#include <string.h>
-#include <stdlib.h>
-#include "process.h"
-typedef struct process_Node
-{
+// ***************************abdelrahman tarek *********************************//
 
-    process Process;
-    struct process_Node* next;
-}process_Node;
-
- 
-
-
-typedef struct process_queue
-{
-    process_Node* front;
-    process_Node* rear;
-}process_queue;
-
+#include <stdlib.h> // For malloc() and free()
+#include <stddef.h> // For NULL
+#include "Process_queue.h"
 
 void initialize_queue(process_queue* queue)
 {
+    if (!queue) return; // Defensive check added
     queue->front = NULL;
     queue->rear = NULL;
 }
 
+// Check for NULL queue added for safety
 int is_queue_empty(process_queue* queue)
 {
+    if (!queue) return 1;
     return (queue->front == NULL);
 }
 
-int enqueue(process_queue* queue, process process)
+int enqueue(process_queue* queue, process Process)
 {
     if (!queue)
         return -4; // Invalid queue pointer
@@ -39,7 +27,7 @@ int enqueue(process_queue* queue, process process)
     if (!new_node)
         return -1; // Memory allocation failed
 
-    new_node->Process = process;
+    new_node->Process = Process;
     new_node->next = NULL;
 
     if (is_queue_empty(queue)) {
@@ -47,14 +35,17 @@ int enqueue(process_queue* queue, process process)
     } else {
         queue->rear->next = new_node;
     }
-    queue->rear = new_node;
+    
+    // The new node is always the new rear
+    queue->rear = new_node; 
 
     return 0; // Success
 }
 
 
 process_Node* dequeue(process_queue* queue){
-    if (!queue || is_queue_empty(queue))
+    // Use the fixed is_queue_empty check
+    if (is_queue_empty(queue))
         return NULL; // Invalid queue pointer or empty queue
 
     process_Node* temp = queue->front;
@@ -63,10 +54,11 @@ process_Node* dequeue(process_queue* queue){
     if (!queue->front) // If the queue is now empty
         queue->rear = NULL;
 
-    return temp;
+    temp->next = NULL; // Isolate the node
+    return temp; // ** CALLER MUST FREE THIS NODE **
 }
 
-void free_queue(   process_queue* queue)
+void free_queue(process_queue* queue)
 {
     if (!queue)
         return;
@@ -76,7 +68,7 @@ void free_queue(   process_queue* queue)
 
     while (current) {
         next_node = current->next;
-        free(current);
+        free(current); // Free the node
         current = next_node;
     }
 
@@ -86,7 +78,8 @@ void free_queue(   process_queue* queue)
 
 process_Node* peek_front(process_queue* queue)
 {
-    if (!queue || is_queue_empty(queue))
+    // Use the fixed is_queue_empty check
+    if (is_queue_empty(queue))
         return NULL; // Invalid queue pointer or empty queue
 
     return queue->front;
