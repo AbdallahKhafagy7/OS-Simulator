@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
+
 #define max 100
 
 void clearResources(int);
@@ -9,65 +10,65 @@ void clearResources(int);
 /*---------------------------Omar Syed------------------------------------*/
 
 typedef struct process{
-    int ID;
-    int AT;
-    int RT;
-    int PR;
-    int DID;
+    int ID;  
+    int ARRIVAL_TIME;
+    int RETURN_CODE;
+    int PRIORITY;
+    int DEPENDENCY_ID;
 } process;
 
 typedef char* string;
 
 int sch=-1;
-string sch_algo;
+string selected_Algorithm;
 int tq;
 
 /*---------------------------Omar Syed------------------------------------*/
 
 int main(int argc, char * argv[])
 {
-    signal(SIGINT, clearResources);
+    signal(SIGINT, clearResources); // TODO: what does this do @omarelsayed
     process process_list[max];
     int count=0;
     // TODO Initialization
     // 1. Read the input files.
 
     /*---------------------------Omar Syed------------------------------------*/
-    FILE*fp=fopen(argv[1],"r");//open file
-    if(fp==NULL){
+    FILE*input_File=fopen(argv[1],"r");//open file
+    if(input_File==NULL){
         perror("\nError in openning file!\n");
     }
-    char line[200];
-    char*s=fgets(line,200,fp);//read first line
+    char line[2*max];
+    char*s=fgets(line,2*max,input_File);//read first line
         while(s!=NULL){
             if(line[0]=='#'){//check #
-                s=fgets(line,200,fp);
+                s=fgets(line,2*max,input_File);
                 continue;
             }
-        sscanf(line,"%d %d %d %d %d",&process_list[count].ID,&process_list[count].AT,&process_list[count].RT,&process_list[count].PR,&process_list[count].DID);//read int from str
-         count++;   
-        s=fgets(line,200,fp);
+        sscanf(line,"%d %d %d %d %d",&process_list[count].ID,&process_list[count].ARRIVAL_TIME,&process_list[count].RETURN_CODE,&process_list[count].PRIORITY,&process_list[count].DEPENDENCY_ID);//read int from str
+         count++;
+        s=fgets(line,2*max,input_File);
     }
-        fclose(fp);
+        fclose(input_File);
         
         
         // 2. Ask the user for the chosen scheduling algorithm and its parameters, if there are any.
         
         /*---------------------------Omar Syed------------------------------------*/
-        while(sch==-1){
         printf("1.HPF\n2.SRTN\n3.RR\n");
+        while(sch==-1){
         printf("Enter The No. of Scheduling Technique : ");
         scanf("%d", &sch);
         switch (sch)
         {
             case 1:
-            sch_algo="HPF";
+            selected_Algorithm="HPF";
             break;
             case 2:
-            sch_algo="SRTN";
+            selected_Algorithm="SRTN";
             break;
             case 3:
-            sch_algo="RR";
+            selected_Algorithm="RR";
             printf("Enter Time Quantum : ");
             scanf("%d", &tq);
             break;
