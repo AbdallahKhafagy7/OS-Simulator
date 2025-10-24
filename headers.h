@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
-#include "process.h"
+#include "Processes_DataStructure/process.h"
 #include "Processes_DataStructure/Process_queue.h"
 #include "Processes_DataStructure/process_priority_queue.h"
 
