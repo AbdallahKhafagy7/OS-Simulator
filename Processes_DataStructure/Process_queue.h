@@ -3,7 +3,7 @@
 #ifndef PROCESS_QUEUE_H
 #define PROCESS_QUEUE_H
 
-#include "process.h" // Assumes process.h defines the 'process' struct
+#include "process.h" 
 
 // Node definition for the standard queue
 typedef struct process_Node
