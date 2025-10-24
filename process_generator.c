@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
-
+#include <string.h>
 #define max 100
 
 void clearResources(int);
@@ -13,7 +13,7 @@ void clearResources(int);
 typedef char* string;
 
 int selected_Algorithm_NUM=-1;
-string selected_Algorithm;
+string selected_Algorithm=NULL;
 int time_quantum;
 
 /*---------------------------Omar Syed------------------------------------*/
@@ -51,6 +51,7 @@ int main(int argc, char * argv[])
         
         /*---------------------------Omar Syed------------------------------------*/
         printf("1.HPF\n2.SRTN\n3.RR\n");
+        if (selected_Algorithm == NULL) selected_Algorithm = malloc(10 * sizeof(char));
         while(selected_Algorithm_NUM==-1)
     {
         printf("Enter The No. of Scheduling Technique : ");
@@ -58,13 +59,13 @@ int main(int argc, char * argv[])
         switch (selected_Algorithm_NUM)
         {
             case 1:
-            selected_Algorithm="HPF"; // highest priority first
+            strcpy(selected_Algorithm,"HPF"); // highest priority first
             break;
             case 2:
-            selected_Algorithm="SRTN"; // shortest remaining time next
+            strcpy(selected_Algorithm,"SRTN"); // shortest remaining time next
             break;
             case 3:
-            selected_Algorithm="RR"; // round robin
+            strcpy(selected_Algorithm,"RR"); // round robin
             printf("Enter Time Quantum : ");
             scanf("%d", &time_quantum);
             break;
