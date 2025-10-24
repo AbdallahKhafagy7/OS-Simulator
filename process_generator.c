@@ -9,13 +9,6 @@ void clearResources(int);
 
 /*---------------------------Omar Syed------------------------------------*/
 
-typedef struct process{
-    int ID;  
-    int ARRIVAL_TIME;
-    int RETURN_CODE;
-    int PRIORITY;
-    int DEPENDENCY_ID;
-} process;
 
 typedef char* string;
 
@@ -116,7 +109,7 @@ int main(int argc, char * argv[])
         struct process_priority_queue Process_queue;
         initialize_priority_queue(&Process_queue);
         for (int i = 0; i < count; i++) {
-            enqueue_priority(&Process_queue, process_list[i].ID, process_list[i].PRIORITY);
+            enqueue_priority(&Process_queue, process_list[i]);
         }
     } else if (schselected_Algorithm_NUM == 2) {
         // SRTN scheduling

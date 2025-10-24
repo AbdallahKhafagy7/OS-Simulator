@@ -1,11 +1,9 @@
 // ***************************abdelrahman******************************* //
 #include <stdlib.h>
-#include "headers.h"
-#include "process_generator.h"
-
+#include "process.h"
 struct process_PNode
 {
-    process p;
+    process Process;
     struct process_PNode* next;
 };
 
@@ -26,14 +24,14 @@ int is_priority_queue_empty(struct process_priority_queue* pq)
     return (pq && pq->front == NULL);
 }
 
-int enqueue_priority(struct process_priority_queue* pq, process p) // lower priority number means higher priority
+int enqueue_priority(struct process_priority_queue* pq, process Process) // lower priority number means higher priority
 {
     if (!pq)
         return -4; // Invalid queue pointer
     struct process_PNode* new_node = malloc(sizeof(struct process_PNode));
     if (!new_node)
         return -1; // Memory allocation failed
-    new_node->p = p;
+    new_node->Process = Process;
     new_node->next = NULL;
 
     if (is_priority_queue_empty(pq)) {
@@ -45,7 +43,7 @@ int enqueue_priority(struct process_priority_queue* pq, process p) // lower prio
     struct process_PNode* previous = NULL;
     /* advance past nodes with higher or equal priority (lower number = higher priority),
        so stop when we find a node with a larger priority number (lower priority) */
-    while (current != NULL && current->p.priority <= p.priority) {
+    while (current != NULL && current->Process.PRIORITY <= Process.PRIORITY) {
         previous = current;
         current = current->next;
     }

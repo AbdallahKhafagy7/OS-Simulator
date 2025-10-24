@@ -10,8 +10,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
-#include "process_priority_queue.c"
-#include "Process_queue.c"
+#include "process.h"
+#include "Process_queue.h"
+#include "process_priority_queue.h"
 
 typedef short bool;
 #define true 1
