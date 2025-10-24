@@ -2,40 +2,40 @@
 #include <string.h>
 #include <stdlib.h>
 #include "process.h"
-struct process_Node
+typedef struct process_Node
 {
 
     process Process;
     struct process_Node* next;
-};
+}process_Node;
 
  
 
 
-struct process_queue
+typedef struct process_queue
 {
-    struct process_Node* front;
-    struct process_Node* rear;
-};
+    process_Node* front;
+    process_Node* rear;
+}process_queue;
 
 
-void initialize_queue(struct process_queue* queue)
+void initialize_queue(process_queue* queue)
 {
     queue->front = NULL;
     queue->rear = NULL;
 }
 
-int is_queue_empty(struct process_queue* queue)
+int is_queue_empty(process_queue* queue)
 {
     return (queue->front == NULL);
 }
 
-int enqueue(struct process_queue* queue, process process)
+int enqueue(process_queue* queue, process process)
 {
     if (!queue)
         return -4; // Invalid queue pointer
 
-    struct process_Node* new_node = malloc(sizeof(struct process_Node));
+    process_Node* new_node = malloc(sizeof(process_Node));
     if (!new_node)
         return -1; // Memory allocation failed
 
@@ -53,11 +53,11 @@ int enqueue(struct process_queue* queue, process process)
 }
 
 
-struct process_Node* dequeue(struct process_queue* queue){
+process_Node* dequeue(process_queue* queue){
     if (!queue || is_queue_empty(queue))
         return NULL; // Invalid queue pointer or empty queue
 
-    struct process_Node* temp = queue->front;
+    process_Node* temp = queue->front;
     queue->front = queue->front->next;
 
     if (!queue->front) // If the queue is now empty
@@ -66,13 +66,13 @@ struct process_Node* dequeue(struct process_queue* queue){
     return temp;
 }
 
-void free_queue(struct process_queue* queue)
+void free_queue(   process_queue* queue)
 {
     if (!queue)
         return;
 
-    struct process_Node* current = queue->front;
-    struct process_Node* next_node;
+    process_Node* current = queue->front;
+    process_Node* next_node;
 
     while (current) {
         next_node = current->next;
@@ -84,7 +84,7 @@ void free_queue(struct process_queue* queue)
     queue->rear = NULL;
 }
 
-struct process_Node* peek_front(struct process_queue* queue)
+process_Node* peek_front(process_queue* queue)
 {
     if (!queue || is_queue_empty(queue))
         return NULL; // Invalid queue pointer or empty queue
