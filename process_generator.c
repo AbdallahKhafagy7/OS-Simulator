@@ -82,13 +82,14 @@ int main(int argc, char * argv[])
     {
         //child clk
         execl("./clk.out","",NULL);
+        perror("clk failed to execute\n");
     }
     else{ //parent
         int pid =fork();//child scheduler
         if(pid==0){
             //child scheduler
             execl("./scheduler.out","",NULL);
-
+            perror("scheduler failed to execute\n");
         }
     }
 
