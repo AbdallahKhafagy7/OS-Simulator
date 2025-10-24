@@ -106,11 +106,7 @@ int main(int argc, char * argv[])
     if (schselected_Algorithm_NUM == 1) {
         // HPF scheduling
         // Initialize priority queue and enqueue processes based on priority
-        struct process_priority_queue Process_queue;
-        initialize_priority_queue(&Process_queue);
-        for (int i = 0; i < count; i++) {
-            enqueue_priority(&Process_queue, process_list[i]);
-        }
+    
     } else if (schselected_Algorithm_NUM == 2) {
         // SRTN scheduling
         // Initialize priority queue and enqueue processes based on remaining time
