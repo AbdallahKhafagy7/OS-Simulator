@@ -103,18 +103,6 @@ int main(int argc, char * argv[])
     // TODO Generation Main Loop
 
     // 5. Create a data structure for processes and provide it with its parameters.
-    // ******************************abdelrahman tarek *******************************//
-    if (schselected_Algorithm_NUM == 1) {
-        // HPF scheduling
-        // Initialize priority queue and enqueue processes based on priority
-    
-    } else if (schselected_Algorithm_NUM == 2) {
-        // SRTN scheduling
-        // Initialize priority queue and enqueue processes based on remaining time
-    } else if (schselected_Algorithm_NUM == 3) {
-        // RR scheduling
-        // Initialize regular queue and enqueue processes in arrival order
-    }
 
     // 6. Send the information to the scheduler at the appropriate time.
 
