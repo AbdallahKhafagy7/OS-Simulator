@@ -6,7 +6,9 @@ typedef struct process{
     int ARRIVAL_TIME;
     int RETURN_CODE;
     int PRIORITY;
+    int RUNNING_TIME;
     int DEPENDENCY_ID;
+    char* NAME;
 } process;
 
 #endif //PROCESS_H

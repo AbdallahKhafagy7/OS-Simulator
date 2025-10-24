@@ -12,7 +12,7 @@ void clearResources(int);
 
 typedef char* string;
 
-int schselected_Algorithm_NUM=-1;
+int selected_Algorithm_NUM=-1;
 string selected_Algorithm;
 int time_quantum;
 
@@ -40,7 +40,7 @@ int main(int argc, char * argv[])
                 s=fgets(line,2*max,input_File);
                 continue;
             }
-        sscanf(line,"%d %d %d %d %d",&process_list[count].ID,&process_list[count].ARRIVAL_TIME,&process_list[count].RETURN_CODE,&process_list[count].PRIORITY,&process_list[count].DEPENDENCY_ID);//read int from str
+        sscanf(line,"%d %d %d %d %d",&process_list[count].ID,&process_list[count].ARRIVAL_TIME,&process_list[count].RUNNING_TIME,&process_list[count].PRIORITY,&process_list[count].DEPENDENCY_ID);//read int from str
          count++;
         s=fgets(line,2*max,input_File);
     }
@@ -51,11 +51,11 @@ int main(int argc, char * argv[])
         
         /*---------------------------Omar Syed------------------------------------*/
         printf("1.HPF\n2.SRTN\n3.RR\n");
-        while(schselected_Algorithm_NUM==-1)
+        while(selected_Algorithm_NUM==-1)
     {
         printf("Enter The No. of Scheduling Technique : ");
-        scanf("%d", &schselected_Algorithm_NUM);
-        switch (schselected_Algorithm_NUM)
+        scanf("%d", &selected_Algorithm_NUM);
+        switch (selected_Algorithm_NUM)
         {
             case 1:
             selected_Algorithm="HPF"; // highest priority first
@@ -68,9 +68,9 @@ int main(int argc, char * argv[])
             printf("Enter Time Quantum : ");
             scanf("%d", &time_quantum);
             break;
-        default:
-        schselected_Algorithm_NUM=-1;
-        printf("Invalid Algorithm\n");
+            default:
+            selected_Algorithm_NUM=-1;
+            printf("Invalid Algorithm\n");
             break;
         }
     }
