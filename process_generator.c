@@ -21,7 +21,7 @@ typedef char* string;
 
 int sch=-1;
 string selected_Algorithm;
-int tq;
+int time_quantum;
 
 /*---------------------------Omar Syed------------------------------------*/
 
@@ -62,15 +62,15 @@ int main(int argc, char * argv[])
         switch (sch)
         {
             case 1:
-            selected_Algorithm="HPF";
+            selected_Algorithm="HPF"; // highest priority first
             break;
             case 2:
-            selected_Algorithm="SRTN";
+            selected_Algorithm="SRTN"; // shortest remaining time next
             break;
             case 3:
-            selected_Algorithm="RR";
+            selected_Algorithm="RR"; // round robin
             printf("Enter Time Quantum : ");
-            scanf("%d", &tq);
+            scanf("%d", &time_quantum);
             break;
         default:
         sch=-1;
