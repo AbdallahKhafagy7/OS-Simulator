@@ -81,13 +81,13 @@ int main(int argc, char * argv[])
     if (pid==0)
     {
         //child clk
-        execl("./clk","",NULL);
+        execl("./clk.out","",NULL);
     }
     else{ //parent
         int pid =fork();//child scheduler
         if(pid==0){
             //child scheduler
-            execl("./scheduler","",NULL);
+            execl("./scheduler.out","",NULL);
 
         }
     }
