@@ -1,10 +1,10 @@
 // **********************************abdelrahman tarek *********************************//
 #include <string.h>
 #include <stdlib.h>
-
+#include "process_generator.c"
 struct process_Node
 {
-    int process_id;
+    process p;
     struct process_Node* next;
 };
 
@@ -29,7 +29,7 @@ int is_queue_empty(struct process_queue* q)
     return (q->front == NULL);
 }
 
-int enqueue(struct process_queue* q, int process_id)
+int enqueue(struct process_queue* q, process process)
 {
     if (!q)
         return -4; // Invalid queue pointer
@@ -38,7 +38,7 @@ int enqueue(struct process_queue* q, int process_id)
     if (!new_node)
         return -1; // Memory allocation failed
 
-    new_node->process_id = process_id;
+    new_node->p = process;
     new_node->next = NULL;
 
     if (is_queue_empty(q)) {
