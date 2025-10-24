@@ -1,5 +1,13 @@
 // ***************************abdelrahman******************************* //
 #include <stdlib.h>
+#include "headers.h"
+#include "process_generator.h"
+
+struct process_PNode
+{
+    process p;
+    struct process_PNode* next;
+};
 
 struct process_priority_queue
 {
@@ -7,32 +15,25 @@ struct process_priority_queue
     struct process_PNode* rear;
 };
 
-struct process_PNode
-{
-    int process_id;
-    int priority;
-    struct process_PNode* next;
-};
-
 void initialize_priority_queue(struct process_priority_queue* pq)
 {
+    if (!pq) return;
     pq->front = NULL;
     pq->rear = NULL;
 }
 int is_priority_queue_empty(struct process_priority_queue* pq)
 {
-    return (pq->front == NULL);
+    return (pq && pq->front == NULL);
 }
 
-int enqueue_priority(struct process_priority_queue* pq, int process_id, int priority) // lower priority number means higher priority
+int enqueue_priority(struct process_priority_queue* pq, process p) // lower priority number means higher priority
 {
     if (!pq)
         return -4; // Invalid queue pointer
     struct process_PNode* new_node = malloc(sizeof(struct process_PNode));
     if (!new_node)
         return -1; // Memory allocation failed
-    new_node->process_id = process_id;
-    new_node->priority = priority;
+    new_node->p = p;
     new_node->next = NULL;
 
     if (is_priority_queue_empty(pq)) {
@@ -42,7 +43,9 @@ int enqueue_priority(struct process_priority_queue* pq, int process_id, int prio
     }
     struct process_PNode* current = pq->front;
     struct process_PNode* previous = NULL;
-    while (current != NULL && (current->priority < priority)) {
+    /* advance past nodes with higher or equal priority (lower number = higher priority),
+       so stop when we find a node with a larger priority number (lower priority) */
+    while (current != NULL && current->p.priority <= p.priority) {
         previous = current;
         current = current->next;
     }
@@ -56,18 +59,20 @@ int enqueue_priority(struct process_priority_queue* pq, int process_id, int prio
             pq->rear = new_node;
         }
     }
+    return 0;
 }
 
 struct process_PNode* dequeue_priority(struct process_priority_queue* pq){
     if (!pq || is_priority_queue_empty(pq))
         return NULL; // Invalid queue pointer or empty queue
 
-    struct process_PNode* temp = pq->front;
-    pq->front = pq->front->next;
+    struct process_PNode* temp = pq->front; // temp is the head
+    pq->front = pq->front->next; // advance the head
 
     if (!pq->front) // If the queue is now empty
-        pq->rear = NULL;
+        pq->rear = NULL; // make the rear NULL as well
 
+    temp->next = NULL;
     return temp;
 }
 

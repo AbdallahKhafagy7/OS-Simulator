@@ -19,7 +19,7 @@ typedef struct process{
 
 typedef char* string;
 
-int sch=-1;
+int schselected_Algorithm_NUM=-1;
 string selected_Algorithm;
 int time_quantum;
 
@@ -56,10 +56,10 @@ int main(int argc, char * argv[])
         
         /*---------------------------Omar Syed------------------------------------*/
         printf("1.HPF\n2.SRTN\n3.RR\n");
-        while(sch==-1){
+        while(schselected_Algorithm_NUM==-1){
         printf("Enter The No. of Scheduling Technique : ");
-        scanf("%d", &sch);
-        switch (sch)
+        scanf("%d", &schselected_Algorithm_NUM);
+        switch (schselected_Algorithm_NUM)
         {
             case 1:
             selected_Algorithm="HPF"; // highest priority first
@@ -73,7 +73,7 @@ int main(int argc, char * argv[])
             scanf("%d", &time_quantum);
             break;
         default:
-        sch=-1;
+        schselected_Algorithm_NUM=-1;
         printf("Invalid Algorithm\n");
             break;
         }
@@ -109,6 +109,22 @@ int main(int argc, char * argv[])
     // TODO Generation Main Loop
 
     // 5. Create a data structure for processes and provide it with its parameters.
+    // ******************************abdelrahman tarek *******************************//
+    if (schselected_Algorithm_NUM == 1) {
+        // HPF scheduling
+        // Initialize priority queue and enqueue processes based on priority
+        struct process_priority_queue Process_queue;
+        initialize_priority_queue(&Process_queue);
+        for (int i = 0; i < count; i++) {
+            enqueue_priority(&Process_queue, process_list[i].ID, process_list[i].PRIORITY);
+        }
+    } else if (schselected_Algorithm_NUM == 2) {
+        // SRTN scheduling
+        // Initialize priority queue and enqueue processes based on remaining time
+    } else if (schselected_Algorithm_NUM == 3) {
+        // RR scheduling
+        // Initialize regular queue and enqueue processes in arrival order
+    }
 
     // 6. Send the information to the scheduler at the appropriate time.
 
