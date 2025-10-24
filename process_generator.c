@@ -28,12 +28,14 @@ int main(int argc, char * argv[])
 
     /*---------------------------Omar Syed------------------------------------*/
     FILE*input_File=fopen(argv[1],"r");//open file
-    if(input_File==NULL){
+    if(input_File==NULL)
+    {
         perror("\nError in openning file!\n");
     }
     char line[2*max];
     char*s=fgets(line,2*max,input_File);//read first line
-        while(s!=NULL){
+        while(s!=NULL)
+    {
             if(line[0]=='#'){//check #
                 s=fgets(line,2*max,input_File);
                 continue;
@@ -49,7 +51,8 @@ int main(int argc, char * argv[])
         
         /*---------------------------Omar Syed------------------------------------*/
         printf("1.HPF\n2.SRTN\n3.RR\n");
-        while(schselected_Algorithm_NUM==-1){
+        while(schselected_Algorithm_NUM==-1)
+    {
         printf("Enter The No. of Scheduling Technique : ");
         scanf("%d", &schselected_Algorithm_NUM);
         switch (schselected_Algorithm_NUM)
