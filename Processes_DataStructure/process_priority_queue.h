@@ -34,9 +34,17 @@ int is_priority_queue_empty(process_priority_queue* Priority_Queue);
  */
 int enqueue_priority(process_priority_queue* Priority_Queue, process Process);
 
+
+/*
+enqueue for SRTN
+ 0 on success, -1 on memory allocation failure, -4 on invalid queue pointer.
+*/
+
+int enqueue_priority_SRTN(process_priority_queue* Priority_Queue, process process);
 /**
  *  The CALLER is responsible for calling free() on this returned node.
  */
+
 process_PNode* dequeue_priority(process_priority_queue* Priority_Queue);
 
 
