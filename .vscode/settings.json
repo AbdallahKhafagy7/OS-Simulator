@@ -57,6 +57,9 @@
   "C_Cpp_Runner.useLinkTimeOptimization": false,
   "C_Cpp_Runner.msvcSecureNoWarnings": false,
   "files.associations": {
-    "process_queue.h": "c"
-  }
+    "process_queue.h": "c",
+    "headers.h": "c",
+    "process_priority_queue.h": "c"
+  },
+  "makefile.configureOnOpen": true
 }

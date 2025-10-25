@@ -3,6 +3,9 @@
 #include <time.h>
 #include <unistd.h>
 #include <string.h>
+#include "Processes_DataStructure/process_priority_queue.h"
+#include "Processes_DataStructure/process_queue.h"
+#include "Processes_DataStructure/process.h"
 #define max 100
 
 void clearResources(int);
@@ -108,7 +111,38 @@ int main(int argc, char * argv[])
     // TODO Generation Main Loop
 
     // 5. Create a data structure for processes and provide it with its parameters.
+    //********************************** abdelrahman tarek***************************************//
+    if (selected_Algorithm_NUM == 1){
+        // Create a priority queue for the processes
+        process_priority_queue P_queue;
+        initialize_priority_queue(&P_queue);
+        printf("HPF selected\n");
+        // Add processes to the priority queue based on their priority
+        for (int i = 0; i < count; i++) {
+            enqueue_priority(&P_queue, process_list[i]);
+            printf("Process with ID %d enqueued based on priority %d\n", process_list[i].ID, process_list[i].PRIORITY);
+        }
+    }
+    else if (selected_Algorithm_NUM == 2){
+        process_priority_queue P_queue;
+        initialize_priority_queue(&P_queue);
+        printf("SRTN selected\n");
+        // add processes to the priority queue based on their remaining time
+        for (int i = 0; i < count; i++) {
+            enqueue_priority_SRTN(&P_queue, process_list[i]);
 
+        }
+    }
+    else if (selected_Algorithm_NUM == 3){
+        // Create a simple queue for Round Robin scheduling
+        process_queue P_queue;
+        initialize_queue(&P_queue);
+        printf("RR selected and time quantum is %d\n", time_quantum);
+        // Add processes to the queue in order of arrival
+        for (int i = 0; i < count; i++) {
+            enqueue(&P_queue, process_list[i]);
+        }
+    }
     // 6. Send the information to the scheduler at the appropriate time.
 
     // 7. Clear clock resources

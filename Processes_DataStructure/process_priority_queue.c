@@ -20,7 +20,7 @@ int is_priority_queue_empty(process_priority_queue* Priority_Queue)
     return (Priority_Queue->front == NULL);
 }
 
-int enqueue_priority(process_priority_queue* Priority_Queue, process Process) // lower priority number means higher priority
+int enqueue_priority(process_priority_queue* Priority_Queue, process Process) 
 {
     if (!Priority_Queue)
         return -4; // Invalid queue pointer
@@ -60,6 +60,48 @@ int enqueue_priority(process_priority_queue* Priority_Queue, process Process) //
     }
     return 0;
 }
+int enqueue_priority_SRTN(process_priority_queue* Priority_Queue, process process) // enqueue based on shortest remaining time next (SRTN)
+{
+   if (!Priority_Queue){
+    return -4; // Invalid queue pointer
+   }
+
+   process_PNode* new_node = malloc(sizeof(process_PNode));
+   if (!new_node)
+       return -1; // Memory allocation failed
+
+   new_node->Process = process;
+   new_node->next = NULL;
+   int priority = process.RUNNING_TIME;
+
+   if (is_priority_queue_empty(Priority_Queue)) {
+       Priority_Queue->front = new_node;
+       Priority_Queue->rear = new_node;
+       return 0; // Success
+   }
+   
+   process_PNode* current = Priority_Queue->front;
+   process_PNode* previous = NULL;
+
+   while (current != NULL && current->Process.RUNNING_TIME <= priority) {
+       previous = current;
+       current = current->next;
+   }
+  
+   if (!previous){ // Insert at the front
+       new_node->next = Priority_Queue->front;
+       Priority_Queue->front = new_node;
+   } else { // Insert in the middle or at the end
+       previous->next = new_node;
+       new_node->next = current;
+       if (current == NULL) { // This was an insertion at the end
+           Priority_Queue->rear = new_node;
+       }
+   }
+   return 0;
+}
+
+
 
 process_PNode* dequeue_priority(process_priority_queue* Priority_Queue){
     if (is_priority_queue_empty(Priority_Queue))

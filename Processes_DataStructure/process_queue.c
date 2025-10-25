@@ -2,7 +2,7 @@
 
 #include <stdlib.h> // For malloc() and free()
 #include <stddef.h> // For NULL
-#include "Process_queue.h"
+#include "process_queue.h"
 
 void initialize_queue(process_queue* queue)
 {
