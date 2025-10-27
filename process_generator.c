@@ -120,7 +120,7 @@ int main(int argc, char * argv[])
         // Add processes to the priority queue based on their priority
         for (int i = 0; i < count; i++) {
             enqueue_priority(&P_queue, process_list[i]);
-            printf("Process with ID %d enqueued based on priority %d\n", process_list[i].ID, process_list[i].PRIORITY);
+            //printf("Process with ID %d enqueued based on priority %d\n", process_list[i].ID, process_list[i].PRIORITY);
         }
     }
     else if (selected_Algorithm_NUM == 2){
@@ -130,7 +130,7 @@ int main(int argc, char * argv[])
         // add processes to the priority queue based on their remaining time
         for (int i = 0; i < count; i++) {
             enqueue_priority_SRTN(&P_queue, process_list[i]);
-
+            // printf("Process with ID %d enqueued based on remaining time %d\n", process_list[i].ID, process_list[i].RUNNING_TIME);
         }
     }
     else if (selected_Algorithm_NUM == 3){
@@ -143,6 +143,7 @@ int main(int argc, char * argv[])
             enqueue(&P_queue, process_list[i]);
         }
     }
+    //******************************************abdelrahman tarek****************************** */
     // 6. Send the information to the scheduler at the appropriate time.
 
     // 7. Clear clock resources
