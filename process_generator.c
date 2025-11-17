@@ -1,6 +1,7 @@
 #include "headers.h"
 #include <stdio.h>
 #include <sys/ipc.h>
+#include <sys/msg.h>
 #include <unistd.h>
 #include <string.h>
 #include "Processes_DataStructure/process.h"
@@ -154,4 +155,5 @@ int clk_pid = fork();
 void clearResources(int signum)
 {
     //TODO Clears all resources in case of interruption
+    msgctl(MESSAGE_ID, IPC_RMID, NULL); 
 }
