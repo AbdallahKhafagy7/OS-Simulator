@@ -6,7 +6,7 @@
 #include "Processes_DataStructure/process_priority_queue.h"
 #include "Processes_DataStructure/process_queue.h"
 #include "Processes_DataStructure/process.h"
-#define max 100
+
 
 void clearResources(int);
 
@@ -19,6 +19,8 @@ typedef char* string;
 int selected_Algorithm_NUM=-1;
 string selected_Algorithm=NULL;
 int time_quantum;
+int MESSAGE_ID;
+
 
 /*---------------------------Omar Syed------------------------------------*/
 
@@ -85,21 +87,29 @@ int main(int argc, char * argv[])
 
     /*---------------------------Omar Syed------------------------------------*/
 
-    int pid=fork();//child clk
-    if (pid==0)
+int clk_pid = fork();
+    if (clk_pid == 0)
     {
-        //child clk
-        execl("./clk.out","",NULL);
-        perror("clk failed to execute\n");
+        execl("./clk.out","clk.out",NULL);
+        perror("Error in executing clock process");
+        exit(1);
     }
-    else{ //parent
-         pid =fork();//child scheduler
-        if(pid==0){
-            //child scheduler
-            execl("./scheduler.out","",NULL);
-            perror("scheduler failed to execute\n");
-        }
+
+    int scheduler_pid = fork();
+    if (scheduler_pid == 0)
+    {
+        char selected_Algorithm_NUM_str[100];
+        char time_quantum_str[100];
+        sprintf(selected_Algorithm_NUM_str, "%d", selected_Algorithm_NUM);
+        sprintf(time_quantum_str, "%d", time_quantum);
+        execl("./scheduler.out", "scheduler.out", selected_Algorithm_NUM_str, time_quantum_str, NULL);
+        perror("Error in executing scheduler process");
+        exit(1);
     }
+
+    
+
+
 
     /*---------------------------Omar Syed------------------------------------*/
 
@@ -111,42 +121,31 @@ int main(int argc, char * argv[])
     // TODO Generation Main Loop
 
     // 5. Create a data structure for processes and provide it with its parameters.
-    //********************************** abdelrahman tarek***************************************//
-    if (selected_Algorithm_NUM == 1){
-        // Create a priority queue for the processes
-        process_priority_queue P_queue;
-        initialize_priority_queue(&P_queue);
-        printf("HPF selected\n");
-        // Add processes to the priority queue based on their priority
-        for (int i = 0; i < count; i++) {
-            enqueue_priority(&P_queue, process_list[i]);
-            //printf("Process with ID %d enqueued based on priority %d\n", process_list[i].ID, process_list[i].PRIORITY);
-        }
-    }
-    else if (selected_Algorithm_NUM == 2){
-        process_priority_queue P_queue;
-        initialize_priority_queue(&P_queue);
-        printf("SRTN selected\n");
-        // add processes to the priority queue based on their remaining time
-        for (int i = 0; i < count; i++) {
-            enqueue_priority_SRTN(&P_queue, process_list[i]);
-            // printf("Process with ID %d enqueued based on remaining time %d\n", process_list[i].ID, process_list[i].RUNNING_TIME);
-        }
-    }
-    else if (selected_Algorithm_NUM == 3){
-        // Create a simple queue for Round Robin scheduling
-        process_queue P_queue;
-        initialize_queue(&P_queue);
-        printf("RR selected and time quantum is %d\n", time_quantum);
-        // Add processes to the queue in order of arrival
-        for (int i = 0; i < count; i++) {
-            enqueue(&P_queue, process_list[i]);
-        }
-    }
-    //******************************************abdelrahman tarek****************************** */
+    
     // 6. Send the information to the scheduler at the appropriate time.
-
+// 6. Send the information to the scheduler at the appropriate time.
+    key_t key_msg_process = ftok("keyfile", 'A');
+    MESSAGE_ID = msgget(key_msg_process, 0666|IPC_CREAT);
+    if(MESSAGE_ID==-1){
+        printf("Error In Creating Message Queue!\n");
+    }
+    message_buf PROCESS_MESSAGE;
+    int c = 0;
+    while(c < count){
+        for(int i=0;i<count;i++){
+        if(getClk()==process_list[i].ARRIVAL_TIME){
+            PROCESS_MESSAGE.p=process_list[i];
+            PROCESS_MESSAGE.msgtype=process_list[i].ID;
+            msgsnd(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(message_buf)-sizeof(long), 0);
+            c++;
+        }
+    }
+    }
     // 7. Clear clock resources
+    for (int i=0; i < 2; i++)
+    {
+        wait(NULL);
+    }
     destroyClk(true);
 }
 

@@ -13,12 +13,21 @@
 #include "Processes_DataStructure/process.h"
 #include "Processes_DataStructure/process_queue.h"
 #include "Processes_DataStructure/process_priority_queue.h"
-
+#define max 100
 typedef short bool;
 #define true 1
 #define false 0
 
 #define SHKEY 300
+// struct 
+
+
+typedef char* string;
+
+struct message_buf{
+    long msgtype;
+    process p;
+}typedef message_buf ;
 
 
 ///==============================
