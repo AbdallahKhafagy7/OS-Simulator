@@ -28,7 +28,8 @@ typedef short bool;
 
 
 typedef char* string;
-
+typedef int state;
+enum process_state {READY, RUNNING, WAITING,FINISHED};
 struct message_buf{
     long msgtype;
     process p;
@@ -36,7 +37,7 @@ struct message_buf{
 
 struct PCB_struct{
     process p;
-    string process_state;
+    state process_state;
     int REMAINING_TIME;
     int WAITING_TIME;
     int RUNNING_TIME;
