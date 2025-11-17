@@ -1,10 +1,7 @@
 #include "headers.h"
 #include <stdio.h>
-#include <time.h>
 #include <unistd.h>
 #include <string.h>
-#include "Processes_DataStructure/process_priority_queue.h"
-#include "Processes_DataStructure/process_queue.h"
 #include "Processes_DataStructure/process.h"
 
 
@@ -114,6 +111,14 @@ int clk_pid = fork();
     /*---------------------------Omar Syed------------------------------------*/
 
     // 4. Use this function after creating the clock process to initialize clock
+    key_t key_msg_process = ftok("keyfile", 'A');
+    MESSAGE_ID = msgget(key_msg_process, 0666|IPC_CREAT);
+    if(MESSAGE_ID==-1){
+        printf("Error In Creating Message Queue!\n");
+    }
+    message_buf PROCESS_MESSAGE;
+    int c = 0;
+    int j=0;
     initClk();
     // To get time use this
     int x = getClk();
@@ -124,22 +129,16 @@ int clk_pid = fork();
     
     // 6. Send the information to the scheduler at the appropriate time.
 // 6. Send the information to the scheduler at the appropriate time.
-    key_t key_msg_process = ftok("keyfile", 'A');
-    MESSAGE_ID = msgget(key_msg_process, 0666|IPC_CREAT);
-    if(MESSAGE_ID==-1){
-        printf("Error In Creating Message Queue!\n");
-    }
-    message_buf PROCESS_MESSAGE;
-    int c = 0;
     while(c < count){
-        for(int i=0;i<count;i++){
-        if(getClk()==process_list[i].ARRIVAL_TIME){
-            PROCESS_MESSAGE.p=process_list[i];
-            PROCESS_MESSAGE.msgtype=process_list[i].ID;
-            msgsnd(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(message_buf)-sizeof(long), 0);
+        if(getClk()==process_list[c].ARRIVAL_TIME){
+            PROCESS_MESSAGE.p=process_list[c];
+            PROCESS_MESSAGE.msgtype=process_list[c].ID;
+            if(msgsnd(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(message_buf)-sizeof(long), 0) == -1) {
+                perror("Error in sending message to scheduler!\n");
+            }
+            printf("Process with ID %d sent to scheduler at time %d\n",PROCESS_MESSAGE.p.ID,getClk());
             c++;
         }
-    }
     }
     // 7. Clear clock resources
     for (int i=0; i < 2; i++)
