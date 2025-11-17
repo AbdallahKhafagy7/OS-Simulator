@@ -10,8 +10,18 @@ int main(int agrc, char * argv[])
     
     //TODO it needs to get the remaining time from somewhere
     //remainingtime = ??;
-    printf("Process %d started at time %d with remaining time %d\n",atoi(argv[1]),getClk(),atoi(argv[2]));
+    remainingtime = atoi(argv[1]);
+    printf("Process::%d\n",remainingtime);
+    while (remainingtime > 0)
+    {
         // remainingtime = ??;
+        int t = getClk()+1;
+        if (t==getClk())
+        {
+            remainingtime--;
+            printf("Process: remaining time %d \n",remainingtime);
+        }
+    }
     
     destroyClk(false);
     
