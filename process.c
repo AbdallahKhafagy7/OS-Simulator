@@ -9,6 +9,7 @@ int main(int agrc, char * argv[])
     
     //TODO it needs to get the remaining time from somewhere
     //remainingtime = ??;
+    
     while (remainingtime > 0)
     {
         // remainingtime = ??;

@@ -44,7 +44,7 @@ int main(int argc, char * argv[])
                 s=fgets(line,2*max,input_File);
                 continue;
             }
-        sscanf(line,"%d %d %d %d %d",&process_list[count].ID,&process_list[count].ARRIVAL_TIME,&process_list[count].RETURN_CODE,&process_list[count].PRIORITY,&process_list[count].DEPENDENCY_ID);//read int from str
+        sscanf(line,"%d %d %d %d %d",&process_list[count].ID,&process_list[count].ARRIVAL_TIME,&process_list[count].RUNNING_TIME,&process_list[count].PRIORITY,&process_list[count].DEPENDENCY_ID);//read int from str
          count++;
         s=fgets(line,2*max,input_File);
     }
@@ -120,23 +120,24 @@ int clk_pid = fork();
     message_buf PROCESS_MESSAGE;
     initClk();
     int c = 0;
-    while(c < count){
-        // To get time use this
-        int x = getClk();
-        printf("current time is %d\n", x);
-          for(int i =0; i<count ;i++){
-            if(process_list[i].ARRIVAL_TIME == x){
-                PROCESS_MESSAGE.msgtype = process_list[i].ID;
-                PROCESS_MESSAGE.p = process_list[i];
-                if(msgsnd(MESSAGE_ID, &PROCESS_MESSAGE, sizeof(message_buf)-sizeof(long), !IPC_NOWAIT) == -1){
-                    printf("Error in sending message to scheduler!\n");
+    int x = getClk();
+    printf("current time is %d\n", x);
+    for(int i=0;i<count;i++){
+        while(c<=i){
+            x=getClk();
+            if(x==process_list[i].ARRIVAL_TIME){
+                PROCESS_MESSAGE.msgtype=2;
+                PROCESS_MESSAGE.p=process_list[i];
+                if(msgsnd(MESSAGE_ID,&PROCESS_MESSAGE,sizeof(message_buf),!IPC_NOWAIT)==-1){
+                    printf("Error In Sending Message To Scheduler!\n");
                 }else{
-                    printf("Process with id %d sent to scheduler at time %d\n", PROCESS_MESSAGE.p.ID, x);
+                    printf("Process with id %d sent to scheduler at time %d\n",process_list[i].ID,getClk());
+                    c++;
+                    break;
                 }
-                c++;
             }
-          }
         }
+    }
     // TODO Generation Main Loop
     
     // 5. Create a data structure for processes and provide it with its parameters.
@@ -150,7 +151,6 @@ int clk_pid = fork();
     }
     destroyClk(true);
 }
-
 void clearResources(int signum)
 {
     //TODO Clears all resources in case of interruption
