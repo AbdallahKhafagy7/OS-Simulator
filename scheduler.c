@@ -16,6 +16,15 @@ int main(int argc, char * argv[])
     if(MESSAGE_ID==-1){
         printf("Error In Creating Message Queue!\n");
     }
+    if(selected_Algorithm_NUM==1){
+        printf("Scheduling Algorithm is HPF\n");
+    }
+    else if(selected_Algorithm_NUM==2){
+        printf("Scheduling Algorithm is SRTN\n");
+    }
+    else if(selected_Algorithm_NUM==3){
+        printf("Scheduling Algorithm is RR with time quantum %d\n",TIME_QUANTUM);
+    }
     message_buf PROCESS_MESSAGE;
 while(1){
 if(msgrcv(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(message_buf)-sizeof(long),0,0)==-1){

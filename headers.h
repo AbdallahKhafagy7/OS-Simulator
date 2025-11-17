@@ -10,9 +10,14 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
-#include "Processes_DataStructure/process.h"
-#include "Processes_DataStructure/process_queue.h"
+#include <stdio.h>
+#include <time.h>
+#include <unistd.h>
+#include <string.h>
 #include "Processes_DataStructure/process_priority_queue.h"
+#include "Processes_DataStructure/process_queue.h"
+#include "Processes_DataStructure/process.h"
+
 #define max 100
 typedef short bool;
 #define true 1
