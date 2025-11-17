@@ -42,12 +42,19 @@ if(msgrcv(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(message_buf)-sizeof(long),0,0)==-1
 printf("Process received with id %d & arritval time %d & priority %d and scheduling algorithm %d \n"
     ,PROCESS_MESSAGE.p.ID,PROCESS_MESSAGE.p.ARRIVAL_TIME,PROCESS_MESSAGE.p.PRIORITY,selected_Algorithm_NUM);
     PCB_ARRAY[process_count].p=PROCESS_MESSAGE.p;
-    PCB_ARRAY[process_count].REMAINING_TIME=PROCESS_MESSAGE.p.RETURN_CODE;
+    PCB_ARRAY[process_count].REMAINING_TIME=PROCESS_MESSAGE.p.RUNNING_TIME;
     PCB_ARRAY[process_count].process_state="Ready";
     PCB_ARRAY[process_count].is_completed=false;
     enqueue(&READY_QUEUE, PROCESS_MESSAGE.p);
     process_count++;
-    usleep(100);
+    int RUNNING_PROCESS_PID = fork();
+    if (RUNNING_PROCESS_PID == 0)
+    {
+        execl("./process.out", "process.out", NULL);
+        perror("Error in executing process");
+        exit(1);    
+    }
+
 }
 /*---------------------------Omar Syed------------------------------------*/
     //upon termination release the clock resources.

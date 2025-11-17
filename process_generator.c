@@ -119,28 +119,30 @@ int clk_pid = fork();
     }
     message_buf PROCESS_MESSAGE;
     initClk();
-    // To get time use this
-    int x = getClk();
-    printf("current time is %d\n", x);
+    int c = 0;
+    while(c < count){
+        // To get time use this
+        int x = getClk();
+        printf("current time is %d\n", x);
+          for(int i =0; i<count ;i++){
+            if(process_list[i].ARRIVAL_TIME == x){
+                PROCESS_MESSAGE.msgtype = process_list[i].ID;
+                PROCESS_MESSAGE.p = process_list[i];
+                if(msgsnd(MESSAGE_ID, &PROCESS_MESSAGE, sizeof(message_buf)-sizeof(long), !IPC_NOWAIT) == -1){
+                    printf("Error in sending message to scheduler!\n");
+                }else{
+                    printf("Process with id %d sent to scheduler at time %d\n", PROCESS_MESSAGE.p.ID, x);
+                }
+                c++;
+            }
+          }
+        }
     // TODO Generation Main Loop
     
     // 5. Create a data structure for processes and provide it with its parameters.
     
     // 6. Send the information to the scheduler at the appropriate time.
     // 6. Send the information to the scheduler at the appropriate time.
-    int c = 0;
-    while(c < count){
-        for(int i=c; i<count;i++){
-        if(getClk()==process_list[c].ARRIVAL_TIME){
-            PROCESS_MESSAGE.p=process_list[c];
-            PROCESS_MESSAGE.msgtype=process_list[c].ID;
-            if(msgsnd(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(message_buf)-sizeof(long), !IPC_NOWAIT) == -1) {
-                perror("Error in sending message to scheduler!\n");
-            }
-            c++;
-        }
-        }
-    }
     // 7. Clear clock resources
     for (int i=0; i < 2; i++)
     {
