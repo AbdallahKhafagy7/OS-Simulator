@@ -39,6 +39,8 @@ struct PCB_struct{
     string process_state;
     int REMAINING_TIME;
     int WAITING_TIME;
+    int RUNNING_TIME;
+    int START_TIME;
     int LAST_EXECUTED_TIME;
     int FINISH_TIME;
     bool is_completed;

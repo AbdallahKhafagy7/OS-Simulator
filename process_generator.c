@@ -1,4 +1,5 @@
 #include "headers.h"
+#include <signal.h>
 #include <stdio.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
@@ -146,6 +147,7 @@ int clk_pid = fork();
     // 6. Send the information to the scheduler at the appropriate time.
     // 6. Send the information to the scheduler at the appropriate time.
     // 7. Clear clock resources
+    raise(SIGINT);
     for (int i=0; i < 2; i++)
     {
         wait(NULL);
