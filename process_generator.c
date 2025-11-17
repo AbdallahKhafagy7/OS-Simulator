@@ -1,5 +1,6 @@
 #include "headers.h"
 #include <stdio.h>
+#include <sys/ipc.h>
 #include <unistd.h>
 #include <string.h>
 #include "Processes_DataStructure/process.h"
@@ -117,27 +118,27 @@ int clk_pid = fork();
         printf("Error In Creating Message Queue!\n");
     }
     message_buf PROCESS_MESSAGE;
-    int c = 0;
-    int j=0;
     initClk();
     // To get time use this
     int x = getClk();
     printf("current time is %d\n", x);
     // TODO Generation Main Loop
-
+    
     // 5. Create a data structure for processes and provide it with its parameters.
     
     // 6. Send the information to the scheduler at the appropriate time.
-// 6. Send the information to the scheduler at the appropriate time.
+    // 6. Send the information to the scheduler at the appropriate time.
+    int c = 0;
     while(c < count){
+        for(int i=c; i<count;i++){
         if(getClk()==process_list[c].ARRIVAL_TIME){
             PROCESS_MESSAGE.p=process_list[c];
             PROCESS_MESSAGE.msgtype=process_list[c].ID;
-            if(msgsnd(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(message_buf)-sizeof(long), 0) == -1) {
+            if(msgsnd(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(message_buf)-sizeof(long), !IPC_NOWAIT) == -1) {
                 perror("Error in sending message to scheduler!\n");
             }
-            printf("Process with ID %d sent to scheduler at time %d\n",PROCESS_MESSAGE.p.ID,getClk());
             c++;
+        }
         }
     }
     // 7. Clear clock resources
