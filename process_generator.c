@@ -16,6 +16,7 @@ void clearResources(int);
 typedef char* string;
 
 
+
 int selected_Algorithm_NUM=-1;
 string selected_Algorithm=NULL;
 int time_quantum;
