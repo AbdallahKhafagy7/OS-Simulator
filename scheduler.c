@@ -1,8 +1,20 @@
+#include "Processes_DataStructure/process.h"
+#include "Processes_DataStructure/process_queue.h"
 #include "headers.h"
 #include <stdio.h>
+#include <unistd.h>
 
 int MESSAGE_ID;
+/*---------------------------------Omar Syed------------------------------------*/
 
+/*---------------------------------QUEUES&PCB------------------------------------*/
+
+//cpu bound --> no blocking queue
+process_queue WAITING_QUEUE;
+process_queue READY_QUEUE;
+PCB PCB_ARRAY[max]; 
+
+/*---------------------------------Omar Syed------------------------------------*/
 int main(int argc, char * argv[])
 {
     initClk();

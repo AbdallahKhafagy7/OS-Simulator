@@ -34,6 +34,15 @@ struct message_buf{
     process p;
 }typedef message_buf ;
 
+struct PCB_struct{
+    process p;
+    string process_state;
+    int REMAINING_TIME;
+    int WAITING_TIME;
+    int LAST_EXECUTED_TIME;
+    int FINISH_TIME;
+    bool is_completed;
+}typedef PCB;
 
 ///==============================
 //don't mess with this variable//
