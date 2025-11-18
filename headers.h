@@ -44,7 +44,60 @@ struct PCB_struct{
     int LAST_EXECUTED_TIME;
     int FINISH_TIME;
     bool is_completed;
+    struct PCB_struct* next;
 }typedef PCB;
+
+void INITIALIZE_PCB(PCB* pcb){
+    pcb->process_state="";
+    pcb->REMAINING_TIME=0;
+    pcb->WAITING_TIME=0;
+    pcb->RUNNING_TIME=0;
+    pcb->START_TIME=-1;
+    pcb->LAST_EXECUTED_TIME=-1;
+    pcb->FINISH_TIME=-1;
+    pcb->is_completed=false;
+    pcb->next=NULL;
+}
+
+void enqueue_PCB(PCB** head,PCB* new_PCB){
+    if(*head==NULL){
+        *head=new_PCB;
+        return;
+    }
+    PCB* temp=*head;
+    while(temp->next!=NULL){
+        temp=temp->next;
+    }
+    temp->next=new_PCB;
+}
+
+void print_PCB_list(PCB* head){
+    PCB* temp=head;
+    while(temp!=NULL){
+        printf("Process ID: %d, State: %s, Remaining Time: %d\n",temp->p.ID,temp->process_state,temp->REMAINING_TIME);
+        temp=temp->next;
+    }
+}
+
+void clear_PCB_list(PCB* head){
+    PCB* temp=head;
+    while(temp!=NULL){
+        PCB* to_free=temp;
+        temp=temp->next;
+        free(to_free);
+    }
+}
+
+void dequeue_PCB(PCB** head){
+    if(*head==NULL){
+        return;
+    }
+    PCB* temp=*head;
+    *head=(*head)->next;
+    temp=NULL;
+}
+
+
 
 ///==============================
 //don't mess with this variable//
