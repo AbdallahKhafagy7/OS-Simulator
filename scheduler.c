@@ -3,6 +3,7 @@
 #include "Processes_DataStructure/process_queue.h"
 #include "headers.h"
 //#include <cstddef>
+#include <signal.h>
 #include <stdio.h>
 #include <sys/ipc.h>
 #include <sys/types.h>
@@ -104,6 +105,7 @@ void SWITCH_PROCESS_HPF(process_priority_queue* queue){
     
 }
 
+int PID[max];
 /*---------------------------------Omar Syed------------------------------------*/
 int main(int argc, char * argv[])
 {
@@ -141,8 +143,18 @@ int main(int argc, char * argv[])
                     PCB_ENTRY.process_state=Ready;
                     PCB_ENTRY.is_completed=false;
                     enqueue_priority(&READY_PRIORITY_QUEUE, PROCESS_MESSAGE.p);
+                    PID[process_count] = fork();
+                    if(PID[process_count] == 0){
+                        char runningtime_str[max];
+                        sprintf(runningtime_str, "%d", PROCESS_MESSAGE.p.RUNNING_TIME);
+                        execl("./process.out", "process.out", runningtime_str, NULL);
+                        perror("Failed to run process\n");
+                        exit(1);
+                    }
+                    kill(PID[process_count], SIGSTOP);
                     process_count++;
-                    PRINT_READY_PRIORITY_QUEUE();
+                    
+                    //RINT_READY_PRIORITY_QUEUE();
                 }
         }
         break;
@@ -163,8 +175,18 @@ int main(int argc, char * argv[])
                     PCB_ENTRY.process_state=Ready;
                     PCB_ENTRY.is_completed=false;
                     enqueue_priority_SRTN(&READY_PRIORITY_QUEUE, PROCESS_MESSAGE.p);
+                                        PID[process_count] = fork();
+                    if(PID[process_count] == 0){
+                        char runningtime_str[max];
+                        sprintf(runningtime_str, "%d", PROCESS_MESSAGE.p.RUNNING_TIME);
+                        execl("./process.out", "process.out", runningtime_str, NULL);
+                        perror("Failed to run process\n");
+                        exit(1);
+                    }
+                    kill(PID[process_count], SIGSTOP);
                     process_count++;
-                    PRINT_READY_PRIORITY_QUEUE();
+                    
+                    //PRINT_READY_PRIORITY_QUEUE();
                 }
         }
         break;
@@ -185,8 +207,17 @@ int main(int argc, char * argv[])
                     PCB_ENTRY.process_state=Ready;
                     PCB_ENTRY.is_completed=false;
                     enqueue(&READY_QUEUE, PROCESS_MESSAGE.p);
+                                        PID[process_count] = fork();
+                    if(PID[process_count] == 0){
+                        char runningtime_str[max];
+                        sprintf(runningtime_str, "%d", PROCESS_MESSAGE.p.RUNNING_TIME);
+                        execl("./process.out", "process.out", runningtime_str, NULL);
+                        perror("Failed to run process\n");
+                        exit(1);
+                    }
+                    kill(PID[process_count], SIGSTOP);
                     process_count++;
-                    PRINT_READY_QUEUE();
+                    //PRINT_READY_QUEUE();
                 }
         }
         break;
