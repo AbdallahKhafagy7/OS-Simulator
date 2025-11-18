@@ -149,7 +149,8 @@ int clk_pid = fork();
     // 6. Send the information to the scheduler at the appropriate time.
     // 6. Send the information to the scheduler at the appropriate time.
     // 7. Clear clock resources
-    raise(SIGINT);
+    //
+    // raise(SIGINT);
     for (int i=0; i < 2; i++)
     {
         wait(NULL);
