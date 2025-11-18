@@ -142,7 +142,7 @@ if(msgrcv(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(message_buf),2,IPC_NOWAIT)!=-1){
         process_count++;
         PRINT_READY_QUEUE();
     }
-    if(selected_Algorithm_NUM==1 ||selected_Algorithm_NUM==2)//HPF or SRTN
+    if(selected_Algorithm_NUM ==1 ||selected_Algorithm_NUM==2)//HPF or SRTN
     {
         
         printf("Process received with id %d & arritval time %d & priority %d and scheduling algorithm %d \n"
