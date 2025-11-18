@@ -2,6 +2,7 @@
 #include "Processes_DataStructure/process_priority_queue.h"
 #include "Processes_DataStructure/process_queue.h"
 #include "headers.h"
+//#include <cstddef>
 #include <stdio.h>
 #include <sys/ipc.h>
 #include <sys/types.h>
@@ -32,13 +33,15 @@ void UPDATE_READY_PRIORITY_QUEUE(){
     enqueue_priority(&READY_PRIORITY_QUEUE,*temp);
  }
 }
-
 void PRINT_READY_QUEUE(){
     process_Node* temp=READY_QUEUE.front;
     printf("Ready Queue: ");
-    while(temp!=NULL &&READY_QUEUE.front!=READY_QUEUE.rear){ {
+    while(temp!=NULL){
         printf("P%d ",temp->Process.ID);
         temp=temp->next;
+        if(temp==READY_QUEUE.rear->next){
+            break;
+        }
     }
     printf("\n");
 }
