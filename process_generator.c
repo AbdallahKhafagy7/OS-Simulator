@@ -132,7 +132,7 @@ int clk_pid = fork();
             if(x==process_list[i].ARRIVAL_TIME){
                 PROCESS_MESSAGE.msgtype=2;
                 PROCESS_MESSAGE.p=process_list[i];
-                if(msgsnd(MESSAGE_ID,&PROCESS_MESSAGE,sizeof(message_buf),!IPC_NOWAIT)==-1){
+                if(msgsnd(MESSAGE_ID,&PROCESS_MESSAGE,sizeof(message_buf),0)==-1){
                     printf("Error In Sending Message To Scheduler!\n");
                 }else{
                     printf("Process with id %d sent to scheduler at time %d\n",process_list[i].ID,getClk());
