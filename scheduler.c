@@ -154,6 +154,7 @@ int main(int argc, char * argv[])
                     kill(PID[process_count], SIGSTOP);
                     process_count++;
                     
+                    
                     //RINT_READY_PRIORITY_QUEUE();
                 }
         }
