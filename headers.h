@@ -26,6 +26,7 @@ typedef short bool;
 #define SHKEY 300
 // struct 
 
+typedef enum { Ready, Running, Finished} state;
 
 typedef char* string;
 
@@ -36,7 +37,7 @@ struct message_buf{
 
 struct PCB_struct{
     process p;
-    string process_state;
+    state process_state;
     int REMAINING_TIME;
     int WAITING_TIME;
     int RUNNING_TIME;
@@ -48,7 +49,7 @@ struct PCB_struct{
 }typedef PCB;
 
 void INITIALIZE_PCB(PCB* pcb){
-    pcb->process_state="";
+    pcb->process_state=Ready;
     pcb->REMAINING_TIME=0;
     pcb->WAITING_TIME=0;
     pcb->RUNNING_TIME=0;

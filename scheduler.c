@@ -132,7 +132,7 @@ if(msgrcv(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(message_buf),2,IPC_NOWAIT)!=-1){
                 ,PROCESS_MESSAGE.p.ID,PROCESS_MESSAGE.p.ARRIVAL_TIME,PROCESS_MESSAGE.p.PRIORITY,selected_Algorithm_NUM);
                 PCB_ENTRY.p=PROCESS_MESSAGE.p;
                 PCB_ENTRY.REMAINING_TIME=PROCESS_MESSAGE.p.RUNNING_TIME;
-                PCB_ENTRY.process_state="Ready";
+                PCB_ENTRY.process_state=Ready;
                 PCB_ENTRY.RUNNING_TIME=0;
                 PCB_ENTRY.START_TIME=-1;
                 PCB_ENTRY.LAST_EXECUTED_TIME=-1;
@@ -153,7 +153,7 @@ if(msgrcv(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(message_buf),2,IPC_NOWAIT)!=-1){
             PCB_ENTRY.START_TIME=-1;
             PCB_ENTRY.LAST_EXECUTED_TIME=-1;
             PCB_ENTRY.FINISH_TIME=-1;
-            PCB_ENTRY.process_state="Ready";
+            PCB_ENTRY.process_state=Ready;
             PCB_ENTRY.is_completed=false;
             enqueue_priority(&READY_PRIORITY_QUEUE, PROCESS_MESSAGE.p);
             process_count++;
