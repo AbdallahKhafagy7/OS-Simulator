@@ -60,7 +60,7 @@ void writeProcessInFile(FILE *pFile, struct processData *processes, int i) {
 int main(int argc, char * argv[])
 {
     FILE *pFile;
-    pFile = fopen("processes.txt", "w");
+    pFile = fopen("test.txt", "w");
     if (!pFile) {
         printf("Error opening file.\n");
         return 1;
