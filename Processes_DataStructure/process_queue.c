@@ -45,9 +45,8 @@ bool enqueue(process_queue* queue, process Process)
 }
 
 
-process* dequeue(process_queue* queue){
+process_Node* dequeue(process_queue* queue){
     // Use the fixed is_queue_empty check
-    process* Process;
     if (is_queue_empty(queue))
         return NULL; // Invalid queue pointer or empty queue
 
@@ -61,11 +60,9 @@ process* dequeue(process_queue* queue){
         queue->front = queue->front->next;
         queue->rear->next = queue->front; // Maintain circular link
     }
-     Process= malloc(sizeof(process));
-    *Process = temp->Process;
-    free(temp);
-
-    return Process; // Return the dequeued node
+    temp->next = NULL; // Detach the dequeued node
+    
+    return temp; // Return the dequeued node
 }
 
 void free_queue(process_queue* queue)
@@ -96,13 +93,10 @@ void free_queue(process_queue* queue)
 
 }
 
-process* peek_front(process_queue* queue)
+process_Node* peek_front(process_queue* queue)
 {
     // Use the fixed is_queue_empty check
     if (is_queue_empty(queue))
         return NULL; // Invalid queue pointer or empty queue
-        
-    process* process = malloc(sizeof(process));
-    *process = queue->front->Process;
-    return process;
+    return queue->front;
 }
