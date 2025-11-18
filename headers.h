@@ -18,7 +18,7 @@
 #include "Processes_DataStructure/process_queue.h"
 #include "Processes_DataStructure/process.h"
 
-#define max 100
+#define max 400
 typedef short bool;
 #define true 1
 #define false 0

@@ -172,17 +172,6 @@ int main(int argc, char * argv[])
                     PCB_ENTRY.process_state=Ready;
                     PCB_ENTRY.is_completed=false;
                     enqueue_priority_SRTN(&READY_PRIORITY_QUEUE, PROCESS_MESSAGE.p);
-                                        PID[process_count] = fork();
-                    if(PID[process_count] == 0){
-                        char runningtime_str[max];
-                        sprintf(runningtime_str, "%d", PROCESS_MESSAGE.p.RUNNING_TIME);
-                        execl("./process.out", "process.out", runningtime_str, NULL);
-                        perror("Failed to run process\n");
-                        exit(1);
-                    }
-                    kill(PID[process_count], SIGSTOP);
-                    process_count++;
-                    
                     //PRINT_READY_PRIORITY_QUEUE();
                 }
         }
@@ -197,8 +186,6 @@ int main(int argc, char * argv[])
                 if(clock_timer!=getClk())
                 {
                     clock_timer=getClk();
-                
-                    printf("Clock Timer: %d\n",clock_timer);
                     if(msgrcv(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(message_buf),2,IPC_NOWAIT)!=-1)
                     {
                         printf("Process received with id %d & arritval time %d & priority %d and scheduling algorithm %d \n"
@@ -215,6 +202,8 @@ int main(int argc, char * argv[])
                         process_count++;
                         PRINT_READY_QUEUE();
                     }
+                
+                    printf("Clock Timer: %d\n",clock_timer);
                     if (firsttime)
                     {
                                 printf("started");
