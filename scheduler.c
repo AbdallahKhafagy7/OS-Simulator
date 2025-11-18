@@ -253,4 +253,5 @@ if(msgrcv(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(message_buf),2,IPC_NOWAIT)!=-1){
 //upon termination release the clock resources.
 
 destroyClk(true);
+
 }
