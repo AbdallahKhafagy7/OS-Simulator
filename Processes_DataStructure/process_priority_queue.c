@@ -105,9 +105,10 @@ bool enqueue_priority_SRTN(process_priority_queue* Priority_Queue, process proce
 
 
 
-process dequeue_priority(process_priority_queue* Priority_Queue){
+process* dequeue_priority(process_priority_queue* Priority_Queue){
+process* Process;
     if (is_priority_queue_empty(Priority_Queue))
-        return; // Invalid queue pointer or empty queue
+        return NULL; // Invalid queue pointer or empty queue
 
     process_PNode* temp = Priority_Queue->front; // temp is the head
     Priority_Queue->front = Priority_Queue->front->next; // advance the head
@@ -116,16 +117,21 @@ process dequeue_priority(process_priority_queue* Priority_Queue){
         Priority_Queue->rear = NULL; // make the rear NULL as well
 
     temp->next = NULL;
-    process Process= temp->Process;
+    Process = malloc(sizeof(process));
+    *Process = temp->Process;
+    free(temp);
     return Process;
 }
 
-process peek_priority_front(process_priority_queue* Priority_Queue)
+process* peek_priority_front(process_priority_queue* Priority_Queue)
 {
     
     if (is_priority_queue_empty(Priority_Queue))
-        return; // Invalid queue pointer or empty queue
-    return Priority_Queue->front->Process;
+        return NULL; // Invalid queue pointer or empty queue
+
+    process* process =malloc(sizeof(process));
+    *process=Priority_Queue->front->Process;
+    return process;
 }
 
 
