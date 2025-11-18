@@ -12,23 +12,25 @@ void initialize_priority_queue(process_priority_queue* Priority_Queue)
     Priority_Queue->rear = NULL;
 }
 
-int is_priority_queue_empty(process_priority_queue* Priority_Queue)
+bool is_priority_queue_empty(process_priority_queue* Priority_Queue)
 {
     if (!Priority_Queue)
-        return 1; // A NULL queue is empty
+        return true; // A NULL queue is empty
         
-    return (Priority_Queue->front == NULL);
+    if (Priority_Queue->front == NULL){
+        return true; // The queue has no nodes
+    }
+    return false;
 }
 
-int enqueue_priority(process_priority_queue* Priority_Queue, process Process) 
+bool enqueue_priority(process_priority_queue* Priority_Queue, process Process) 
 {
     if (!Priority_Queue)
-        return -4; // Invalid queue pointer
+        return false; // Invalid queue pointer
 
     process_PNode* new_node = malloc(sizeof(process_PNode));
     if (!new_node)
-        return -1; // Memory allocation failed
-
+        return false; // Memory allocation failed
     new_node->Process = Process;
     new_node->next = NULL;
 
@@ -58,17 +60,17 @@ int enqueue_priority(process_priority_queue* Priority_Queue, process Process)
             Priority_Queue->rear = new_node;
         }
     }
-    return 0;
+    return true;
 }
-int enqueue_priority_SRTN(process_priority_queue* Priority_Queue, process process) // enqueue based on shortest remaining time next (SRTN)
+bool enqueue_priority_SRTN(process_priority_queue* Priority_Queue, process process) // enqueue based on shortest remaining time next (SRTN)
 {
    if (!Priority_Queue){
-    return -4; // Invalid queue pointer
+    return false; // Invalid queue pointer
    }
 
    process_PNode* new_node = malloc(sizeof(process_PNode));
    if (!new_node)
-       return -1; // Memory allocation failed
+       return false; // Memory allocation failed
 
    new_node->Process = process;
    new_node->next = NULL;
@@ -77,7 +79,7 @@ int enqueue_priority_SRTN(process_priority_queue* Priority_Queue, process proces
    if (is_priority_queue_empty(Priority_Queue)) {
        Priority_Queue->front = new_node;
        Priority_Queue->rear = new_node;
-       return 0; // Success
+       return true; // Success
    }
    
    process_PNode* current = Priority_Queue->front;
@@ -98,14 +100,14 @@ int enqueue_priority_SRTN(process_priority_queue* Priority_Queue, process proces
            Priority_Queue->rear = new_node;
        }
    }
-   return 0;
+   return true;
 }
 
 
 
-process_PNode* dequeue_priority(process_priority_queue* Priority_Queue){
+process dequeue_priority(process_priority_queue* Priority_Queue){
     if (is_priority_queue_empty(Priority_Queue))
-        return NULL; // Invalid queue pointer or empty queue
+        return; // Invalid queue pointer or empty queue
 
     process_PNode* temp = Priority_Queue->front; // temp is the head
     Priority_Queue->front = Priority_Queue->front->next; // advance the head
@@ -113,17 +115,17 @@ process_PNode* dequeue_priority(process_priority_queue* Priority_Queue){
     if (!Priority_Queue->front) // If the queue is now empty
         Priority_Queue->rear = NULL; // make the rear NULL as well
 
-    temp->next = NULL; // Isolate the node
-    return temp; // ** CALLER MUST FREE THIS NODE **
+    temp->next = NULL;
+    process Process= temp->Process;
+    return Process;
 }
 
-process_PNode* peek_priority_front(process_priority_queue* Priority_Queue)
+process peek_priority_front(process_priority_queue* Priority_Queue)
 {
-    // *** SIMPLIFIED CHECK ***
+    
     if (is_priority_queue_empty(Priority_Queue))
-        return NULL; // Invalid queue pointer or empty queue
-
-    return Priority_Queue->front;
+        return; // Invalid queue pointer or empty queue
+    return Priority_Queue->front->Process;
 }
 
 
