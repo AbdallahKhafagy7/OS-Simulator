@@ -19,7 +19,7 @@ process_queue READY_QUEUE;
 process_priority_queue READY_PRIORITY_QUEUE;
 
 
-
+//after every quantum i want to preemt!!
 void UPDATE_READY_QUEUE(){
  if(!is_queue_empty(&READY_QUEUE)){
     process temp=dequeue(&READY_QUEUE);
