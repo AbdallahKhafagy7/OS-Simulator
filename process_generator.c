@@ -1,4 +1,5 @@
 #include "headers.h"
+<<<<<<< HEAD
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
@@ -9,6 +10,19 @@
 #define max 100
 
 void clearResources(int);
+=======
+#include <signal.h>
+#include <stdio.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
+#include <unistd.h>
+#include <string.h>
+#include "Processes_DataStructure/process.h"
+
+
+void clearResources(int);
+ 
+>>>>>>> 3a83696511a7d3b8add38931a3efd33f92be1480
 
 /*---------------------------Omar Syed------------------------------------*/
 
@@ -16,9 +30,18 @@ void clearResources(int);
 typedef char* string;
 
 
+<<<<<<< HEAD
 int selected_Algorithm_NUM=-1;
 string selected_Algorithm=NULL;
 int time_quantum;
+=======
+
+int selected_Algorithm_NUM=-1;
+string selected_Algorithm=NULL;
+int time_quantum;
+int MESSAGE_ID;
+
+>>>>>>> 3a83696511a7d3b8add38931a3efd33f92be1480
 
 /*---------------------------Omar Syed------------------------------------*/
 
@@ -44,7 +67,11 @@ int main(int argc, char * argv[])
                 s=fgets(line,2*max,input_File);
                 continue;
             }
+<<<<<<< HEAD
         sscanf(line,"%d %d %d %d %d",&process_list[count].ID,&process_list[count].ARRIVAL_TIME,&process_list[count].RETURN_CODE,&process_list[count].PRIORITY,&process_list[count].DEPENDENCY_ID);//read int from str
+=======
+        sscanf(line,"%d %d %d %d %d",&process_list[count].ID,&process_list[count].ARRIVAL_TIME,&process_list[count].RUNNING_TIME,&process_list[count].PRIORITY,&process_list[count].DEPENDENCY_ID);//read int from str
+>>>>>>> 3a83696511a7d3b8add38931a3efd33f92be1480
          count++;
         s=fgets(line,2*max,input_File);
     }
@@ -85,6 +112,7 @@ int main(int argc, char * argv[])
 
     /*---------------------------Omar Syed------------------------------------*/
 
+<<<<<<< HEAD
     int pid=fork();//child clk
     if (pid==0)
     {
@@ -154,3 +182,77 @@ void clearResources(int signum)
 {
     //TODO Clears all resources in case of interruption
 }
+=======
+int clk_pid = fork();
+    if (clk_pid == 0)
+    {
+        execl("./clk.out","clk.out",NULL);
+        perror("Error in executing clock process");
+        exit(1);
+    }
+
+    int scheduler_pid = fork();
+    if (scheduler_pid == 0)
+    {
+        char selected_Algorithm_NUM_str[100];
+        char time_quantum_str[100];
+        sprintf(selected_Algorithm_NUM_str, "%d", selected_Algorithm_NUM);
+        sprintf(time_quantum_str, "%d", time_quantum);
+        execl("./scheduler.out", "scheduler.out", selected_Algorithm_NUM_str, time_quantum_str, NULL);
+        perror("Error in executing scheduler process");
+        exit(1);
+    }
+
+    
+
+
+
+    /*---------------------------Omar Syed------------------------------------*/
+
+    // 4. Use this function after creating the clock process to initialize clock
+    key_t key_msg_process = ftok("keyfile", 'A');
+    MESSAGE_ID = msgget(key_msg_process, 0666|IPC_CREAT);
+    if(MESSAGE_ID==-1){
+        printf("Error In Creating Message Queue!\n");
+    }
+    message_buf PROCESS_MESSAGE;
+    initClk();
+    int c = 0;
+    int x = getClk();
+    printf("current time is %d\n", x);
+    for(int i=0;i<count;i++){
+        while(c<=i){
+            x=getClk();
+            if(x==process_list[i].ARRIVAL_TIME){
+                PROCESS_MESSAGE.msgtype=2;
+                PROCESS_MESSAGE.p=process_list[i];
+                if(msgsnd(MESSAGE_ID,&PROCESS_MESSAGE,sizeof(message_buf),!IPC_NOWAIT)==-1){
+                    printf("Error In Sending Message To Scheduler!\n");
+                }else{
+                    printf("Process with id %d sent to scheduler at time %d\n",process_list[i].ID,getClk());
+                    c++;
+                    break;
+                }
+            }
+        }
+    }
+    // TODO Generation Main Loop
+    
+    // 5. Create a data structure for processes and provide it with its parameters.
+    
+    // 6. Send the information to the scheduler at the appropriate time.
+    // 6. Send the information to the scheduler at the appropriate time.
+    // 7. Clear clock resources
+    raise(SIGINT);
+    for (int i=0; i < 2; i++)
+    {
+        wait(NULL);
+    }
+    destroyClk(true);
+}
+void clearResources(int signum)
+{
+    //TODO Clears all resources in case of interruption
+    msgctl(MESSAGE_ID, IPC_RMID, NULL); 
+}
+>>>>>>> 3a83696511a7d3b8add38931a3efd33f92be1480
