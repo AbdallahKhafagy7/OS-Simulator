@@ -3,6 +3,7 @@
 #include "Processes_DataStructure/process_queue.h"
 #include "headers.h"
 //#include <cstddef>
+#include <signal.h>
 #include <stdio.h>
 #include <sys/ipc.h>
 #include <sys/types.h>
@@ -104,6 +105,7 @@ void SWITCH_PROCESS_HPF(process_priority_queue* queue){
     
 }
 
+int PID[max];
 /*---------------------------------Omar Syed------------------------------------*/
 int main(int argc, char * argv[])
 {
@@ -170,8 +172,18 @@ int main(int argc, char * argv[])
                     PCB_ENTRY.process_state=Ready;
                     PCB_ENTRY.is_completed=false;
                     enqueue_priority_SRTN(&READY_PRIORITY_QUEUE, PROCESS_MESSAGE.p);
+                                        PID[process_count] = fork();
+                    if(PID[process_count] == 0){
+                        char runningtime_str[max];
+                        sprintf(runningtime_str, "%d", PROCESS_MESSAGE.p.RUNNING_TIME);
+                        execl("./process.out", "process.out", runningtime_str, NULL);
+                        perror("Failed to run process\n");
+                        exit(1);
+                    }
+                    kill(PID[process_count], SIGSTOP);
                     process_count++;
-                    PRINT_READY_PRIORITY_QUEUE();
+                    
+                    //PRINT_READY_PRIORITY_QUEUE();
                 }
         }
         break;
@@ -228,65 +240,68 @@ int main(int argc, char * argv[])
 
         }
         break;
-        }
-    default:
-        break;
     }
-// while(1){
-// if(msgrcv(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(message_buf),2,IPC_NOWAIT)!=-1){
-//     if( selected_Algorithm_NUM==3)//RR
-//     {
-            
-//             printf("Process received with id %d & arritval time %d & priority %d and scheduling algorithm %d \n"
-//                 ,PROCESS_MESSAGE.p.ID,PROCESS_MESSAGE.p.ARRIVAL_TIME,PROCESS_MESSAGE.p.PRIORITY,selected_Algorithm_NUM);
-//                 PCB_ENTRY.p=PROCESS_MESSAGE.p;
-//                 PCB_ENTRY.REMAINING_TIME=PROCESS_MESSAGE.p.RUNNING_TIME;
-//                 PCB_ENTRY.process_state=Ready;
-//                 PCB_ENTRY.RUNNING_TIME=0;
-//                 PCB_ENTRY.START_TIME=-1;
-//                 PCB_ENTRY.LAST_EXECUTED_TIME=-1;
-//                 PCB_ENTRY.FINISH_TIME=-1;
-//                 PCB_ENTRY.is_completed=false;
-//         enqueue(&READY_QUEUE, PROCESS_MESSAGE.p);
-//         process_count++;
-//         PRINT_READY_QUEUE();
-//     }
-//     if(selected_Algorithm_NUM ==1)//HPF 
-//     {
-        
-//         printf("Process received with id %d & arritval time %d & priority %d and scheduling algorithm %d \n"
-//             ,PROCESS_MESSAGE.p.ID,PROCESS_MESSAGE.p.ARRIVAL_TIME,PROCESS_MESSAGE.p.PRIORITY,selected_Algorithm_NUM);
-//             PCB_ENTRY.p=PROCESS_MESSAGE.p;
-//             PCB_ENTRY.REMAINING_TIME=PROCESS_MESSAGE.p.RUNNING_TIME;
-//             PCB_ENTRY.RUNNING_TIME=0;
-//             PCB_ENTRY.START_TIME=-1;
-//             PCB_ENTRY.LAST_EXECUTED_TIME=-1;
-//             PCB_ENTRY.FINISH_TIME=-1;
-//             PCB_ENTRY.process_state=Ready;
-//             PCB_ENTRY.is_completed=false;
-//             enqueue_priority(&READY_PRIORITY_QUEUE, PROCESS_MESSAGE.p);
-//             process_count++;
-//             PRINT_READY_PRIORITY_QUEUE();
-//         }
-//     if(selected_Algorithm_NUM ==2)//SRTN
-//     {
-//         printf("Process received with id %d & arritval time %d & priority %d and scheduling algorithm %d \n"
-//             ,PROCESS_MESSAGE.p.ID,PROCESS_MESSAGE.p.ARRIVAL_TIME,PROCESS_MESSAGE.p.PRIORITY,selected_Algorithm_NUM);
-//             PCB_ENTRY.p=PROCESS_MESSAGE.p;
-//             PCB_ENTRY.REMAINING_TIME=PROCESS_MESSAGE.p.RUNNING_TIME;
-//             PCB_ENTRY.RUNNING_TIME=0;
-//             PCB_ENTRY.START_TIME=-1;
-//             PCB_ENTRY.LAST_EXECUTED_TIME=-1;
-//             PCB_ENTRY.FINISH_TIME=-1;
-//             PCB_ENTRY.process_state=Ready;
-//             PCB_ENTRY.is_completed=false;
-//             enqueue_priority_SRTN(&READY_PRIORITY_QUEUE, PROCESS_MESSAGE.p);
-//             process_count++;
-//             PRINT_READY_PRIORITY_QUEUE();
-//         }
-// }
+    default:
+    break;
+}
 /*---------------------------Omar Syed------------------------------------*/
+/*
+while(1){
+if(msgrcv(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(message_buf),2,IPC_NOWAIT)!=-1){
+    if( selected_Algorithm_NUM==3)//RR
+    {
+            
+            printf("Process received with id %d & arritval time %d & priority %d and scheduling algorithm %d \n"
+                ,PROCESS_MESSAGE.p.ID,PROCESS_MESSAGE.p.ARRIVAL_TIME,PROCESS_MESSAGE.p.PRIORITY,selected_Algorithm_NUM);
+                PCB_ENTRY.p=PROCESS_MESSAGE.p;
+                PCB_ENTRY.REMAINING_TIME=PROCESS_MESSAGE.p.RUNNING_TIME;
+                PCB_ENTRY.process_state=Ready;
+                PCB_ENTRY.RUNNING_TIME=0;
+                PCB_ENTRY.START_TIME=-1;
+                PCB_ENTRY.LAST_EXECUTED_TIME=-1;
+                PCB_ENTRY.FINISH_TIME=-1;
+                PCB_ENTRY.is_completed=false;
+        enqueue(&READY_QUEUE, PROCESS_MESSAGE.p);
+        process_count++;
+        PRINT_READY_QUEUE();
+    }
+    if(selected_Algorithm_NUM ==1)//HPF 
+    {
+        
+        printf("Process received with id %d & arritval time %d & priority %d and scheduling algorithm %d \n"
+            ,PROCESS_MESSAGE.p.ID,PROCESS_MESSAGE.p.ARRIVAL_TIME,PROCESS_MESSAGE.p.PRIORITY,selected_Algorithm_NUM);
+            PCB_ENTRY.p=PROCESS_MESSAGE.p;
+            PCB_ENTRY.REMAINING_TIME=PROCESS_MESSAGE.p.RUNNING_TIME;
+            PCB_ENTRY.RUNNING_TIME=0;
+            PCB_ENTRY.START_TIME=-1;
+            PCB_ENTRY.LAST_EXECUTED_TIME=-1;
+            PCB_ENTRY.FINISH_TIME=-1;
+            PCB_ENTRY.process_state=Ready;
+            PCB_ENTRY.is_completed=false;
+            enqueue_priority(&READY_PRIORITY_QUEUE, PROCESS_MESSAGE.p);
+            process_count++;
+            PRINT_READY_PRIORITY_QUEUE();
+        }
+    if(selected_Algorithm_NUM ==2)//SRTN
+    {
+        printf("Process received with id %d & arritval time %d & priority %d and scheduling algorithm %d \n"
+            ,PROCESS_MESSAGE.p.ID,PROCESS_MESSAGE.p.ARRIVAL_TIME,PROCESS_MESSAGE.p.PRIORITY,selected_Algorithm_NUM);
+            PCB_ENTRY.p=PROCESS_MESSAGE.p;
+            PCB_ENTRY.REMAINING_TIME=PROCESS_MESSAGE.p.RUNNING_TIME;
+            PCB_ENTRY.RUNNING_TIME=0;
+            PCB_ENTRY.START_TIME=-1;
+            PCB_ENTRY.LAST_EXECUTED_TIME=-1;
+            PCB_ENTRY.FINISH_TIME=-1;
+            PCB_ENTRY.process_state=Ready;
+            PCB_ENTRY.is_completed=false;
+            enqueue_priority_SRTN(&READY_PRIORITY_QUEUE, PROCESS_MESSAGE.p);
+            process_count++;
+            PRINT_READY_PRIORITY_QUEUE();
+        }
+}
+*/
 //upon termination release the clock resources.
 
 destroyClk(true);
+
 }

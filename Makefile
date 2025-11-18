@@ -15,4 +15,5 @@ clean:
 all: clean build
 
 run:
-	./process_generator.out test.txt
+	./test_generator.out
+	./process_generator.out processes.txt 
