@@ -1,12 +1,3 @@
-<<<<<<< HEAD
-#include "headers.h"
-
-
-int main(int argc, char * argv[])
-{
-    initClk();
-    //TODO implement the scheduler :)
-=======
 #include "Processes_DataStructure/process.h"
 #include "Processes_DataStructure/process_priority_queue.h"
 #include "Processes_DataStructure/process_queue.h"
@@ -187,7 +178,6 @@ if(msgrcv(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(message_buf),2,IPC_NOWAIT)!=-1){
 }
 }
 /*---------------------------Omar Syed------------------------------------*/
->>>>>>> 3a83696511a7d3b8add38931a3efd33f92be1480
     //upon termination release the clock resources.
     
     destroyClk(true);

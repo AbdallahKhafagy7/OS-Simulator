@@ -4,11 +4,6 @@
  * This file represents an emulated clock for simulation purpose only.
  * It is not a real part of operating system!
  */
-<<<<<<< HEAD
-// test
-=======
-
->>>>>>> 3a83696511a7d3b8add38931a3efd33f92be1480
 #include "headers.h"
 
 int shmid;

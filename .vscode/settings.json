@@ -59,7 +59,8 @@
   "files.associations": {
     "process_queue.h": "c",
     "headers.h": "c",
-    "process_priority_queue.h": "c"
+    "process_priority_queue.h": "c",
+    "ipc.h": "c"
   },
   "makefile.configureOnOpen": true
 }

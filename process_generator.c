@@ -1,16 +1,4 @@
 #include "headers.h"
-<<<<<<< HEAD
-#include <stdio.h>
-#include <time.h>
-#include <unistd.h>
-#include <string.h>
-#include "Processes_DataStructure/process_priority_queue.h"
-#include "Processes_DataStructure/process_queue.h"
-#include "Processes_DataStructure/process.h"
-#define max 100
-
-void clearResources(int);
-=======
 #include <signal.h>
 #include <stdio.h>
 #include <sys/ipc.h>
@@ -22,7 +10,6 @@ void clearResources(int);
 
 void clearResources(int);
  
->>>>>>> 3a83696511a7d3b8add38931a3efd33f92be1480
 
 /*---------------------------Omar Syed------------------------------------*/
 
@@ -30,18 +17,12 @@ void clearResources(int);
 typedef char* string;
 
 
-<<<<<<< HEAD
-int selected_Algorithm_NUM=-1;
-string selected_Algorithm=NULL;
-int time_quantum;
-=======
 
 int selected_Algorithm_NUM=-1;
 string selected_Algorithm=NULL;
 int time_quantum;
 int MESSAGE_ID;
 
->>>>>>> 3a83696511a7d3b8add38931a3efd33f92be1480
 
 /*---------------------------Omar Syed------------------------------------*/
 
@@ -67,11 +48,7 @@ int main(int argc, char * argv[])
                 s=fgets(line,2*max,input_File);
                 continue;
             }
-<<<<<<< HEAD
-        sscanf(line,"%d %d %d %d %d",&process_list[count].ID,&process_list[count].ARRIVAL_TIME,&process_list[count].RETURN_CODE,&process_list[count].PRIORITY,&process_list[count].DEPENDENCY_ID);//read int from str
-=======
         sscanf(line,"%d %d %d %d %d",&process_list[count].ID,&process_list[count].ARRIVAL_TIME,&process_list[count].RUNNING_TIME,&process_list[count].PRIORITY,&process_list[count].DEPENDENCY_ID);//read int from str
->>>>>>> 3a83696511a7d3b8add38931a3efd33f92be1480
          count++;
         s=fgets(line,2*max,input_File);
     }
@@ -112,77 +89,6 @@ int main(int argc, char * argv[])
 
     /*---------------------------Omar Syed------------------------------------*/
 
-<<<<<<< HEAD
-    int pid=fork();//child clk
-    if (pid==0)
-    {
-        //child clk
-        execl("./clk.out","",NULL);
-        perror("clk failed to execute\n");
-    }
-    else{ //parent
-         pid =fork();//child scheduler
-        if(pid==0){
-            //child scheduler
-            execl("./scheduler.out","",NULL);
-            perror("scheduler failed to execute\n");
-        }
-    }
-
-    /*---------------------------Omar Syed------------------------------------*/
-
-    // 4. Use this function after creating the clock process to initialize clock
-    initClk();
-    // To get time use this
-    int x = getClk();
-    printf("current time is %d\n", x);
-    // TODO Generation Main Loop
-
-    // 5. Create a data structure for processes and provide it with its parameters.
-    //********************************** abdelrahman tarek***************************************//
-    if (selected_Algorithm_NUM == 1){
-        // Create a priority queue for the processes
-        process_priority_queue P_queue;
-        initialize_priority_queue(&P_queue);
-        printf("HPF selected\n");
-        // Add processes to the priority queue based on their priority
-        for (int i = 0; i < count; i++) {
-            enqueue_priority(&P_queue, process_list[i]);
-            //printf("Process with ID %d enqueued based on priority %d\n", process_list[i].ID, process_list[i].PRIORITY);
-        }
-    }
-    else if (selected_Algorithm_NUM == 2){
-        process_priority_queue P_queue;
-        initialize_priority_queue(&P_queue);
-        printf("SRTN selected\n");
-        // add processes to the priority queue based on their remaining time
-        for (int i = 0; i < count; i++) {
-            enqueue_priority_SRTN(&P_queue, process_list[i]);
-            // printf("Process with ID %d enqueued based on remaining time %d\n", process_list[i].ID, process_list[i].RUNNING_TIME);
-        }
-    }
-    else if (selected_Algorithm_NUM == 3){
-        // Create a simple queue for Round Robin scheduling
-        process_queue P_queue;
-        initialize_queue(&P_queue);
-        printf("RR selected and time quantum is %d\n", time_quantum);
-        // Add processes to the queue in order of arrival
-        for (int i = 0; i < count; i++) {
-            enqueue(&P_queue, process_list[i]);
-        }
-    }
-    //******************************************abdelrahman tarek****************************** */
-    // 6. Send the information to the scheduler at the appropriate time.
-
-    // 7. Clear clock resources
-    destroyClk(true);
-}
-
-void clearResources(int signum)
-{
-    //TODO Clears all resources in case of interruption
-}
-=======
 int clk_pid = fork();
     if (clk_pid == 0)
     {
@@ -255,4 +161,3 @@ void clearResources(int signum)
     //TODO Clears all resources in case of interruption
     msgctl(MESSAGE_ID, IPC_RMID, NULL); 
 }
->>>>>>> 3a83696511a7d3b8add38931a3efd33f92be1480

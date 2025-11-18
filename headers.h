@@ -10,12 +10,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
-<<<<<<< HEAD
-#include "Processes_DataStructure/process.h"
-#include "Processes_DataStructure/process_queue.h"
-#include "Processes_DataStructure/process_priority_queue.h"
-
-=======
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
@@ -25,14 +19,11 @@
 #include "Processes_DataStructure/process.h"
 
 #define max 100
->>>>>>> 3a83696511a7d3b8add38931a3efd33f92be1480
 typedef short bool;
 #define true 1
 #define false 0
 
 #define SHKEY 300
-<<<<<<< HEAD
-=======
 // struct 
 
 typedef enum { Ready, Running, Finished} state;
@@ -121,7 +112,6 @@ void dequeue_PCB(PCB** head){
     temp=NULL;
 }
 
->>>>>>> 3a83696511a7d3b8add38931a3efd33f92be1480
 
 
 ///==============================
