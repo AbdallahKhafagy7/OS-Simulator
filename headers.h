@@ -75,7 +75,21 @@ void enqueue_PCB(PCB** head,PCB* new_PCB){
 void print_PCB_list(PCB* head){
     PCB* temp=head;
     while(temp!=NULL){
-        printf("Process ID: %d, State: %s, Remaining Time: %d\n",temp->p.ID,temp->process_state,temp->REMAINING_TIME);
+        if (temp->process_state==Ready)
+        {
+            printf("Process ID: %d, State: Ready , Remaining Time: %d\n",temp->p.ID,temp->REMAINING_TIME);
+            
+        }
+        else if (temp->process_state==Running)
+        {
+            printf("Process ID: %d, State: Running , Remaining Time: %d\n",temp->p.ID,temp->REMAINING_TIME);
+            
+        }
+        else if (temp->process_state==Finished)
+        {
+            printf("Process ID: %d, State: Finished , Remaining Time: %d\n",temp->p.ID,temp->REMAINING_TIME);
+            
+        }
         temp=temp->next;
     }
 }
