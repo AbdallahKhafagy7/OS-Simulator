@@ -25,21 +25,19 @@ void initialize_queue(process_queue* queue);
  *  Checks if the queue is empty.
  *  1 (true) if the queue is NULL or has no nodes, 0 (false) otherwise.
  */
-int is_queue_empty(process_queue* queue);
+bool is_queue_empty(process_queue* queue);
 
 /**
  *  0 on success, -1 on memory allocation failure, -4 on invalid queue pointer.
  */
-int enqueue(process_queue* queue, process Process);
+bool enqueue(process_queue* queue, process Process);
 
-/**
-    *  The CALLER is responsible for calling free() on this returned node.
- */
-process_Node* dequeue(process_queue* queue);
+
+process dequeue(process_queue* queue);
 
 
 void free_queue(process_queue* queue);
 
-process_Node* peek_front(process_queue* queue);
+process peek_front(process_queue* queue);
 
 #endif // PROCESS_QUEUE_H
