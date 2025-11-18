@@ -33,11 +33,11 @@ bool is_queue_empty(process_queue* queue);
 bool enqueue(process_queue* queue, process Process);
 
 
-process dequeue(process_queue* queue);
+process* dequeue(process_queue* queue);
 
 
 void free_queue(process_queue* queue);
 
-process peek_front(process_queue* queue);
+process* peek_front(process_queue* queue);
 
 #endif // PROCESS_QUEUE_H

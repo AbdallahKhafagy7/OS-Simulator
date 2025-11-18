@@ -33,10 +33,10 @@ bool enqueue_priority(process_priority_queue* Priority_Queue, process Process);
 bool enqueue_priority_SRTN(process_priority_queue* Priority_Queue, process process);
 
 
-process dequeue_priority(process_priority_queue* Priority_Queue);
+process* dequeue_priority(process_priority_queue* Priority_Queue);
 
 
-process peek_priority_front(process_priority_queue* Priority_Queue);
+process* peek_priority_front(process_priority_queue* Priority_Queue);
 
 
 void free_priority_queue(process_priority_queue* Priority_Queue);

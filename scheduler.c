@@ -22,15 +22,17 @@ process_priority_queue READY_PRIORITY_QUEUE;
 //after every quantum i want to preemt!!
 void UPDATE_READY_QUEUE(){
  if(!is_queue_empty(&READY_QUEUE)){
-    process temp=dequeue(&READY_QUEUE);
-    enqueue(&READY_QUEUE,temp);
+    process* temp=dequeue(&READY_QUEUE);
+    enqueue(&READY_QUEUE,*temp);
+    free(temp);
  }
 }
 
 void UPDATE_READY_PRIORITY_QUEUE(){
  if(!is_priority_queue_empty(&READY_PRIORITY_QUEUE)){
-    process temp=dequeue_priority(&READY_PRIORITY_QUEUE);
-    enqueue_priority(&READY_PRIORITY_QUEUE,temp);
+    process* temp=dequeue_priority(&READY_PRIORITY_QUEUE);
+    enqueue_priority(&READY_PRIORITY_QUEUE,*temp);
+    free(temp);
  }
 }
 
