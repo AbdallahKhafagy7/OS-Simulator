@@ -36,7 +36,7 @@ void UPDATE_READY_PRIORITY_QUEUE(){
 void PRINT_READY_QUEUE(){
     process_Node* temp=READY_QUEUE.front;
     printf("Ready Queue: ");
-    while(temp!=NULL){
+    while(temp!=NULL &&READY_QUEUE.front!=READY_QUEUE.rear){ {
         printf("P%d ",temp->Process.ID);
         temp=temp->next;
     }
