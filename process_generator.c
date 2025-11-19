@@ -29,6 +29,8 @@ int MESSAGE_ID;
 int main(int argc, char * argv[])
 {
     signal(SIGINT, clearResources); // TODO: what does this do @omarelsayed
+    signal(SIGKILL, clearResources); // TODO: what does this do @omarelsayed
+
     process process_list[max];
     int count=0;
     // TODO Initialization
@@ -118,9 +120,11 @@ int clk_pid = fork();
     // 4. Use this function after creating the clock process to initialize clock
     key_t key_msg_process = ftok("keyfile", 'A');
     MESSAGE_ID = msgget(key_msg_process, 0666|IPC_CREAT);
+
     if(MESSAGE_ID==-1){
         printf("Error In Creating Message Queue!\n");
     }
+    printf(" message queue ID is %d \n",MESSAGE_ID);
     message_buf PROCESS_MESSAGE;
     initClk();
     int c = 0;
@@ -160,5 +164,8 @@ int clk_pid = fork();
 void clearResources(int signum)
 {
     //TODO Clears all resources in case of interruption
+    printf("cleared msgque");
     msgctl(MESSAGE_ID, IPC_RMID, NULL); 
+    printf("cleared msgque 2");
+
 }

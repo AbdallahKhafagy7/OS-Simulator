@@ -180,11 +180,11 @@ int main(int argc, char * argv[])
         case 3:
         {
             printf("Scheduling Algorithm is Round Robin with Time Quantum = %d\n",TIME_QUANTUM);
-            int firsttime =true; // TODO::fix this to be when queue is empty
+            int firsttime =true; // TODO::fix this to be when queue is empty    
             process_Node* current_process;
             while(1){
-                if(msgrcv(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(message_buf),2,IPC_NOWAIT)!=-1)
-                {
+                
+                if(msgrcv(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(message_buf),2,IPC_NOWAIT)!=-1){
                     printf("Process received with id %d & arritval time %d & priority %d and scheduling algorithm %d \n"
                     ,PROCESS_MESSAGE.p.ID,PROCESS_MESSAGE.p.ARRIVAL_TIME,PROCESS_MESSAGE.p.PRIORITY,selected_Algorithm_NUM);
                     PCB_ENTRY.p=PROCESS_MESSAGE.p;
@@ -195,7 +195,7 @@ int main(int argc, char * argv[])
                     PCB_ENTRY.FINISH_TIME=-1;
                     PCB_ENTRY.process_state=Ready;
                     PCB_ENTRY.is_completed=false;
-                    enqueue(&READY_QUEUE, PROCESS_MESSAGE.p);
+                    enqueue(&READY_QUEUE,PROCESS_MESSAGE.p);
                     process_count++;
                     PRINT_READY_QUEUE();
                 }
@@ -208,19 +208,20 @@ int main(int argc, char * argv[])
                     {
                                 printf("started");
                                 current_process=peek_front(&READY_QUEUE);
-                                if(current_process!=NULL){
+                                if(current_process!=NULL)
+                                {
                                     printf("At time %d, Process P%d is running\n",clock_timer,current_process->Process.ID);
                                     firsttime=false;
-                                    }
+                                }
+                                    
                     }
+                                
                     if (clock_timer%TIME_QUANTUM==0)
                     {  // a time quantum has passed
-                                kill(current_process->Process.ID,SIGSTOP); //TODO:: FORK THE PROCCES THEN KILL IT
+                               // kill(current_process->Process.ID,SIGSTOP); //TODO:: FORK THE PROCCES THEN KILL IT
+                               if (current_process->next){
                                 current_process=current_process->next;
-                                if(current_process==NULL)
-                                {
-                                    current_process=READY_QUEUE.front;
-                                }
+                               }
                                 printf("At time %d, Process P%d is running\n",clock_timer,current_process->Process.ID);
                     }
                     firsttime=is_queue_empty(&READY_QUEUE);
@@ -294,3 +295,19 @@ if(msgrcv(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(message_buf),2,IPC_NOWAIT)!=-1){
 destroyClk(true);
 
 }
+/*if(msgrcv(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(message_buf),2,IPC_NOWAIT)!=-1)
+                {
+                    printf("Process received with id %d & arritval time %d & priority %d and scheduling algorithm %d \n"
+                    ,PROCESS_MESSAGE.p.ID,PROCESS_MESSAGE.p.ARRIVAL_TIME,PROCESS_MESSAGE.p.PRIORITY,selected_Algorithm_NUM);
+                    PCB_ENTRY.p=PROCESS_MESSAGE.p;
+                    PCB_ENTRY.REMAINING_TIME=PROCESS_MESSAGE.p.RUNNING_TIME;
+                    PCB_ENTRY.RUNNING_TIME=0;
+                    PCB_ENTRY.START_TIME=-1;
+                    PCB_ENTRY.LAST_EXECUTED_TIME=-1;
+                    PCB_ENTRY.FINISH_TIME=-1;
+                    PCB_ENTRY.process_state=Ready;
+                    PCB_ENTRY.is_completed=false;
+                    enqueue(&READY_QUEUE, PROCESS_MESSAGE.p);
+                    process_count++;
+                    PRINT_READY_QUEUE();
+                }*/
