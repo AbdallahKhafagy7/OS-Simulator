@@ -80,6 +80,7 @@ int main(int argc, char * argv[])
                 int rec_status = msgrcv(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(message_buf),2,IPC_NOWAIT);
                 if(rec_status!=-1)
                 {
+                    clock_timer = getClk();
                     printf("clock now is: %d\n",clock_timer);
                     printf("Process received with id %d & arritval time %d & priority %d and scheduling algorithm %d \n"
                     ,PROCESS_MESSAGE.p.ID,PROCESS_MESSAGE.p.ARRIVAL_TIME,PROCESS_MESSAGE.p.PRIORITY,selected_Algorithm_NUM);
