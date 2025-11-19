@@ -161,4 +161,7 @@ void clearResources(int signum)
 {
     //TODO Clears all resources in case of interruption
     msgctl(MESSAGE_ID, IPC_RMID, NULL); 
+    //test
+        destroyClk(true);
+        exit(1);
 }

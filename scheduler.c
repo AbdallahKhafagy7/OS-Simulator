@@ -21,19 +21,6 @@ process_queue READY_QUEUE;
 process_priority_queue READY_PRIORITY_QUEUE;
 
 
-void UPDATE_READY_QUEUE(){
- if(!is_queue_empty(&READY_QUEUE)){
-    process_Node* temp=dequeue(&READY_QUEUE);
-    enqueue(&READY_QUEUE,temp->Process);
- }
-}
-
-void UPDATE_READY_PRIORITY_QUEUE(){
- if(!is_priority_queue_empty(&READY_PRIORITY_QUEUE)){
-    process* temp=dequeue_priority(&READY_PRIORITY_QUEUE);
-    enqueue_priority(&READY_PRIORITY_QUEUE,*temp);
- }
-}
 void PRINT_READY_QUEUE(){
     process_Node* temp=READY_QUEUE.front;
     printf("Ready Queue: ");
@@ -55,54 +42,6 @@ void PRINT_READY_PRIORITY_QUEUE(){
         temp=temp->next;
     }
     printf("\n");
-}
-
-process GET_PROCESS_READY_QUEUE(int index){
-    if(!is_queue_empty(&READY_QUEUE)){
-    process_Node* temp=READY_QUEUE.front;
-    int count=0;
-    while(temp!=NULL){
-        if(count==index){
-            return temp->Process;
-        } 
-        count++;
-        temp=temp->next;
-    }
-}
-}
-
-process GET_PROCESS_READY_PRIORITY_QUEUE(int index){
-    if(!is_priority_queue_empty(&READY_PRIORITY_QUEUE)){
-    process_PNode* temp=READY_PRIORITY_QUEUE.front;
-    int count=0;
-    while(temp!=NULL){
-        if(count==index){
-            return temp->Process;
-        } 
-        count++;
-        temp=temp->next;
-    }
-}
-}
-
-void CHECK_DEPENDECY_RR(process_queue* queue){
-    
-}
-
-void CHECK_DEPENDENCY(process_priority_queue* queue){
-    
-}
-
-void SWITCH_PROCESS_RR(process_queue* queue){
-    
-}
-
-void SWITCH_PROCESS_SRTN(process_priority_queue* queue){
-    
-}
-
-void SWITCH_PROCESS_HPF(process_priority_queue* queue){
-    
 }
 
 int PID[max];
@@ -172,7 +111,7 @@ int main(int argc, char * argv[])
                     PCB_ENTRY.process_state=Ready;
                     PCB_ENTRY.is_completed=false;
                     enqueue_priority_SRTN(&READY_PRIORITY_QUEUE, PROCESS_MESSAGE.p);
-                    //PRINT_READY_PRIORITY_QUEUE();
+                    PRINT_READY_PRIORITY_QUEUE();
                 }
         }
         break;
