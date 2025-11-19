@@ -12,7 +12,12 @@
 /*---------------------------------Omar Syed------------------------------------*/
 
 int MESSAGE_ID;
-
+/*
+1-Receive processes
+2-Initialize Queues & PCB
+3-Initialize Algorithms
+Done by Omar Syed
+*/
 /*---------------------------------QUEUES&PCB------------------------------------*/
 
 //cpu bound --> no blocking queue

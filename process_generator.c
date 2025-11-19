@@ -12,7 +12,14 @@ void clearResources(int);
  
 
 /*---------------------------Omar Syed------------------------------------*/
-
+/*
+1-Read From File
+2-Create Message Buffer
+3-fork Scheduler & Clk
+4-send processes to the scheduler
+5-clear resource 
+Done by Omar Syed
+*/
 
 typedef char* string;
 
@@ -87,9 +94,8 @@ int main(int argc, char * argv[])
 
     // 3. Initiate and create the scheduler and clock processes.
 
-    /*---------------------------Omar Syed------------------------------------*/
-
-int clk_pid = fork();
+    
+    int clk_pid = fork();
     if (clk_pid == 0)
     {
         execl("./clk.out","clk.out",NULL);
@@ -108,11 +114,12 @@ int clk_pid = fork();
         perror("Error in executing scheduler process");
         exit(1);
     }
-
     
-
-
-
+    
+    
+    
+    
+    /*---------------------------Omar Syed------------------------------------*/
     /*---------------------------Omar Syed------------------------------------*/
 
     // 4. Use this function after creating the clock process to initialize clock
