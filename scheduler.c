@@ -71,7 +71,6 @@ int main(int argc, char * argv[])
     message_buf PROCESS_MESSAGE;
     int process_count=0;
     /*---------------------------Omar Syed------------------------------------*/
-<<<<<<< HEAD
     switch (selected_Algorithm_NUM)
     {
         case 1:
@@ -131,18 +130,6 @@ int main(int argc, char * argv[])
             while(1){
                 
                 if(msgrcv(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(message_buf),2,IPC_NOWAIT)!=-1){
-=======
-    
-        
-            // printf("Scheduling Algorithm is Round Robin with Time Quantum = %d\n",TIME_QUANTUM);
-            int firsttime =true; // TODO::fix this to be when queue is empty
-            process_Node* current_process;
-            while(1){
-                int rec_status = msgrcv(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(message_buf),2,IPC_NOWAIT);
-                if(rec_status!=-1)
-                {
-                    printf("clock now is: %d\n",clock_timer);
->>>>>>> 9b87937 (omar)
                     printf("Process received with id %d & arritval time %d & priority %d and scheduling algorithm %d \n"
                     ,PROCESS_MESSAGE.p.ID,getClk(),PROCESS_MESSAGE.p.PRIORITY,selected_Algorithm_NUM);
                     PCB_ENTRY.p=PROCESS_MESSAGE.p;
