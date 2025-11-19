@@ -143,7 +143,6 @@ int main(int argc, char * argv[])
                     enqueue(&READY_QUEUE,PROCESS_MESSAGE.p);
                     process_count++;
                     PRINT_READY_QUEUE();
-<<<<<<< HEAD
                 }
                 if(clock_timer!=getClk())
                 {
@@ -171,38 +170,21 @@ int main(int argc, char * argv[])
                                 printf("At time %d, Process P%d is running\n",clock_timer,current_process->Process.ID);
                     }
                     firsttime=is_queue_empty(&READY_QUEUE);
-=======
-                    switch(selected_Algorithm_NUM){
-                        case 1:
-                        {
-                            /*==================HPF===================*/
-                            PRINT_READY_PRIORITY_QUEUE();
-                            break;
-                        }
-                        case 2:
-                        {
-                            /*==================SRTN===================*/
-                            PRINT_READY_PRIORITY_QUEUE();
-                            break;
-                        }
-                        case 3:
-                        {
-                            /*==================RR===================*/
-                             PRINT_READY_QUEUE();
-                            PRINT_READY_QUEUE();
-                            break;
-                        }
-                    }
->>>>>>> 9b87937 (omar)
                 }
         }
+        break;
+        }
+        default:
+            printf("Invalid Algorithm\n");
+            break;
+    }
+    /*---------------------------Omar Syed------------------------------------*/
    
 
 
 
 destroyClk(true);
-
-}
+    }
 /*if(msgrcv(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(message_buf),2,IPC_NOWAIT)!=-1)
                 {
                     printf("Process received with id %d & arritval time %d & priority %d and scheduling algorithm %d \n"
