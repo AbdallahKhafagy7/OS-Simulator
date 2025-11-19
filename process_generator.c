@@ -127,11 +127,6 @@ int main(int argc, char * argv[])
     // 4. Use this function after creating the clock process to initialize clock
     key_t key_msg_process = ftok("keyfile", 'A');
     MESSAGE_ID = msgget(key_msg_process, 0666|IPC_CREAT);
-<<<<<<< HEAD
-
-=======
-    printf("queue id  is: %d\n",MESSAGE_ID);
->>>>>>> 9b87937 (omar)
     if(MESSAGE_ID==-1){
         printf("Error In Creating Message Queue!\n");
     }
