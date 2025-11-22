@@ -88,30 +88,29 @@ int PID[max];
 //Use in case of more than one process -omar
 void schedule_RR(){
   if(running_process_id!=READY_QUEUE.front->Process.ID){
-                                    kill(running_process_pid,SIGSTOP);
-                                    running_process_id=READY_QUEUE.front->Process.ID;
-                                    if(READY_QUEUE.front->Process.first_time){
-                                    pid[process_count]=fork();
-                                    if(pid[process_count]==0){
-                                        char str_remaining_time[10];
-                                        sprintf(str_remaining_time, "%d", READY_QUEUE.front->Process.RUNNING_TIME);
-                                        execl("./process.out","./process.out", str_remaining_time, NULL);
-                                        perror("Error in forking\n");
-                                    }
-                                    else
-                                    {
-                                        running_process_index=(running_process_index)%process_count;
-                                        kill(pid[running_process_index],SIGCONT);
-                                    }
+                                kill(running_process_pid,SIGSTOP);
+                                running_process_id=READY_QUEUE.front->Process.ID;
+                                if(READY_QUEUE.front->Process.first_time){
+                                pid[process_count]=fork();
+                                if(pid[process_count]==0){
+                                    char str_remaining_time[10];
+                                    sprintf(str_remaining_time, "%d", READY_QUEUE.front->Process.RUNNING_TIME);
+                                    execl("./process.out","./process.out", str_remaining_time, NULL);
+                                    perror("Error in forking\n");
                                 }
-                                    else
-                                    {
-                                        running_process_pid=pid[process_count];
-                                        process_count++;
-                                    }
+                                else
+                                {
+                                    running_process_index=(running_process_index)%process_count;
+                                    kill(pid[running_process_index],SIGCONT);
                                 }
+                            }
+                                else
+                                {
+                                    running_process_pid=pid[process_count];
+                                    process_count++;
+                                }
+                            }
 }
-
 
 /*---------------------------------Omar Syed------------------------------------*/
 int main(int argc, char * argv[])
@@ -187,14 +186,14 @@ int main(int argc, char * argv[])
                                         sprintf(str_remaining_time, "%d", PROCESS_MESSAGE.p.RUNNING_TIME);
                                         execl("./process.out","./process.out", str_remaining_time, NULL);
                                         perror("Error in forking\n");
-                                }
-                                else
-                                {
-                                    PROCESS_MESSAGE.p.first_time=false;
-                                    running_process_pid=pid[process_count];
-                                    running_process_id=0;
-                                    process_count++;
-                                }
+                                        }
+                                     else
+                                        {
+                                            PROCESS_MESSAGE.p.first_time=false;
+                                            running_process_pid=pid[process_count];
+                                            running_process_id=0;
+                                            process_count++;
+                                        }
                             }
                           else
                             {

@@ -45,8 +45,23 @@ struct PCB_struct{
     int LAST_EXECUTED_TIME;
     int FINISH_TIME;
     bool is_completed;
-    struct PCB_struct* next;
 }typedef PCB;
+
+
+typedef struct PCB_node
+{
+    PCB PCB_entry;
+    struct PCB_node* next;
+
+}PCB_node;
+
+typedef struct PCB_linked_list
+{
+    PCB_node* head;
+    PCB_node* tail;
+    int count;
+}PCB_linked_list;
+
 
 void INITIALIZE_PCB(PCB* pcb){
     pcb->process_state=Ready;
@@ -57,60 +72,114 @@ void INITIALIZE_PCB(PCB* pcb){
     pcb->LAST_EXECUTED_TIME=-1;
     pcb->FINISH_TIME=-1;
     pcb->is_completed=false;
-    pcb->next=NULL;
+}
+void INITIALIZE_PCB_Node(PCB_node* pcb_node){
+    INITIALIZE_PCB(&pcb_node->PCB_entry);
+    pcb_node->next=NULL;
 }
 
-void enqueue_PCB(PCB** head,PCB* new_PCB){
-    if(*head==NULL){
-        *head=new_PCB;
+void INITIALIZE_PCB_Linked_List(PCB_linked_list* pcb_list){
+    pcb_list->head=NULL;
+    pcb_list->tail=NULL;
+    pcb_list->count=0;
+}
+
+
+
+void ADD_PCB(PCB_linked_list* pcb_list, PCB pcb_entry){
+    PCB_node* new_node=(PCB_node*)malloc(sizeof(PCB_node));
+    if (!new_node){
+        perror("Memory allocation failed for PCB_node\n");
         return;
     }
-    PCB* temp=*head;
-    while(temp->next!=NULL){
-        temp=temp->next;
-    }
-    temp->next=new_PCB;
-}
 
-void print_PCB_list(PCB* head){
-    PCB* temp=head;
-    while(temp!=NULL){
-        if (temp->process_state==Ready)
-        {
-            printf("Process ID: %d, State: Ready , Remaining Time: %d\n",temp->p.ID,temp->REMAINING_TIME);
-            
-        }
-        else if (temp->process_state==Running)
-        {
-            printf("Process ID: %d, State: Running , Remaining Time: %d\n",temp->p.ID,temp->REMAINING_TIME);
-            
-        }
-        else if (temp->process_state==Finished)
-        {
-            printf("Process ID: %d, State: Finished , Remaining Time: %d\n",temp->p.ID,temp->REMAINING_TIME);
-            
-        }
-        temp=temp->next;
-    }
-}
+    INITIALIZE_PCB_Node(new_node);
+    new_node->PCB_entry=pcb_entry;
 
-void clear_PCB_list(PCB* head){
-    PCB* temp=head;
-    while(temp!=NULL){
-        PCB* to_free=temp;
-        temp=temp->next;
-        free(to_free);
-    }
-}
-
-void dequeue_PCB(PCB** head){
-    if(*head==NULL){
+    if(pcb_list->head==NULL){
+        pcb_list->head=new_node;
+        pcb_list->tail=new_node;
+        pcb_list->count++;
+        return;
+    }else{
+        pcb_list->tail->next=new_node;
+        pcb_list->tail=new_node;
+        pcb_list->tail->next=pcb_list->head;
+        pcb_list->count++;
         return;
     }
-    PCB* temp=*head;
-    *head=(*head)->next;
-    temp=NULL;
 }
+
+int Remove_PCB(PCB_linked_list* pcb_list, int process_id){
+    if(pcb_list->head==NULL){
+        return;
+    }
+
+    PCB_node* current=pcb_list->head;
+    PCB_node* previous=NULL;
+
+    while(current!=NULL){
+        if(current->PCB_entry.p.ID==process_id){
+            if(previous==NULL){ // if head needs to be removed
+                pcb_list->head=current->next;
+                if(pcb_list->head==NULL){ // if list became empty
+                    pcb_list->tail=NULL;
+                }
+            }else{
+                previous->next=current->next;
+                if(current==pcb_list->tail){ // if tail needs to be removed
+                    pcb_list->tail=previous;
+                }
+            }
+            free(current);
+            pcb_list->count--;
+            return 0; // Success
+        }
+        previous=current;
+        current=current->next;
+    }
+    return -1;
+}
+
+int get_PCB_index(PCB_linked_list* pcb_list, int process_id){
+    if(pcb_list->head==NULL){
+        return -1;
+    }
+
+    PCB_node* current=pcb_list->head;
+    int index=0;
+
+    while(current!=NULL){
+        if(current->PCB_entry.p.ID==process_id){
+            return index;
+        }
+        current=current->next;
+        index++;
+    }
+    return -1; // Not found
+}
+
+
+int get_count_PCB(PCB_linked_list* pcb_list){
+    return pcb_list->count;
+}
+PCB* get_PCB_entry(PCB_linked_list* pcb_list, int process_id){
+    if(pcb_list->head==NULL){
+        return NULL; // Empty list
+    }
+
+    PCB_node* current=pcb_list->head;
+
+    while(current!=NULL){
+        if(current->PCB_entry.p.ID==process_id){
+            return &current->PCB_entry;
+        }
+        current=current->next;
+    }
+    return NULL; // Not found
+}
+
+
 
 
 
