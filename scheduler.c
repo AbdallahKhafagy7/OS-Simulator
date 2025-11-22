@@ -23,6 +23,7 @@ Done by Omar Syed
 //cpu bound --> no blocking queue
 process_queue READY_QUEUE;
 process_priority_queue READY_PRIORITY_QUEUE;
+PCB_linked_list* pcb;
 int TIME_QUANTUM;
 int pid[max];
 int running_process_index=-1;
@@ -83,6 +84,7 @@ int main(int argc, char * argv[])
     /*---------------------------Omar Syed------------------------------------*/
     initialize_queue(&READY_QUEUE);
     initialize_priority_queue(&READY_PRIORITY_QUEUE);
+   // INITIALIZE_PCB_Linked_List(pcb);
     int selected_Algorithm_NUM=atoi(argv[1]);
     TIME_QUANTUM=atoi(argv[2]);// if RR 3
     key_t key_msg_process = ftok("keyfile", 'A');
@@ -106,8 +108,8 @@ int main(int argc, char * argv[])
                 {
                     // clock_timer = getClk();
                     // printf("clock now is: %d\n",clock_timer);
-                    // printf("Process received with id %d & arritval time %d & priority %d and scheduling algorithm %d \n"
-                    // ,PROCESS_MESSAGE.p.ID,PROCESS_MESSAGE.p.ARRIVAL_TIME,PROCESS_MESSAGE.p.PRIORITY,selected_Algorithm_NUM);
+                     printf("Process received with id %d & arritval time %d & priority %d and scheduling algorithm %d \n"
+                     ,PROCESS_MESSAGE.p.ID,PROCESS_MESSAGE.p.ARRIVAL_TIME,PROCESS_MESSAGE.p.PRIORITY,selected_Algorithm_NUM);
                     // PCB_ENTRY.p=PROCESS_MESSAGE.p;
                     // PCB_ENTRY.REMAINING_TIME=PROCESS_MESSAGE.p.RUNNING_TIME;
                     // PCB_ENTRY.RUNNING_TIME=0;
@@ -139,6 +141,32 @@ int main(int argc, char * argv[])
                             //RR
                             enqueue(&READY_QUEUE, PROCESS_MESSAGE.p);
                             PRINT_READY_QUEUE();
+                            enqueue(&READY_QUEUE, PROCESS_MESSAGE.p);
+                            PRINT_READY_QUEUE();
+                            if (get_count(&READY_QUEUE)==1 && 
+                            peek_front(&READY_QUEUE)->Process.first_time==true )
+                            {
+                                char remaining_time_string[20] ;
+                                sprintf(remaining_time_string,"%d",peek_front(&READY_QUEUE)->Process.RUNNING_TIME );
+                                PCB pcb_obj ;
+                                pcb_obj.arrival_time=peek_front(&READY_QUEUE)->Process.ARRIVAL_TIME;
+                                pcb_obj.LAST_EXECUTED_TIME=getClk();
+                                pcb_obj.REMAINING_TIME=peek_front(&READY_QUEUE)->Process.RUNNING_TIME;
+                                pcb_obj.process_state=Running;
+                                pcb_obj.START_TIME=getClk();
+                                pcb_obj.process_id=peek_front(&READY_QUEUE)->Process.ID;
+                                pcb_obj.is_completed=false;
+                                int pid =fork();
+                                if(pid==0){
+                                    execl("./process.out","./process.out",remaining_time_string, NULL);
+                                    perror("Error In forking");
+                                }
+                                else{
+                                    pcb_obj.process_pid=pid;
+                                    ADD_PCB(pcb, pcb_obj);
+                                }
+                            }
+                                
 
                                 
                             break;
