@@ -26,6 +26,7 @@ int main(int agrc, char * argv[])
     }
 
     printf("Process finished at time %d\n", current_time);
+    kill(getppid(),SIGUSR1);    
     exit(getpid());
     destroyClk(false);
     

@@ -10,8 +10,8 @@ build:
 	gcc test_generator.c -o test_generator.out
 
 clean:
-	rm -f *.out  processes.txt 
-	rm -f *.o  processes.txt
+	rm -f *.out  processes.txt scheduler_log.txt
+	rm -f *.o  processes.txt   scheduler_log.txt
 all: clean build
 
 run:
