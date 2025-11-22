@@ -36,7 +36,7 @@ struct message_buf{
 }typedef message_buf ;
 
 struct PCB_struct{
-    process p;
+    int process_id;
     state process_state;
     int REMAINING_TIME;
     int WAITING_TIME;
@@ -45,6 +45,7 @@ struct PCB_struct{
     int LAST_EXECUTED_TIME;
     int FINISH_TIME;
     int process_pid;
+    int arrival_time;
     bool is_completed;
 }typedef PCB;
 
@@ -121,7 +122,7 @@ int Remove_PCB(PCB_linked_list* pcb_list, int process_id){
     PCB_node* previous=NULL;
 
     while(current!=NULL){
-        if(current->PCB_entry.p.ID==process_id){
+        if(current->PCB_entry.process_id==process_id){
             if(previous==NULL){ // if head needs to be removed
                 pcb_list->head=current->next;
                 if(pcb_list->head==NULL){ // if list became empty
@@ -143,23 +144,25 @@ int Remove_PCB(PCB_linked_list* pcb_list, int process_id){
     return -1;
 }
 
-int get_PCB_index(PCB_linked_list* pcb_list, int process_id){
-    if(pcb_list->head==NULL){
-        return -1;
-    }
+// PCB get_PCB_index(PCB_linked_list* pcb_list, int process_id){
+//     PCB pcb_entry;
+//     pcb_entry.process_id=-1;
+//     if(pcb_list->head==NULL){
+//         return pcb_entry;
+//     }
 
-    PCB_node* current=pcb_list->head;
-    int index=0;
+//     PCB_node* current=pcb_list->head;
+//     int index=0;
 
-    while(current!=NULL){
-        if(current->PCB_entry.p.ID==process_id){
-            return index;
-        }
-        current=current->next;
-        index++;
-    }
-    return -1; // Not found
-}
+//     while(current!=NULL){
+//         if(current->PCB_entry.process_id==process_id){
+//             return current->PCB_entry;
+//         }
+//         current=current->next;
+//         index++;
+//     }
+//     return pcb_entry; // Not found
+// }
 
 
 int get_count_PCB(PCB_linked_list* pcb_list){
@@ -173,7 +176,7 @@ PCB* get_PCB_entry(PCB_linked_list* pcb_list, int process_id){
     PCB_node* current=pcb_list->head;
 
     while(current!=NULL){
-        if(current->PCB_entry.p.ID==process_id){
+        if(current->PCB_entry.process_id==process_id){
             return &current->PCB_entry;
         }
         current=current->next;

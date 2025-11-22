@@ -143,7 +143,7 @@ int main(int argc, char * argv[])
                 process_list[i].first_time=true;
                 PROCESS_MESSAGE.msgtype=2;
                 PROCESS_MESSAGE.p=process_list[i];
-                if(msgsnd(MESSAGE_ID,&PROCESS_MESSAGE,sizeof(message_buf),!IPC_NOWAIT)==-1){
+                if(msgsnd(MESSAGE_ID,&PROCESS_MESSAGE,sizeof(message_buf) - sizeof(long),!IPC_NOWAIT)==-1){
                     printf("Error In Sending Message To Scheduler!\n");
                 }else{
                     printf("Process with id %d sent to scheduler at time %d\n",process_list[i].ID,getClk());
