@@ -82,8 +82,8 @@ void INITIALIZE_PCB_Node(PCB_node* pcb_node){
 }
 
 void INITIALIZE_PCB_Linked_List(PCB_linked_list* pcb_list){
-    pcb_list->head=NULL;
-    pcb_list->tail=NULL;
+    INITIALIZE_PCB_Node(pcb_list->head);
+    INITIALIZE_PCB_Node(pcb_list->tail);
     pcb_list->count=0;
 }
 
@@ -102,17 +102,17 @@ void ADD_PCB(PCB_linked_list* pcb_list, PCB pcb_entry){
     if(pcb_list->head==NULL){
         pcb_list->head=new_node;
         pcb_list->tail=new_node;
+        new_node->next=NULL;
         pcb_list->count++;
         return;
     }else{
         pcb_list->tail->next=new_node;
         pcb_list->tail=new_node;
-        pcb_list->tail->next=pcb_list->head;
+        pcb_list->tail->next=NULL;
         pcb_list->count++;
         return;
     }
 }
-
 int Remove_PCB(PCB_linked_list* pcb_list, int process_id){
     if(pcb_list->head==NULL){
         return -1;
@@ -132,6 +132,7 @@ int Remove_PCB(PCB_linked_list* pcb_list, int process_id){
                 previous->next=current->next;
                 if(current==pcb_list->tail){ // if tail needs to be removed
                     pcb_list->tail=previous;
+                    pcb_list->tail->next=NULL;
                 }
             }
             free(current);
@@ -143,6 +144,7 @@ int Remove_PCB(PCB_linked_list* pcb_list, int process_id){
     }
     return -1;
 }
+
 
 // PCB get_PCB_index(PCB_linked_list* pcb_list, int process_id){
 //     PCB pcb_entry;
