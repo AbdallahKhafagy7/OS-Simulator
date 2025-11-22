@@ -183,13 +183,13 @@ int main(int argc, char * argv[])
                                              pid[++count_pid]=fork();
                                              if(pid[count_pid]==0){
                                                char str_remaining_time[10];
-                                               sprintf(str_remaining_time, "%d", READY_QUEUE.front->Process.RUNNING_TIME);
+                                               sprintf(str_remaining_time, "%d", PROCESS_MESSAGE.p.RUNNING_TIME);
                                                execl("./process.out","./process.out", str_remaining_time, NULL);
                                                perror("Error in forking\n");
                                               }     
                                     }
                                     else{
-                                        kill(pid[count_pid],SIGCONT);
+                                        kill(++count_pid,SIGCONT);
                                     }
                                   }
                                 

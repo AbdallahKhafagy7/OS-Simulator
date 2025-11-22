@@ -44,6 +44,7 @@ struct PCB_struct{
     int START_TIME;
     int LAST_EXECUTED_TIME;
     int FINISH_TIME;
+    int process_pid;
     bool is_completed;
 }typedef PCB;
 
@@ -71,6 +72,7 @@ void INITIALIZE_PCB(PCB* pcb){
     pcb->START_TIME=-1;
     pcb->LAST_EXECUTED_TIME=-1;
     pcb->FINISH_TIME=-1;
+    pcb->process_pid=-1;
     pcb->is_completed=false;
 }
 void INITIALIZE_PCB_Node(PCB_node* pcb_node){
