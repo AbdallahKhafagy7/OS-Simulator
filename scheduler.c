@@ -200,6 +200,8 @@ int main(int argc, char * argv[])
                             {
                                 //update_pcb();
                                 update_queue_RR(&READY_QUEUE);
+                                //schedule_RR();
+
                             }
                             break;
                         }
