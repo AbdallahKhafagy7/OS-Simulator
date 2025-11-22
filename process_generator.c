@@ -140,6 +140,7 @@ int main(int argc, char * argv[])
         while(c<=i){
             x=getClk();
             if(x==process_list[i].ARRIVAL_TIME){
+                process_list[i].first_time=1;
                 PROCESS_MESSAGE.msgtype=2;
                 PROCESS_MESSAGE.p=process_list[i];
                 if(msgsnd(MESSAGE_ID,&PROCESS_MESSAGE,sizeof(message_buf),!IPC_NOWAIT)==-1){
