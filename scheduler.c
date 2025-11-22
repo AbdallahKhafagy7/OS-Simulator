@@ -21,15 +21,10 @@ Done by Omar Syed
 /*---------------------------------QUEUES&PCB------------------------------------*/
 
 //cpu bound --> no blocking queue
-PCB PCB_ENTRY;
 process_queue READY_QUEUE;
 process_priority_queue READY_PRIORITY_QUEUE;
 int TIME_QUANTUM;
 int pid[max];
-int running_process_pid=-1;
-int running_process_id=-1;
-int next_process_pid=-1;
-int next_process_id=-1;
 int running_process_index=-1;
 int process_count=0;
 void PRINT_READY_QUEUE(){
@@ -72,19 +67,7 @@ int get_count(process_queue* READY_QUEUE){
 //to be completed -omar
 
 void update_queue_RR(process_queue* READY_QUEUE){
-    if(get_count(READY_QUEUE)>1&&PCB_ENTRY.REMAINING_TIME-PCB_ENTRY.LAST_EXECUTED_TIME==TIME_QUANTUM){
-        process_Node* temp=dequeue(READY_QUEUE);
-        enqueue(READY_QUEUE,temp->Process);
-    }
-     if(PCB_ENTRY.REMAINING_TIME==0){
-        PCB_ENTRY.FINISH_TIME=getClk();
-        PCB_ENTRY.process_state=Finished;
-        dequeue(READY_QUEUE);
-        running_process_pid=-1;
-    }
-    if(get_count(READY_QUEUE)==1){
-        return;
-    }
+  
 }
 int count_pid=-1;
 int PID[max];
@@ -156,42 +139,7 @@ int main(int argc, char * argv[])
                             //RR
                             enqueue(&READY_QUEUE, PROCESS_MESSAGE.p);
                             PRINT_READY_QUEUE();
-                              if(get_count(&READY_QUEUE)==1&&PROCESS_MESSAGE.p.first_time)
-                                  {
-                                      pid[++count_pid]=fork();
-                                      if(pid[count_pid]==0){
-                                          char str_remaining_time[10];
-                                          sprintf(str_remaining_time, "%d", PROCESS_MESSAGE.p.RUNNING_TIME);
-                                          execl("./process.out","./process.out", str_remaining_time, NULL);
-                                          perror("Error in forking\n");
-                                  }
-                                  else
-                                  {
-                                    update_queue_RR(&READY_QUEUE);
-                                  }
-                                }
-                                  else if (get_count(&READY_QUEUE)==1)
-                                  {
-                                    kill(pid[count_pid],SIGCONT);
-                                    update_queue_RR(&READY_QUEUE);
-                                  }
-                                  else
-                                  {
-                                    //count_pid -> front  count_pid +1 -> front->next  count_pid-1 -> rear
-                                    update_queue_RR(&READY_QUEUE);
-                                         if(READY_QUEUE.front->Process.first_time){
-                                             pid[++count_pid]=fork();
-                                             if(pid[count_pid]==0){
-                                               char str_remaining_time[10];
-                                               sprintf(str_remaining_time, "%d", PROCESS_MESSAGE.p.RUNNING_TIME);
-                                               execl("./process.out","./process.out", str_remaining_time, NULL);
-                                               perror("Error in forking\n");
-                                              }     
-                                    }
-                                    else{
-                                        kill(++count_pid,SIGCONT);
-                                    }
-                                  }
+
                                 
                             break;
                         }
