@@ -76,41 +76,18 @@ void update_queue_RR(process_queue* READY_QUEUE){
         process_Node* temp=dequeue(READY_QUEUE);
         enqueue(READY_QUEUE,temp->Process);
     }
-    else if(PCB_ENTRY.REMAINING_TIME==0){
+     if(PCB_ENTRY.REMAINING_TIME==0){
         PCB_ENTRY.FINISH_TIME=getClk();
         PCB_ENTRY.process_state=Finished;
         dequeue(READY_QUEUE);
         running_process_pid=-1;
     }
+    if(get_count(READY_QUEUE)==1){
+        return;
+    }
 }
-
+int count_pid=-1;
 int PID[max];
-//Use in case of more than one process -omar
-void schedule_RR(){
-  if(running_process_id!=READY_QUEUE.front->Process.ID){
-                                    kill(running_process_pid,SIGSTOP);
-                                    running_process_id=READY_QUEUE.front->Process.ID;
-                                    if(READY_QUEUE.front->Process.first_time){
-                                    pid[process_count]=fork();
-                                    if(pid[process_count]==0){
-                                        char str_remaining_time[10];
-                                        sprintf(str_remaining_time, "%d", READY_QUEUE.front->Process.RUNNING_TIME);
-                                        execl("./process.out","./process.out", str_remaining_time, NULL);
-                                        perror("Error in forking\n");
-                                    }
-                                    else
-                                    {
-                                        running_process_index=(running_process_index)%process_count;
-                                        kill(pid[running_process_index],SIGCONT);
-                                    }
-                                }
-                                    else
-                                    {
-                                        running_process_pid=pid[process_count];
-                                        process_count++;
-                                    }
-                                }
-}
 
 
 /*---------------------------------Omar Syed------------------------------------*/
@@ -179,30 +156,43 @@ int main(int argc, char * argv[])
                             //RR
                             enqueue(&READY_QUEUE, PROCESS_MESSAGE.p);
                             PRINT_READY_QUEUE();
-                            if(get_count(&READY_QUEUE)==1&&PROCESS_MESSAGE.p.first_time)
-                                {
-                                    pid[process_count]=fork();
-                                    if(pid[process_count]==0){
-                                        char str_remaining_time[10];
-                                        sprintf(str_remaining_time, "%d", PROCESS_MESSAGE.p.RUNNING_TIME);
-                                        execl("./process.out","./process.out", str_remaining_time, NULL);
-                                        perror("Error in forking\n");
+                              if(get_count(&READY_QUEUE)==1&&PROCESS_MESSAGE.p.first_time)
+                                  {
+                                      pid[++count_pid]=fork();
+                                      if(pid[count_pid]==0){
+                                          char str_remaining_time[10];
+                                          sprintf(str_remaining_time, "%d", PROCESS_MESSAGE.p.RUNNING_TIME);
+                                          execl("./process.out","./process.out", str_remaining_time, NULL);
+                                          perror("Error in forking\n");
+                                  }
+                                  else
+                                  {
+                                    update_queue_RR(&READY_QUEUE);
+                                  }
                                 }
-                                else
-                                {
-                                    PROCESS_MESSAGE.p.first_time=false;
-                                    running_process_pid=pid[process_count];
-                                    running_process_id=0;
-                                    process_count++;
-                                }
-                            }
-                          else
-                            {
-                                //update_pcb();
-                                update_queue_RR(&READY_QUEUE);
-                                //schedule_RR();
-
-                            }
+                                  else if (get_count(&READY_QUEUE)==1)
+                                  {
+                                    kill(pid[count_pid],SIGCONT);
+                                    update_queue_RR(&READY_QUEUE);
+                                  }
+                                  else
+                                  {
+                                    //count_pid -> front  count_pid +1 -> front->next  count_pid-1 -> rear
+                                    update_queue_RR(&READY_QUEUE);
+                                         if(READY_QUEUE.front->Process.first_time){
+                                             pid[++count_pid]=fork();
+                                             if(pid[count_pid]==0){
+                                               char str_remaining_time[10];
+                                               sprintf(str_remaining_time, "%d", PROCESS_MESSAGE.p.RUNNING_TIME);
+                                               execl("./process.out","./process.out", str_remaining_time, NULL);
+                                               perror("Error in forking\n");
+                                              }     
+                                    }
+                                    else{
+                                        kill(++count_pid,SIGCONT);
+                                    }
+                                  }
+                                
                             break;
                         }
                         default:
