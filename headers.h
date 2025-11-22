@@ -112,7 +112,7 @@ void ADD_PCB(PCB_linked_list* pcb_list, PCB pcb_entry){
 
 int Remove_PCB(PCB_linked_list* pcb_list, int process_id){
     if(pcb_list->head==NULL){
-        return;
+        return -1;
     }
 
     PCB_node* current=pcb_list->head;
