@@ -1,2 +1,2 @@
 #At   time       x          process    y                    state arr        w          total      z                    remain     wait                
-At    time       14    process    1     Started arr        8     total      9     remain     9     wait       6    
+At    time       24    process    3     Started arr        24    total      30    remain     30    wait       0    

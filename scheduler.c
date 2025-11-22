@@ -87,12 +87,12 @@ int get_pcb_index(PCB*pcb,int process_count,int process_id){
     return -1;
 }
 
-void remove_pcb(PCB*pcb,int process_count,int process_id){
-    int k= get_pcb_index(pcb,  process_count,  process_id);
-    for(int i=k;i<process_count-1;i++){
+void remove_pcb(PCB*pcb,int *process_count,int process_id){
+    int k= get_pcb_index(pcb,  *process_count,  process_id);
+    for(int i=k;i<*process_count-1;i++){
         pcb[i]=pcb[i+1];
     }
-    process_count--;
+    (*process_count)--;
 }
 
 int count_pid=-1;
@@ -113,7 +113,7 @@ void handler(int signum){
         "At", "time", finihed->START_TIME, "process", finihed->process_id,"Started","arr",finihed->arrival_time,
         "total",finihed->RUNNING_TIME,"remain",finihed->REMAINING_TIME,"wait",finihed->FINISH_TIME-finihed->arrival_time-finihed->RUNNING_TIME);
     fclose(pFile);
-    remove_pcb(pcb, process_count,peek_front(&READY_QUEUE)->Process.ID);
+    remove_pcb(pcb, &process_count,peek_front(&READY_QUEUE)->Process.ID);
     printf("\nProcess with id %d has been dequeued\n",peek_front(&READY_QUEUE)->Process.ID);
     dequeue(&READY_QUEUE);
 }
@@ -211,7 +211,9 @@ int main(int argc, char * argv[])
                                     kill(pcb[running_index].process_pid, SIGSTOP);
                                     printf("Stopped\n");
                                     process_Node* temp =dequeue(&READY_QUEUE);
+                                    PRINT_READY_QUEUE();
                                     enqueue(&READY_QUEUE, temp->Process);
+                                    PRINT_READY_QUEUE();
                                     if(peek_front(&READY_QUEUE)->Process.first_time==true){
                                     pcb[process_count].arrival_time= peek_front(&READY_QUEUE)->Process.ARRIVAL_TIME;
                                     pcb[process_count].LAST_EXECUTED_TIME= getClk();
@@ -222,12 +224,14 @@ int main(int argc, char * argv[])
                                     char str_rem_time [ 20];
                                     sprintf(str_rem_time, "%d",peek_front(&READY_QUEUE)->Process.RUNNING_TIME);
                                     printf("Forked\n");
+                                    PRINT_READY_QUEUE();
                                     int pid =fork();
                                       if(pid==0){
                                           execl("./process.out","./process.out",str_rem_time,NULL);
                                           perror("Error in forking\n");
                                       }
                                       else{
+                                        PRINT_READY_QUEUE();
                                           pcb[process_count].process_pid=pid;
                                           process_count++;
                                       }
