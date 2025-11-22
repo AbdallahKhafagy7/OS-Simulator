@@ -247,3 +247,50 @@ if(msgrcv(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(message_buf),2,IPC_NOWAIT)!=-1){
 destroyClk(true);
 
 }
+
+ enqueue(&READY_QUEUE, PROCESS_MESSAGE.p);
+                            PRINT_READY_QUEUE();
+                            if (get_count(&READY_QUEUE)==1 && 
+                            peek_front(&READY_QUEUE)->Process.first_time==true )
+                            {
+                                char remaining_time_string[20] ;
+                                sprintf(remaining_time_string,"%d",peek_front(&READY_QUEUE)->Process.RUNNING_TIME );
+                                PCB pcb_obj ;
+                                pcb_obj.arrival_time=peek_front(&READY_QUEUE)->Process.ARRIVAL_TIME;
+                                pcb_obj.LAST_EXECUTED_TIME=getClk();
+                                pcb_obj.REMAINING_TIME=peek_front(&READY_QUEUE)->Process.RUNNING_TIME;
+                                pcb_obj.process_state=Running;
+                                pcb_obj.START_TIME=getClk();
+                                pcb_obj.process_id=peek_front(&READY_QUEUE)->Process.ID;
+                                pcb_obj.is_completed=false;
+                                int pid =fork();
+                                if(pid==0){
+                                    execl("./process.out","./process.out",remaining_time_string, NULL);
+                                    perror("Error In forking");
+                                }
+                                else{
+                                    pcb_obj.process_pid=pid;
+                                    ADD_PCB(pcb, pcb_obj);
+                                }
+                            }
+                                
+
+                            void handler(int signum){
+
+    PCB* to_be_removed_pcb =  get_PCB_entry(pcb,peek_front(&READY_QUEUE)->Process.ID );
+    to_be_removed_pcb->process_state=Finished;
+    to_be_removed_pcb->FINISH_TIME=getClk();
+    to_be_removed_pcb->is_completed=true;
+     pFile = fopen("processes.txt", "w");
+    if (!pFile) {
+        printf("Error opening file.\n");
+    }
+     fprintf(pFile, "%-5s %-10s %-10s %-10s %-20s %-5s %-10s %-10s %-10s %-20s %-10s %-20s\n",
+        "#At", "time", "x", "process", "y","state","arr","w","total","z","remain","wait");
+        fprintf(pFile, "%-5s %-10s %-10d %-10s %-20d %-5s %-10s %-10d %-10s %-20d %-10s %-20d %-20s %-10d\n",
+        "#At", "time", to_be_removed_pcb->START_TIME, "process", to_be_removed_pcb->process_id,"Finished","arr",to_be_removed_pcb->arrival_time,"total",to_be_removed_pcb->RUNNING_TIME,"remain",to_be_removed_pcb->REMAINING_TIME,"wait",to_be_removed_pcb->LAST_EXECUTED_TIME-to_be_removed_pcb->arrival_time);
+    fclose(pFile);
+    Remove_PCB(pcb, peek_front(&READY_QUEUE)->Process.ID);
+    printf("\nProcess with id %d has been dequeued\n",peek_front(&READY_QUEUE)->Process.ID);
+    dequeue(&READY_QUEUE);
+}
