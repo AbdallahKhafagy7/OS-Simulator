@@ -11,7 +11,7 @@ build:
 
 clean:
 	rm -f *.out  processes.txt
-
+	rm -f *.o  processes.txt
 all: clean build
 
 run:

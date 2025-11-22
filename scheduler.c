@@ -139,7 +139,8 @@ int main(int argc, char * argv[])
             // printf("Scheduling Algorithm is Round Robin with Time Quantum = %d\n",TIME_QUANTUM);
             int firsttime =true; // TODO::fix this to be when queue is empty
             process_Node* current_process;
-            while(1){
+            while(1)
+    {
                 int rec_status = msgrcv(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(message_buf),2,IPC_NOWAIT);
                 if(rec_status!=-1)
                 {
@@ -178,23 +179,24 @@ int main(int argc, char * argv[])
                             //RR
                             enqueue(&READY_QUEUE, PROCESS_MESSAGE.p);
                             PRINT_READY_QUEUE();
-                            if(get_count(&READY_QUEUE)==1&&PROCESS_MESSAGE.p.first_time){
-                                pid[process_count]=fork();
-                                if(pid[process_count]==0){
-                                    char str_remaining_time[10];
-                                    sprintf(str_remaining_time, "%d", PROCESS_MESSAGE.p.RUNNING_TIME);
-                                    execl("./process.out","./process.out", str_remaining_time, NULL);
-                                    perror("Error in forking\n");
+                            if(get_count(&READY_QUEUE)==1&&PROCESS_MESSAGE.p.first_time)
+                                {
+                                    pid[process_count]=fork();
+                                    if(pid[process_count]==0){
+                                        char str_remaining_time[10];
+                                        sprintf(str_remaining_time, "%d", PROCESS_MESSAGE.p.RUNNING_TIME);
+                                        execl("./process.out","./process.out", str_remaining_time, NULL);
+                                        perror("Error in forking\n");
+                                }
+                                else
+                                {
+                                    PROCESS_MESSAGE.p.first_time=false;
+                                    running_process_pid=pid[process_count];
+                                    running_process_id=0;
+                                    process_count++;
+                                }
                             }
-                            else
-                            {
-                                PROCESS_MESSAGE.p.first_time=false;
-                                running_process_pid=pid[process_count];
-                                running_process_id=0;
-                                process_count++;
-                            }
-                        }
-                            else
+                          else
                             {
                                 //update_pcb();
                                 update_queue_RR(&READY_QUEUE);
@@ -208,14 +210,52 @@ int main(int argc, char * argv[])
                 }
 
                 
+                 if(clock_timer!=getClk())
+                {
+                    clock_timer=getClk();
+                
+                    printf("Clock Timer: %d\n",clock_timer);
+                    
+                    if (firsttime)
+                    {
+                        printf("started\n");
+                        current_process = peek_front(&READY_QUEUE);
+                        if(current_process != NULL)
+                        {
+                            printf("At time %d, Process P%d is running\n", clock_timer, current_process->Process.ID);
+                            // TODO: Fork and execute the process here
+                            // pid = fork();
+                            // if (pid == 0) exec(...);
+                            firsttime = false;
+                        }
+                    }
+                                else if (clock_timer > 0 && clock_timer % TIME_QUANTUM == 0)
+                        {  
+                                            if(current_process != NULL)
+                                            {
+                                                // TODO: Stop current process
+                                                // kill(current_process->Process.pid, SIGSTOP);
+                                                
+                                                current_process = current_process->next;
+                                                if(current_process == NULL)
+                                                {
+                                                    current_process = READY_QUEUE.front;
+                                                }
+                                                
+                                                if(current_process != NULL)
+                                                {
+                                                    printf("At time %d, Process P%d is running\n", clock_timer, current_process->Process.ID);
+                                                    // TODO: Resume/start the process
+                                                    // kill(current_process->Process.pid, SIGCONT);
+                                                }
+                                            }
+                }
+
                
             
 
         }
-   
-
-
-
-destroyClk(true);
+    }
+    destroyClk(true);
 
 }
