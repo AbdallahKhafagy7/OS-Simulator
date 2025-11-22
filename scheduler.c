@@ -98,7 +98,6 @@ int main(int argc, char * argv[])
 {
    // signal(SIGCHLD,handler);
     int clock_timer= 0;
-    printf("gkhjdzfmls");
     initClk();
     
     //TODO implement the scheduler :)
