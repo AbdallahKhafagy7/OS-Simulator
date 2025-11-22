@@ -86,9 +86,9 @@ int main(int argc, char * argv[])
     initialize_queue(&READY_QUEUE);
     initialize_priority_queue(&READY_PRIORITY_QUEUE);
    // INITIALIZE_PCB_Linked_List(pcb);
-   pcb->head=NULL;
-   pcb->tail=NULL;
-   pcb->count=0;
+   //pcb->head=NULL;
+   //pcb->tail=NULL;
+ //  pcb->count=0;
     int selected_Algorithm_NUM=atoi(argv[1]);
     TIME_QUANTUM=atoi(argv[2]);// if RR 3
     key_t key_msg_process = ftok("keyfile", 'A');
