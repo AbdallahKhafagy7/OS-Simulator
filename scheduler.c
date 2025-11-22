@@ -92,7 +92,7 @@ int PID[max];
 
 /*---------------------------------Omar Syed------------------------------------*/
 int main(int argc, char * argv[])
-{+
+{
     int clock_timer= 0;
     initClk();
     
