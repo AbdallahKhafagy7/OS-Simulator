@@ -171,11 +171,7 @@ int main(int argc, char * argv[])
 void clearResources(int signum)
 {
     //TODO Clears all resources in case of interruption
-    printf("cleared msgque");
     msgctl(MESSAGE_ID, IPC_RMID, NULL); 
-    printf("cleared msgque 2");
-
-    //test
         destroyClk(true);
         exit(1);
 }
