@@ -161,43 +161,45 @@ int main(int argc, char * argv[])
                             //RR
                             enqueue(&READY_QUEUE, PROCESS_MESSAGE.p);
                             PRINT_READY_QUEUE();
-                            if(get_count(&READY_QUEUE)==1&&PROCESS_MESSAGE.p.first_time){
-                                pid[process_count]=fork();
-                                if(pid[process_count]==0){
-                                    char str_remaining_time[10];
-                                    sprintf(str_remaining_time, "%d", PROCESS_MESSAGE.p.RUNNING_TIME);
-                                    execl("./process.out","./process.out", str_remaining_time, NULL);
-                                    perror("Error in forking\n");
+                            if(get_count(&READY_QUEUE)==1&&PROCESS_MESSAGE.p.first_time)
+                                {
+                                    pid[process_count]=fork();
+                                    if(pid[process_count]==0){
+                                        char str_remaining_time[10];
+                                        sprintf(str_remaining_time, "%d", PROCESS_MESSAGE.p.RUNNING_TIME);
+                                        execl("./process.out","./process.out", str_remaining_time, NULL);
+                                        perror("Error in forking\n");
+                                }
+                                else
+                                {
+                                    PROCESS_MESSAGE.p.first_time=false;
+                                    running_process_pid=pid[process_count];
+                                    running_process_id=0;
+                                    process_count++;
+                                }
                             }
-                            else
-                            {
-                                PROCESS_MESSAGE.p.first_time=false;
-                                running_process_pid=pid[process_count];
-                                running_process_id=0;
-                                process_count++;
-                            }
-                        }
-                            else
+                          else
                             {
                                 update_pcb();
                                 update_queue_RR(&READY_QUEUE);
                                 if(running_process_id!=READY_QUEUE.front->Process.ID){
                                     kill(running_process_pid,SIGSTOP);
                                     running_process_id=READY_QUEUE.front->Process.ID;
-                                    if(READY_QUEUE.front->Process.first_time){
-                                    pid[process_count]=fork();
-                                    if(pid[process_count]==0){
-                                        char str_remaining_time[10];
-                                        sprintf(str_remaining_time, "%d", READY_QUEUE.front->Process.RUNNING_TIME);
-                                        execl("./process.out","./process.out", str_remaining_time, NULL);
-                                        perror("Error in forking\n");
-                                    }
-                                    else
+                                    if(READY_QUEUE.front->Process.first_time)
                                     {
-                                        running_process_index=(running_process_index)%process_count;
-                                        kill(pid[running_process_index],SIGCONT);
+                                    pid[process_count]=fork();
+                                        if(pid[process_count]==0){
+                                            char str_remaining_time[10];
+                                            sprintf(str_remaining_time, "%d", READY_QUEUE.front->Process.RUNNING_TIME);
+                                            execl("./process.out","./process.out", str_remaining_time, NULL);
+                                            perror("Error in forking\n");
+                                        }
+                                        else
+                                        {
+                                            running_process_index=(running_process_index)%process_count;
+                                            kill(pid[running_process_index],SIGCONT);
+                                        }
                                     }
-                                }
                                     else
                                     {
                                         running_process_pid=pid[process_count];
