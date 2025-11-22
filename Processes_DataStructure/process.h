@@ -11,7 +11,8 @@ typedef struct process{
     int PRIORITY;
     int RUNNING_TIME;
     int DEPENDENCY_ID;
-    char* NAME;
+    //char* NAME;
+    int first_time;
 } process;
 
 #endif //PROCESS_H

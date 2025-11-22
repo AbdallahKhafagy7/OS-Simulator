@@ -24,7 +24,13 @@ Done by Omar Syed
 PCB PCB_ENTRY;
 process_queue READY_QUEUE;
 process_priority_queue READY_PRIORITY_QUEUE;
-
+int TIME_QUANTUM;
+int pid[max];
+int running_process_pid=-1;
+int running_process_id=-1;
+int next_process_pid=-1;
+int next_process_id=-1;
+int running_process_index=-1;
 
 void PRINT_READY_QUEUE(){
     process_Node* temp=READY_QUEUE.front;
@@ -49,6 +55,45 @@ void PRINT_READY_PRIORITY_QUEUE(){
     printf("\n");
 }
 
+void update_pcb(){
+    int current_time=getClk();
+    if(getClk()-1==current_time){
+        PCB_ENTRY.REMAINING_TIME--;
+        PCB_ENTRY.LAST_EXECUTED_TIME=current_time;
+    }
+}
+
+int get_count(process_queue* READY_QUEUE){
+    process_Node* temp=READY_QUEUE->front;
+    int count=0;
+    while(temp!=NULL){
+        count++;
+        temp=temp->next;
+        if(temp==READY_QUEUE->rear->next){
+            break;
+        }
+    }
+    return count;
+}
+
+//to be completed -omar
+
+void update_queue_RR(process_queue* READY_QUEUE){
+    if(get_count(READY_QUEUE)>1&&PCB_ENTRY.REMAINING_TIME-PCB_ENTRY.LAST_EXECUTED_TIME==TIME_QUANTUM){
+        process_Node* temp=dequeue(READY_QUEUE);
+        enqueue(READY_QUEUE,temp->Process);
+    }
+    else if(PCB_ENTRY.REMAINING_TIME==0){
+        PCB_ENTRY.FINISH_TIME=getClk();
+        PCB_ENTRY.process_state=Finished;
+        dequeue(READY_QUEUE);
+        running_process_pid=-1;
+    }
+}
+
+
+
+
 int PID[max];
 /*---------------------------------Omar Syed------------------------------------*/
 int main(int argc, char * argv[])
@@ -61,7 +106,7 @@ int main(int argc, char * argv[])
     initialize_queue(&READY_QUEUE);
     initialize_priority_queue(&READY_PRIORITY_QUEUE);
     int selected_Algorithm_NUM=atoi(argv[1]);
-    int TIME_QUANTUM=atoi(argv[2]);// if RR 3
+    TIME_QUANTUM=atoi(argv[2]);// if RR 3
     key_t key_msg_process = ftok("keyfile", 'A');
     MESSAGE_ID = msgget(key_msg_process, 0666|IPC_CREAT);
     printf("queue id  is: %d\n",MESSAGE_ID);
@@ -81,22 +126,93 @@ int main(int argc, char * argv[])
                 int rec_status = msgrcv(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(message_buf),2,IPC_NOWAIT);
                 if(rec_status!=-1)
                 {
-                    clock_timer = getClk();
-                    printf("clock now is: %d\n",clock_timer);
-                    printf("Process received with id %d & arritval time %d & priority %d and scheduling algorithm %d \n"
-                    ,PROCESS_MESSAGE.p.ID,PROCESS_MESSAGE.p.ARRIVAL_TIME,PROCESS_MESSAGE.p.PRIORITY,selected_Algorithm_NUM);
-                    PCB_ENTRY.p=PROCESS_MESSAGE.p;
-                    PCB_ENTRY.REMAINING_TIME=PROCESS_MESSAGE.p.RUNNING_TIME;
-                    PCB_ENTRY.RUNNING_TIME=0;
-                    PCB_ENTRY.START_TIME=-1;
-                    PCB_ENTRY.LAST_EXECUTED_TIME=-1;
-                    PCB_ENTRY.FINISH_TIME=-1;
-                    PCB_ENTRY.process_state=Ready;
-                    PCB_ENTRY.is_completed=false;
-                    enqueue(&READY_QUEUE, PROCESS_MESSAGE.p);
-                    process_count++;
-                    PRINT_READY_QUEUE();
+                    // clock_timer = getClk();
+                    // printf("clock now is: %d\n",clock_timer);
+                    // printf("Process received with id %d & arritval time %d & priority %d and scheduling algorithm %d \n"
+                    // ,PROCESS_MESSAGE.p.ID,PROCESS_MESSAGE.p.ARRIVAL_TIME,PROCESS_MESSAGE.p.PRIORITY,selected_Algorithm_NUM);
+                    // PCB_ENTRY.p=PROCESS_MESSAGE.p;
+                    // PCB_ENTRY.REMAINING_TIME=PROCESS_MESSAGE.p.RUNNING_TIME;
+                    // PCB_ENTRY.RUNNING_TIME=0;
+                    // PCB_ENTRY.START_TIME=-1;
+                    // PCB_ENTRY.LAST_EXECUTED_TIME=-1;
+                    // PCB_ENTRY.FINISH_TIME=-1;
+                    // PCB_ENTRY.process_state=Ready;
+                    // PCB_ENTRY.is_completed=false;
+                    // enqueue(&READY_QUEUE, PROCESS_MESSAGE.p);
+                    // process_count++;
+                    // PRINT_READY_QUEUE();
+
+                    switch (selected_Algorithm_NUM) {
+                        case 1: 
+                        {
+                            //HPF
+                            enqueue_priority(&READY_PRIORITY_QUEUE, PROCESS_MESSAGE.p);
+                            PRINT_READY_PRIORITY_QUEUE();
+                            break;
+                        }
+                        case 2:{
+                            //SRTN
+                            enqueue_priority_SRTN(&READY_PRIORITY_QUEUE, PROCESS_MESSAGE.p);
+                            PRINT_READY_PRIORITY_QUEUE();
+                            break;
+                        }
+                        case 3:
+                        {
+                            //RR
+                            enqueue(&READY_QUEUE, PROCESS_MESSAGE.p);
+                            PRINT_READY_QUEUE();
+                            if(get_count(&READY_QUEUE)==1&&PROCESS_MESSAGE.p.first_time){
+                                pid[process_count]=fork();
+                                if(pid[process_count]==0){
+                                    char str_remaining_time[10];
+                                    sprintf(str_remaining_time, "%d", PROCESS_MESSAGE.p.RUNNING_TIME);
+                                    execl("./process.out","./process.out", str_remaining_time, NULL);
+                                    perror("Error in forking\n");
+                            }
+                            else
+                            {
+                                PROCESS_MESSAGE.p.first_time=false;
+                                running_process_pid=pid[process_count];
+                                running_process_id=0;
+                                process_count++;
+                            }
+                        }
+                            else
+                            {
+                                update_pcb();
+                                update_queue_RR(&READY_QUEUE);
+                                if(running_process_id!=READY_QUEUE.front->Process.ID){
+                                    kill(running_process_pid,SIGSTOP);
+                                    running_process_id=READY_QUEUE.front->Process.ID;
+                                    if(READY_QUEUE.front->Process.first_time){
+                                    pid[process_count]=fork();
+                                    if(pid[process_count]==0){
+                                        char str_remaining_time[10];
+                                        sprintf(str_remaining_time, "%d", READY_QUEUE.front->Process.RUNNING_TIME);
+                                        execl("./process.out","./process.out", str_remaining_time, NULL);
+                                        perror("Error in forking\n");
+                                    }
+                                    else
+                                    {
+                                        running_process_index=(running_process_index)%process_count;
+                                        kill(pid[running_process_index],SIGCONT);
+                                    }
+                                }
+                                    else
+                                    {
+                                        running_process_pid=pid[process_count];
+                                        process_count++;
+                                    }
+                                }
+                            }
+                            break;
+                        }
+                        default:
+                            break;
+                    
+                    }
                 }
+
                 
                  if(clock_timer!=getClk())
                 {
