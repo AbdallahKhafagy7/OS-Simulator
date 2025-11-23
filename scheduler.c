@@ -291,11 +291,46 @@ int main(int argc, char * argv[])
                     enqueue_priority_SRTN(&READY_PRIORITY_QUEUE, PROCESS_MESSAGE.p);
                     PRINT_READY_PRIORITY_QUEUE();
                     break;
-                case 3:
+                case 3:{
                     // RR
                     enqueue(&READY_QUEUE, PROCESS_MESSAGE.p);
                     PRINT_READY_QUEUE();
+                     if(running_process_index == -1 && peek_front(&READY_QUEUE)->Process.first_time) {
+                int current_time = getClk();
+                
+                peek_front(&READY_QUEUE)->Process.first_time = false;
+                pcb[process_count].arrival_time = peek_front(&READY_QUEUE)->Process.ARRIVAL_TIME;
+                pcb[process_count].process_id = peek_front(&READY_QUEUE)->Process.ID;
+                pcb[process_count].RUNNING_TIME = peek_front(&READY_QUEUE)->Process.RUNNING_TIME;
+                pcb[process_count].REMAINING_TIME = peek_front(&READY_QUEUE)->Process.RUNNING_TIME;
+                pcb[process_count].START_TIME = current_time;
+                pcb[process_count].LAST_EXECUTED_TIME = current_time;
+                pcb[process_count].process_state = Running;
+                
+                char str_rem_time[20];
+                sprintf(str_rem_time, "%d", peek_front(&READY_QUEUE)->Process.RUNNING_TIME);
+                int pid = fork();
+                if(pid == 0) {
+                    execl("./process.out", "./process.out", str_rem_time, NULL);
+                    exit(0);
+                }
+                pcb[process_count].process_pid = pid;
+                running_process_index = process_count;
+                process_count++;
+                
+                pFile = fopen("scheduler_log.txt", "a");
+                fprintf(pFile, "At time %-5d process %-5d started arr %-5d total %-5d remain %-5d wait %-5d\n",
+                        current_time, pcb[running_process_index].process_id,
+                        pcb[running_process_index].arrival_time,
+                        pcb[running_process_index].RUNNING_TIME,
+                        pcb[running_process_index].REMAINING_TIME,
+                        current_time - pcb[running_process_index].arrival_time);
+                fclose(pFile);
+                
+                clock_timer = current_time; // Sync clock_timer
                     break;
+                }
+            }
                 default:
                     break;
             }
