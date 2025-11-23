@@ -102,7 +102,7 @@ int main(int argc, char * argv[])
     {
         execl("./clk.out","clk.out",NULL);
         perror("Error in executing clock process");
-        exit(1);
+        exit(0);
     }
 
     int scheduler_pid = fork();
@@ -116,7 +116,7 @@ int main(int argc, char * argv[])
         sprintf(time_quantum_str, "%d", time_quantum);
         execl("./scheduler.out", "scheduler.out", selected_Algorithm_NUM_str, time_quantum_str,total_process, NULL);
         perror("Error in executing scheduler process");
-        exit(1);
+        exit(0);
     }
     
     
@@ -175,5 +175,5 @@ void clearResources(int signum)
     //TODO Clears all resources in case of interruption
     msgctl(MESSAGE_ID, IPC_RMID, NULL); 
         destroyClk(true);
-        exit(1);
+        exit(0);
 }
