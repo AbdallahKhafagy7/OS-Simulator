@@ -7,13 +7,12 @@ build:
     Processes_DataStructure/process_priority_queue.c \
     -o scheduler.out
 	gcc process.c -o process.out
-	gcc test_generator.c -o test_generator.out
+	
 
 clean:
-	rm -f *.out  processes.txt scheduler_log.txt
-	rm -f *.o  processes.txt   scheduler_log.txt
+	rm -f *.out   scheduler_log.txt
+	rm -f *.o     scheduler_log.txt
 all: clean build
 
 run:
-	./test_generator.out
 	./process_generator.out processes.txt 
