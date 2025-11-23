@@ -280,12 +280,14 @@ int main(int argc, char * argv[])
              if(clock_timer!=getClk()){
 
                  if (peek_front(&READY_QUEUE) == NULL) {
+                    clock_timer=getClk();
                      continue;
                  }
                         clock_timer=getClk();
                         printf("Clock Timer: %d\n",clock_timer);
                         PRINT_READY_QUEUE();   
-                if(get_count(&READY_QUEUE)==1 && peek_front(&READY_QUEUE)->Process.first_time==true){
+            
+                        if(get_count(&READY_QUEUE)==1 && peek_front(&READY_QUEUE)->Process.first_time==true){
                     peek_front(&READY_QUEUE)->Process.first_time=false;
                      pcb[process_count].arrival_time = peek_front(&READY_QUEUE)->Process.ARRIVAL_TIME;
                         pcb[process_count].process_id = peek_front(&READY_QUEUE)->Process.ID;
@@ -317,24 +319,20 @@ int main(int argc, char * argv[])
                        }
                        continue;
                 }
+
                     if(peek_front(&READY_QUEUE) != NULL){
                         running_process_index = get_pcb_index(pcb,  process_count,peek_front(&READY_QUEUE)->Process.ID);
                         if(running_process_index==-1)continue;
                    int time_executed = getClk() - pcb[running_process_index].LAST_EXECUTED_TIME;
                     pcb[running_process_index].REMAINING_TIME =pcb[running_process_index].REMAINING_TIME- time_executed;
+                    
                     if(time_executed>=TIME_QUANTUM && get_count(&READY_QUEUE)>1){
-                         pcb[running_process_index].LAST_EXECUTED_TIME = getClk();
-                        kill(pcb[running_process_index].process_pid, SIGSTOP);
-                        pcb[running_process_index].process_state = Ready;   
-
-                          pFile=fopen("scheduler_log.txt", "a");
-                         fprintf(pFile, "At time %-5d process %-5d stopped arr %-5d total %-5d remain %-5d wait %-5d\n",
-                       getClk(), pcb[running_process_index].process_id,
-                       pcb[running_process_index].arrival_time,
-                       pcb[running_process_index].RUNNING_TIME,
-                       pcb[running_process_index].REMAINING_TIME,
-                       getClk() - pcb[running_process_index].arrival_time - 
-                       (pcb[running_process_index].RUNNING_TIME - pcb[running_process_index].REMAINING_TIME));
+                               pcb[running_process_index].LAST_EXECUTED_TIME = getClk();
+                                kill(pcb[running_process_index].process_pid, SIGSTOP);
+                                pcb[running_process_index].process_state = Ready;   
+                              pFile=fopen("scheduler_log.txt", "a");
+                             fprintf(pFile, "At time %-5d process %-5d stopped arr %-5d total %-5d remain %-5d wait %-5d\n",
+                           getClk(), pcb[running_process_index].process_id,pcb[running_process_index].arrival_time, pcb[running_process_index].RUNNING_TIME, pcb[running_process_index].REMAINING_TIME,getClk() - pcb[running_process_index].arrival_time - (pcb[running_process_index].RUNNING_TIME - pcb[running_process_index].REMAINING_TIME));
                          fclose(pFile);
             
 
@@ -344,6 +342,8 @@ int main(int argc, char * argv[])
                         PRINT_READY_QUEUE();
                         enqueue(&READY_QUEUE, temp->Process);
                         PRINT_READY_QUEUE();
+
+
                         if(peek_front(&READY_QUEUE)->Process.first_time==true){
                              pcb[process_count].arrival_time = peek_front(&READY_QUEUE)->Process.ARRIVAL_TIME;
                              pcb[process_count].process_id = peek_front(&READY_QUEUE)->Process.ID;
@@ -357,11 +357,12 @@ int main(int argc, char * argv[])
                         printf("Forked\n");
                         PRINT_READY_QUEUE();
                         int pid =fork();
-                          if(pid==0){
+                       
+                        if(pid==0){
                               execl("./process.out","./process.out",str_rem_time,NULL);
                               perror("Error in forking\n");
                             }
-                          else{
+                        else{
                             PRINT_READY_QUEUE();
                             pcb[process_count].process_pid = pid;
                             peek_front(&READY_QUEUE)->Process.first_time = false;
@@ -377,13 +378,15 @@ int main(int argc, char * argv[])
                             fclose(pFile);
                           }
                         }
+
                         else{
-                            running_process_index=get_pcb_index(pcb,  process_count, peek_front(&READY_QUEUE)->Process.ID);
-                            if(running_process_index!=-1){
-                            //printf("Cont %d \n",running_process_index);
-                            pcb[running_process_index].LAST_EXECUTED_TIME = getClk();
-                            pcb[running_process_index].process_state = Running;
-                            kill(pcb[running_process_index].process_pid, SIGCONT);
+
+                             running_process_index = get_pcb_index(pcb, process_count, peek_front(&READY_QUEUE)->Process.ID);
+                    if(running_process_index != -1){
+                pcb[running_process_index].LAST_EXECUTED_TIME = getClk();
+                pcb[running_process_index].process_state = Running;
+                kill(pcb[running_process_index].process_pid, SIGCONT);
+                
                              pFile = fopen("scheduler_log.txt", "a");
                              fprintf(pFile, "At time %-5d process %-5d resumed arr %-5d total %-5d remain %-5d wait %-5d\n",
                             getClk(), pcb[running_process_index].process_id,
@@ -398,6 +401,10 @@ int main(int argc, char * argv[])
 
                         }
                         
+                    }
+                    else{
+                        if(running_process_index!=-1)
+                        pcb[running_process_index].REMAINING_TIME--;
                     }
                     
                 }

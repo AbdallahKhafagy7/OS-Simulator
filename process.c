@@ -15,13 +15,14 @@ int main(int agrc, char * argv[])
     //raise(SIGSTOP);
     //TODO it needs to get the remaining time from somewhere
     //remainingtime = ??;
+    int clock_timer=getClk();
     while (remainingtime > 0)
     {
         // remainingtime = ??;
-        if(getClk()-1==current_time){
+        if(clock_timer!=getClk()){
+            clock_timer=getClk();
             remainingtime--;
             printf("Process with remaining time %d at time %d\n", remainingtime,getClk());
-            current_time = getClk();
         }
     }
 
