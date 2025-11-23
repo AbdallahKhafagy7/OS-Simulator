@@ -6,13 +6,15 @@ build:
     Processes_DataStructure/process_queue.c \
     Processes_DataStructure/process_priority_queue.c \
     -o scheduler.out
+	gcc test_generator.c -o test_generator.out 
 	gcc process.c -o process.out
 	
 
 clean:
-	rm -f *.out   scheduler_log.txt
-	rm -f *.o     scheduler_log.txt
+	rm -f *.out  processes.txt  scheduler.log
+	rm -f *.o   processes.txt   scheduler.log
 all: clean build
 
 run:
+	./test_generator.out 
 	./process_generator.out processes.txt 
