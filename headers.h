@@ -46,6 +46,7 @@ struct PCB_struct{
     int FINISH_TIME;
     int process_pid;
     int arrival_time;
+    int quantum_remaining;
     bool is_completed;
 }typedef PCB;
 

@@ -110,9 +110,11 @@ int main(int argc, char * argv[])
     {
         char selected_Algorithm_NUM_str[100];
         char time_quantum_str[100];
+        char total_process[20];
+        sprintf(total_process, "%d", count);
         sprintf(selected_Algorithm_NUM_str, "%d", selected_Algorithm_NUM);
         sprintf(time_quantum_str, "%d", time_quantum);
-        execl("./scheduler.out", "scheduler.out", selected_Algorithm_NUM_str, time_quantum_str, NULL);
+        execl("./scheduler.out", "scheduler.out", selected_Algorithm_NUM_str, time_quantum_str,total_process, NULL);
         perror("Error in executing scheduler process");
         exit(1);
     }

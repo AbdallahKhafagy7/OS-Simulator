@@ -10,26 +10,24 @@ int main(int agrc, char * argv[])
 {
     initClk();
     remainingtime=atoi(argv[1]);
-    int current_time = getClk();
-    printf("Process with remaining time %d started at time %d\n", remainingtime, current_time);
     //raise(SIGSTOP);
     //TODO it needs to get the remaining time from somewhere
     //remainingtime = ??;
-    int clock_timer=getClk();
+  int clock_timer=getClk();
+    printf("Process with remaining time %d started at time %d\n", remainingtime, clock_timer);
+    
     while (remainingtime > 0)
     {
-        // remainingtime = ??;
-        if(clock_timer!=getClk()){
-            clock_timer=getClk();
+        int current_time = getClk();
+        if(clock_timer != current_time){
+            clock_timer = current_time;
             remainingtime--;
-            printf("Process with remaining time %d at time %d\n", remainingtime,getClk());
+            printf("Process with remaining time %d at time %d\n", remainingtime, clock_timer);
         }
     }
 
-    printf("Process finished at time %d\n", current_time);
-    kill(getppid(),SIGUSR1);    
-    exit(getpid());
+    printf("Process finished at time %d\n", getClk());
+    kill(getppid(), SIGUSR1);    
     destroyClk(false);
-    
     return 0;
 }
