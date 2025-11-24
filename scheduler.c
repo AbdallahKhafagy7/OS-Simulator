@@ -239,59 +239,59 @@ int main(int argc, char * argv[])
                     //PRINT_READY_QUEUE();
                     enqueue(&READY_QUEUE, PROCESS_MESSAGE.p);
                     //PRINT_READY_QUEUE();
-                    
-                    //Get Running Process Index to Access Pcb array
-                    running_process_index=get_pcb_index(pcb,  process_count,peek_front(&READY_QUEUE)->Process.ID);
 
-                    if(running_process_index == -1 && peek_front(&READY_QUEUE) != NULL && peek_front(&READY_QUEUE)->Process.first_time) {
-                        //printf("\nInitialize pcb for first forking of process\n") ;
-                        current_time = getClk();
-                        peek_front(&READY_QUEUE)->Process.first_time = false;
-                        
-                        if(process_count >= max){
-                            printf("Error: Max processes reached\n");
-                            break;
-                        }
-                        
-                        pcb[process_count].arrival_time = peek_front(&READY_QUEUE)->Process.ARRIVAL_TIME;
-                        pcb[process_count].process_id = peek_front(&READY_QUEUE)->Process.ID;
-                        pcb[process_count].RUNNING_TIME = peek_front(&READY_QUEUE)->Process.RUNNING_TIME;
-                        pcb[process_count].REMAINING_TIME = peek_front(&READY_QUEUE)->Process.RUNNING_TIME;
-                        pcb[process_count].START_TIME = getClk();
-                        pcb[process_count].LAST_EXECUTED_TIME = getClk();
-                        pcb[process_count].process_state = Running;
-                        pcb[process_count].WAITING_TIME=0;
-                        char str_rem_time[20];
-                        sprintf(str_rem_time, "%d", peek_front(&READY_QUEUE)->Process.RUNNING_TIME);
-                        
-                        //Run the process But this if it in the front of the queue 
-                        int pid = fork();
-                        if(pid == -1){
-                            perror("Fork failed");
-                            break;
-                        }
-                        if(pid == 0) {
-                            execl("./process.out", "./process.out", str_rem_time, NULL);
-                            perror("Error in execl");
-                            exit(1);
-                        }
+                    // //Get Running Process Index to Access Pcb array
+                    // running_process_index=get_pcb_index(pcb,  process_count,peek_front(&READY_QUEUE)->Process.ID);
 
-                        pcb[process_count].process_pid = pid;
-                        running_process_index = process_count;
-                        process_count++;
+                    // if(running_process_index == -1 && peek_front(&READY_QUEUE) != NULL && peek_front(&READY_QUEUE)->Process.first_time) {
+                    //     //printf("\nInitialize pcb for first forking of process\n") ;
+                    //     current_time = getClk();
+                    //     peek_front(&READY_QUEUE)->Process.first_time = false;
+                        
+                    //     if(process_count >= max){
+                    //         printf("Error: Max processes reached\n");
+                    //         break;
+                    //     }
+                        
+                    //     pcb[process_count].arrival_time = peek_front(&READY_QUEUE)->Process.ARRIVAL_TIME;
+                    //     pcb[process_count].process_id = peek_front(&READY_QUEUE)->Process.ID;
+                    //     pcb[process_count].RUNNING_TIME = peek_front(&READY_QUEUE)->Process.RUNNING_TIME;
+                    //     pcb[process_count].REMAINING_TIME = peek_front(&READY_QUEUE)->Process.RUNNING_TIME;
+                    //     pcb[process_count].START_TIME = getClk();
+                    //     pcb[process_count].LAST_EXECUTED_TIME = getClk();
+                    //     pcb[process_count].process_state = Running;
+                    //     pcb[process_count].WAITING_TIME=0;
+                    //     char str_rem_time[20];
+                    //     sprintf(str_rem_time, "%d", peek_front(&READY_QUEUE)->Process.RUNNING_TIME);
+                        
+                    //     //Run the process But this if it in the front of the queue 
+                    //     int pid = fork();
+                    //     if(pid == -1){
+                    //         perror("Fork failed");
+                    //         break;
+                    //     }
+                    //     if(pid == 0) {
+                    //         execl("./process.out", "./process.out", str_rem_time, NULL);
+                    //         perror("Error in execl");
+                    //         exit(1);
+                    //     }
 
-                        //LOG file when start
-                        pFile = fopen("scheduler.log", "a");
-                        if(pFile) {
-                            fprintf(pFile, "At time %-5d process %-5d started arr %-5d total %-5d remain %-5d wait %-5d\n",
-                                    current_time, pcb[running_process_index].process_id,
-                                    pcb[running_process_index].arrival_time,
-                                    pcb[running_process_index].RUNNING_TIME,
-                                    pcb[running_process_index].REMAINING_TIME,
-                                    current_time - pcb[running_process_index].arrival_time);
-                            fclose(pFile);
-                        }
-                    }
+                    //     pcb[process_count].process_pid = pid;
+                    //     running_process_index = process_count;
+                    //     process_count++;
+
+                    //     //LOG file when start
+                    //     pFile = fopen("scheduler.log", "a");
+                    //     if(pFile) {
+                    //         fprintf(pFile, "At time %-5d process %-5d started arr %-5d total %-5d remain %-5d wait %-5d\n",
+                    //                 current_time, pcb[running_process_index].process_id,
+                    //                 pcb[running_process_index].arrival_time,
+                    //                 pcb[running_process_index].RUNNING_TIME,
+                    //                 pcb[running_process_index].REMAINING_TIME,
+                    //                 current_time - pcb[running_process_index].arrival_time);
+                    //         fclose(pFile);
+                    //     }
+                    // }
                     break;
                 }
                 default:
@@ -461,7 +461,10 @@ int main(int argc, char * argv[])
 
         if(selected_Algorithm_NUM==3 && clock_timer!=getClk() ){
             clock_timer=getClk();
-            total_running_time++;
+
+            if(running_process_index != -1 && pcb[running_process_index].process_state == Running){
+                total_running_time++;
+                }
              process_Node* temp = READY_QUEUE.front;
         while(temp != NULL){
             int pcb_index = get_pcb_index(pcb, process_count, temp->Process.ID);
@@ -492,7 +495,7 @@ int main(int argc, char * argv[])
                 pcb[process_count].START_TIME = getClk();
                 pcb[process_count].LAST_EXECUTED_TIME = getClk();
                 pcb[process_count].process_state = Running;
-                pcb[process_count].WAITING_TIME= getClk()-pcb[process_count].arrival_time;
+                pcb[process_count].WAITING_TIME= 0; 
             
                 char str_rem_time[20];
                 sprintf(str_rem_time,"%d",peek_front(&READY_QUEUE)->Process.RUNNING_TIME);
@@ -517,7 +520,7 @@ int main(int argc, char * argv[])
                             pcb[running_process_index].arrival_time,
                             pcb[running_process_index].RUNNING_TIME,
                             pcb[running_process_index].REMAINING_TIME,
-                            getClk() - pcb[running_process_index].arrival_time);
+                            pcb[running_process_index].WAITING_TIME);
                     fclose(pFile);
                 }
             } 
@@ -540,7 +543,7 @@ int main(int argc, char * argv[])
                                 getClk(), finished->process_id,
                                 finished->arrival_time, finished->RUNNING_TIME,
                                 0,
-                                getClk() - finished->arrival_time - finished->RUNNING_TIME,
+                                pcb[running_process_index].WAITING_TIME,
                                 finished->FINISH_TIME - finished->arrival_time,
                                 (float)(finished->FINISH_TIME - finished->arrival_time) / finished->RUNNING_TIME);
                         fclose(pFile);
@@ -569,8 +572,7 @@ int main(int argc, char * argv[])
                                         pcb[running_process_index].arrival_time,
                                         pcb[running_process_index].RUNNING_TIME,
                                         pcb[running_process_index].REMAINING_TIME,
-                                        getClk() - pcb[running_process_index].arrival_time - 
-                                        (pcb[running_process_index].RUNNING_TIME - pcb[running_process_index].REMAINING_TIME));
+                                        pcb[running_process_index].WAITING_TIME);
                                 fclose(pFile);
                             }
                         } else if(running_process_index == -1 && peek_front(&READY_QUEUE)->Process.first_time) {
@@ -604,7 +606,7 @@ int main(int argc, char * argv[])
                                         pcb[running_process_index].arrival_time,
                                         pcb[running_process_index].RUNNING_TIME, 
                                         pcb[running_process_index].REMAINING_TIME,
-                                        getClk() - pcb[running_process_index].arrival_time);
+                                        pcb[running_process_index].WAITING_TIME);
                                 fclose(pFile);
                             }
                         }
@@ -628,8 +630,7 @@ int main(int argc, char * argv[])
                                 pcb[running_process_index].arrival_time,
                                 pcb[running_process_index].RUNNING_TIME,
                                 pcb[running_process_index].REMAINING_TIME,
-                                getClk() - pcb[running_process_index].arrival_time - 
-                                (pcb[running_process_index].RUNNING_TIME - pcb[running_process_index].REMAINING_TIME));
+                                pcb[running_process_index].WAITING_TIME);
                         fclose(pFile);
                     }
                     
@@ -673,8 +674,7 @@ int main(int argc, char * argv[])
                                     pcb[running_process_index].arrival_time,
                                     pcb[running_process_index].RUNNING_TIME,
                                     pcb[running_process_index].REMAINING_TIME,
-                                    getClk() - pcb[running_process_index].arrival_time - 
-                                    (pcb[running_process_index].RUNNING_TIME - pcb[running_process_index].REMAINING_TIME));
+                                    pcb[running_process_index].WAITING_TIME);
                             fclose(pFile);
                         }
                     } 
@@ -690,8 +690,7 @@ int main(int argc, char * argv[])
                                     pcb[running_process_index].arrival_time,
                                     pcb[running_process_index].RUNNING_TIME,
                                     pcb[running_process_index].REMAINING_TIME,
-                                    getClk() - pcb[running_process_index].arrival_time - 
-                                    (pcb[running_process_index].RUNNING_TIME - pcb[running_process_index].REMAINING_TIME));
+                                    pcb[running_process_index].WAITING_TIME);
                             fclose(pFile);
                         }
                     }
@@ -720,6 +719,7 @@ int main(int argc, char * argv[])
     finished_process=0;
     total_process=-1;
 }
+
     }
 
     
