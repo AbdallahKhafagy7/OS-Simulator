@@ -106,6 +106,7 @@ void remove_pcb(PCB*pcb,int *process_count,int process_id){
     (*process_count)--;
 }
 
+/*-----------------------Handler-----------------------*/
 void handler(int signum){
     printf("Handler called - Process finished\n");
     
