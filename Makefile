@@ -11,10 +11,10 @@ build:
 	
 
 clean:
-	rm -f *.out    scheduler.log scheduler.perf
-	rm -f *.o     scheduler.log scheduler.perf
+	rm -f *.out  processes.txt  scheduler.log scheduler.perf
+	rm -f *.o   processes.txt   scheduler.log scheduler.perf
 all: clean build
 
 run:
-	
+	./test_generator.out 
 	./process_generator.out processes.txt 
