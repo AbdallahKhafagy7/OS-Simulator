@@ -201,6 +201,8 @@ int main(int argc, char * argv[])
     int total_process = atoi(argv[3]);
     wait_time = malloc(sizeof(int)*total_process);
     WTA = malloc(sizeof(float)*total_process);
+    bool new_process= false;
+    bool time_moved= false;
     initClk();
     /*---------------------------Omar Syed------------------------------------*/
 
@@ -235,6 +237,7 @@ int main(int argc, char * argv[])
                     // SRTN
                     enqueue_priority_SRTN(&READY_PRIORITY_QUEUE, PROCESS_MESSAGE.p);
                     PRINT_READY_PRIORITY_QUEUE();
+                    new_process=true;
                     break;
                 case 3:{
                     // RR
@@ -307,8 +310,13 @@ int main(int argc, char * argv[])
         
    
 
-    if(clock_timer != getClk()) {
-        clock_timer = getClk();
+    if(clock_timer != getClk()|| new_process) {
+       
+        if (clock_timer != getClk()) {
+             clock_timer = getClk();
+            time_moved = true;
+        }
+        new_process=false;
         printf("Clock Timer: %d\n", clock_timer);
         if (clock_timer ==0)
         printf("Scheduling Algorithm is SRTN\n");
@@ -326,6 +334,8 @@ int main(int argc, char * argv[])
             current_running_id = pcb[running_process_index].process_id;
         }
 
+          if (time_moved) {
+            
         
         if (current_running_id != -1 && current_running_id == shortest_id) //  process running and running is the shortest
         {
@@ -342,45 +352,12 @@ int main(int argc, char * argv[])
                 pcb[running_process_index].REMAINING_TIME--;
                 if (peek_priority_front(&READY_PRIORITY_QUEUE) != NULL)
                 peek_priority_front(&READY_PRIORITY_QUEUE)->RUNNING_TIME=pcb[running_process_index].REMAINING_TIME; //change running time so queue understand
-                
-                // COMPLETION CHECK after decrement
-               /*if (pcb[running_process_index].REMAINING_TIME == 0) {
-                
-                    int finished_id = pcb[running_process_index].process_id;
-                    pid_t finished_pid = pcb[running_process_index].process_pid;
-
-                    // Update State process to be done and get time finished 
-                    pcb[running_process_index].process_state = Finished;
-                    pcb[running_process_index].FINISH_TIME = getClk();
-                    pcb[running_process_index].is_completed = true;
-
-                    // Log to file
-                    pFile = fopen("scheduler.log", "a");
-                    fprintf(pFile, "At time %-5d process %-5d finished arr %-5d total %-5d remain %-5d wait %-5d TA %-5d WTA %.2f\n",
-                        pcb[running_process_index].FINISH_TIME, finished_id,
-                        pcb[running_process_index].arrival_time, pcb[running_process_index].RUNNING_TIME,
-                        0, 
-                        pcb[running_process_index].FINISH_TIME - pcb[running_process_index].arrival_time - pcb[running_process_index].RUNNING_TIME,
-                        pcb[running_process_index].FINISH_TIME - pcb[running_process_index].arrival_time,
-                        (float)(pcb[running_process_index].FINISH_TIME - pcb[running_process_index].arrival_time) / pcb[running_process_index].RUNNING_TIME);
-                    fclose(pFile);
-
-                    // Remove from the READY PRIORITY QUEUE and kill the process
-                    dequeue_priority(&READY_PRIORITY_QUEUE);
-                    printf("Process %d finished and removed from queue\n", finished_id);
-                    kill(finished_pid, SIGKILL);
-                    
-                    // Remove from PCB 
-                    remove_pcb(pcb, &process_count, finished_id);
-                    running_process_index = -1; // Reset running index
-                    
-                    
-                }*/
-
-                
             }
+              
+        }
         } 
-        else 
+        if (current_running_id == -1 || current_running_id != shortest_id) 
+        
         {
             // not shortest running (preemption needed)
 
@@ -461,7 +438,9 @@ int main(int argc, char * argv[])
 }
 
 
-//
+
+
+
         if(selected_Algorithm_NUM==3 && clock_timer!=getClk() ){
             clock_timer=getClk();
             printf("Clock Timer : %d \n",clock_timer);
@@ -704,6 +683,7 @@ int main(int argc, char * argv[])
                 }
             }
         }
+    }
 
         // Generate performance file
         if(finished_process==total_process){
@@ -732,7 +712,7 @@ int main(int argc, char * argv[])
     finished_process=0;
     total_process=-1;
 }
-    }
+    
 
     
     
