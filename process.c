@@ -23,10 +23,10 @@ int main(int agrc, char * argv[])
         if(clock_timer!=getClk()){
             clock_timer=getClk();
             remainingtime--;
-            printf("Process with remaining time %d at time %d\n", remainingtime,getClk());
+           // printf("Process with remaining time %d at time %d\n", remainingtime,getClk());
         }
     }
-     printf("Process finished at time %d\n", getClk());
+     //printf("Process finished at time %d\n", getClk());
 
 
    // printf("Process finished at time %d\n", getClk());
