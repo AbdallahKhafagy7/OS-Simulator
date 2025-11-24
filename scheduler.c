@@ -95,6 +95,10 @@ void handler(int signum){
 }
 
 /*---------------------------------Omar Syed------------------------------------*/
+/*
+Note :
+    In  RR i assume if p2 arrived at the end of quanta of p1 i will execute p1 then p2 
+*/
 
 int main(int argc, char * argv[])
 {
@@ -105,8 +109,7 @@ int main(int argc, char * argv[])
     if (!pFile) {
         printf("Error opening file.\n");
     } else {
-        fprintf(pFile, "%-5s %-8s %-8s %-8s %-8s %-5s %-8s %-8s %-8s %-8s %-8s %-8s %-8s\n",
-            "#At", "time", "x", "process", "y","state","arr","w","total","z","remain","wait","K");
+        fprintf(pFile,"#At     time    x     process    y    state    arr    w    total    z    remain    wait    K\n");
         fclose(pFile);
     }
 
@@ -125,7 +128,7 @@ int main(int argc, char * argv[])
     TIME_QUANTUM=atoi(argv[2]);// if RR 3
     key_t key_msg_process = ftok("keyfile", 'A');
     MESSAGE_ID = msgget(key_msg_process, 0666|IPC_CREAT);
-    printf("queue id  is: %d\n",MESSAGE_ID);
+    //printf("queue id  is: %d\n",MESSAGE_ID);
     if(MESSAGE_ID==-1){
         printf("Error In Creating Message Queue!\n");
     }
@@ -152,15 +155,15 @@ int main(int argc, char * argv[])
                     break;
                 case 3:{
                     // RR
-                    PRINT_READY_QUEUE();
+                    //PRINT_READY_QUEUE();
                     enqueue(&READY_QUEUE, PROCESS_MESSAGE.p);
-                    PRINT_READY_QUEUE();
+                    //PRINT_READY_QUEUE();
                     
                     //Get Running Process Index to Access Pcb array
                     running_process_index=get_pcb_index(pcb,  process_count,peek_front(&READY_QUEUE)->Process.ID);
 
                     if(running_process_index == -1 && peek_front(&READY_QUEUE) != NULL && peek_front(&READY_QUEUE)->Process.first_time) {
-                        printf("\nInitialize pcb for first forking of process\n") ;
+                        //printf("\nInitialize pcb for first forking of process\n") ;
                         current_time = getClk();
                         peek_front(&READY_QUEUE)->Process.first_time = false;
                         
@@ -218,21 +221,28 @@ int main(int argc, char * argv[])
         if(selected_Algorithm_NUM==3 && clock_timer!=getClk() ){
             clock_timer=getClk();
             total_running_time++;
+             process_Node* temp = READY_QUEUE.front;
+        while(temp != NULL){
+            int pcb_index = get_pcb_index(pcb, process_count, temp->Process.ID);
+            if(pcb_index != -1 && pcb[pcb_index].process_state != Running) {
+                pcb[pcb_index].WAITING_TIME++;
+             }
+            temp = temp->next;
+            if(temp == READY_QUEUE.rear)
+            break;
+            }
+            
             if(peek_front(&READY_QUEUE)==NULL) continue;
-            PRINT_READY_QUEUE();
+            //PRINT_READY_QUEUE();
             
             running_process_index=get_pcb_index(pcb,process_count,peek_front(&READY_QUEUE)->Process.ID);
             
-            //check if first time
+            
             if(running_process_index==-1 && peek_front(&READY_QUEUE)->Process.first_time){
-                printf("\nInitialize pcb for first forking of process\n") ;
+                //printf("\nInitialize pcb for first forking of process\n") ;
                 current_time = getClk();
                 peek_front(&READY_QUEUE)->Process.first_time = false;
-                
-                if(process_count >= max){
-                    printf("Error: Max processes reached\n");
-                    continue;
-                }
+            
                 
                 pcb[process_count].arrival_time = peek_front(&READY_QUEUE)->Process.ARRIVAL_TIME;
                 pcb[process_count].process_id = peek_front(&READY_QUEUE)->Process.ID;
@@ -326,11 +336,6 @@ int main(int argc, char * argv[])
                             
                             peek_front(&READY_QUEUE)->Process.first_time = false;
                             
-                            if(process_count >= max){
-                                printf("Error: Max processes reached\n");
-                                continue;
-                            }
-                            
                             pcb[process_count].process_state = Running;
                             pcb[process_count].process_id = peek_front(&READY_QUEUE)->Process.ID;
                             pcb[process_count].RUNNING_TIME = peek_front(&READY_QUEUE)->Process.RUNNING_TIME;
@@ -395,11 +400,7 @@ int main(int argc, char * argv[])
                     if(running_process_index == -1 && peek_front(&READY_QUEUE)->Process.first_time){
                         peek_front(&READY_QUEUE)->Process.first_time=false;
                         
-                        if(process_count >= max){
-                            printf("Error: Max processes reached\n");
-                            continue;
-                        }
-                        
+                       
                         pcb[process_count].arrival_time=peek_front(&READY_QUEUE)->Process.ARRIVAL_TIME;
                         pcb[process_count].process_id=peek_front(&READY_QUEUE)->Process.ID;
                         pcb[process_count].RUNNING_TIME=peek_front(&READY_QUEUE)->Process.RUNNING_TIME;
@@ -473,7 +474,7 @@ int main(int argc, char * argv[])
                 AVGWTA/total_process, 
                 (float)AVGWAITING/total_process);
         fclose(pFile);
-        printf("\nPerformance File Has Been Generated !\n");
+        printf("\nPerformance File Has Been Generated !\a\n");
     }
     finished_process=0;
     total_process=-1;

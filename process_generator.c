@@ -132,7 +132,7 @@ int main(int argc, char * argv[])
     if(MESSAGE_ID==-1){
         printf("Error In Creating Message Queue!\n");
     }
-    printf(" message queue ID is %d \n",MESSAGE_ID);
+    //printf(" message queue ID is %d \n",MESSAGE_ID);
     message_buf PROCESS_MESSAGE;
     initClk();
     int c = 0;
@@ -148,7 +148,7 @@ int main(int argc, char * argv[])
                 if(msgsnd(MESSAGE_ID,&PROCESS_MESSAGE,sizeof(message_buf) - sizeof(long),!IPC_NOWAIT)==-1){
                     printf("Error In Sending Message To Scheduler!\n");
                 }else{
-                    printf("Process with id %d sent to scheduler at time %d\n",process_list[i].ID,getClk());
+                //    printf("Process with id %d sent to scheduler at time %d\n",process_list[i].ID,getClk());
                     c++;
                     break;
                 }
