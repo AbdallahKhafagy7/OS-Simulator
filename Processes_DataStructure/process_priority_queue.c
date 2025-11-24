@@ -129,9 +129,8 @@ process* peek_priority_front(process_priority_queue* Priority_Queue)
     if (is_priority_queue_empty(Priority_Queue))
         return NULL; // Invalid queue pointer or empty queue
 
-    process* process =malloc(sizeof(process));
-    *process=Priority_Queue->front->Process;
-    return process;
+    
+    return &(Priority_Queue->front->Process);
 }
 
 

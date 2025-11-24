@@ -1,1 +1,18 @@
-scheduler.log
+# Build artifacts
+*.out
+*.o
+*.log
+
+# C-Specific files
+*.gch
+*.d
+
+# Scheduler/Process Specific Files
+
+keyfile
+
+# IDE and System files
+.vscode/
+.vscode-server/
+.cache/
+.bash_history
