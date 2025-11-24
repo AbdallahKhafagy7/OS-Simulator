@@ -445,6 +445,7 @@ if (finished_process == total_process && peek_front(&READY_QUEUE) == NULL) {
     fclose(pFile);
     printf("\nPerformace File Has Been Generated !\n");
         }
+        finished_process=0;
 }
             destroyClk(true);
             }
