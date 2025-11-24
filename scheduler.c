@@ -10,13 +10,22 @@
 #include <unistd.h>
 
 /*---------------------------------Omar Syed------------------------------------*/
-
 int MESSAGE_ID;
+int finished_process=0;
+int count_pid=-1;
+PCB pcb[max];
+FILE*pFile;
+int * wait_time ;
+float * WTA;
+int count =0;
+int total_running_time=0;
+
 /*
 1-Receive processes
 2-Initialize Queues & PCB
 3-Initialize Algorithms
 4-RR
+5-process.c
 Done by Omar Syed
 */
 /*---------------------------------QUEUES&PCB------------------------------------*/
@@ -52,6 +61,8 @@ void PRINT_READY_PRIORITY_QUEUE(){
 }
 
 
+/*
+
 int get_count(process_queue* READY_QUEUE){
     process_Node* temp=READY_QUEUE->front;
     int count=0;
@@ -65,27 +76,13 @@ int get_count(process_queue* READY_QUEUE){
     return count;
 }
 
+*/
 
-int finished_process=0;
-int count_pid=-1;
-PCB pcb[max];
-FILE*pFile;
-int * wait_time ;
-float * WTA;
 
 
 PCB* get_pcb(PCB*pcb,int process_count,int process_id){
     for(int i = 0 ;i<process_count;i++){
         if(pcb[i].process_id==process_id){
-            return &pcb[i];
-        }
-    }
-    return NULL;
-}
-
-PCB* get_pcb_pid(PCB*pcb,int process_count,int process_pid){
-    for(int i = 0 ;i<process_count;i++){
-        if(pcb[i].process_pid==process_pid){
             return &pcb[i];
         }
     }
@@ -109,26 +106,6 @@ void remove_pcb(PCB*pcb,int *process_count,int process_id){
     (*process_count)--;
 }
 
-void update_queue_RR(process_queue* READY_QUEUE){
-    int index = get_pcb_index(pcb, process_count, peek_front(READY_QUEUE)->Process.ID);
-    int current_time =getClk();
-    if(current_time-pcb[index].LAST_EXECUTED_TIME>=TIME_QUANTUM){
-        pcb[index].process_state=Ready;
-         kill(pcb[index].process_pid, SIGSTOP);
-         pcb[running_process_index].LAST_EXECUTED_TIME = getClk();
-        printf("Stopped\n");
-        process_Node* temp =dequeue(READY_QUEUE);
-        PRINT_READY_QUEUE();
-        enqueue(READY_QUEUE, temp->Process);
-        PRINT_READY_QUEUE();
-    }
-    else{
-        pcb[index].REMAINING_TIME--;
-    }
-}
-
-int count =0;
-int total_running_time=0;
 void handler(int signum){
     printf("Handler called - Process finished\n");
     
@@ -260,10 +237,6 @@ int main(int argc, char * argv[])
     message_buf PROCESS_MESSAGE;
     process_count=0;
     /*---------------------------Omar Syed------------------------------------*/
-    
-        
-            // printf("Scheduling Algorithm is Round Robin with Time Quantum = %d\n",TIME_QUANTUM);
-            int firsttime =true; // TODO::fix this to be when queue is empty
             while(1)
     {
                 int rec_status = msgrcv(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(message_buf),2,IPC_NOWAIT);
@@ -286,29 +259,7 @@ int main(int argc, char * argv[])
     enqueue(&READY_QUEUE, PROCESS_MESSAGE.p);
         PRINT_READY_QUEUE();
         running_process_index= get_pcb_index(pcb,  process_count, peek_front(&READY_QUEUE)->Process.ID);
-//         if(running_process_index!=-1&& pcb[running_process_index].REMAINING_TIME<=0 ){
-//             PRINT_READY_QUEUE();
-//             raise(SIGUSR1);
-//             PRINT_READY_QUEUE();
-//         }  else if(running_process_index!=-1 && (getClk()-pcb[running_process_index].LAST_EXECUTED_TIME>=TIME_QUANTUM)){
-//              kill(pcb[running_process_index].process_pid,SIGSTOP);
-//                     pcb[running_process_index].process_state=Ready;
-//                     pcb[running_process_index].LAST_EXECUTED_TIME=getClk();
-//                    pFile = fopen("scheduler.log", "a");
-//     fprintf(pFile, "At time %-5d process %-5d stopped arr %-5d total %-5d remain %-5d wait %-5d\n",
-//             getClk(), pcb[running_process_index].process_id,
-//             pcb[running_process_index].arrival_time,
-//             pcb[running_process_index].RUNNING_TIME,
-//             pcb[running_process_index].REMAINING_TIME,
-//             getClk() - pcb[running_process_index].arrival_time - 
-//             (pcb[running_process_index].RUNNING_TIME - pcb[running_process_index].REMAINING_TIME) );
-//     fclose(pFile);
-//     PRINT_READY_QUEUE();
-//     process_Node* temp=dequeue(&READY_QUEUE);
-//     PRINT_READY_QUEUE();
-//     enqueue(&READY_QUEUE,temp->Process);
-//     PRINT_READY_QUEUE();
-// }
+
 running_process_index=get_pcb_index(pcb,  process_count,peek_front(&READY_QUEUE)->Process.ID);
         if(running_process_index == -1 && peek_front(&READY_QUEUE) != NULL && peek_front(&READY_QUEUE)->Process.first_time) {
              current_time = getClk();
@@ -478,20 +429,23 @@ fclose(pFile);
         }
     }
 }
+
+
+
+//perf. file
 if (finished_process == total_process && peek_front(&READY_QUEUE) == NULL) {
-            printf("All processes finished. Scheduler exiting.\n");
-            break;
+    int AVGWAITING=0;
+    float AVGWTA = 0;
+    for(int i=0;i<count;i++){
+        AVGWTA+=WTA[i];
+        AVGWAITING+=wait_time[i];
+    }
+    pFile=fopen("scheduler.perf", "w");
+    fprintf(pFile, "Cpu utilization = %-4f %% \n Avg WTA = %-4f \n Avg Waiting = %-4f \n ", ((float)total_running_time/getClk())*100 , AVGWTA/total_process , (float)AVGWAITING/total_process );
+    fclose(pFile);
+    printf("\nPerformace File Has Been Generated !\n");
         }
 }
-int AVGWAITING=0;
-float AVGWTA = 0;
-for(int i=0;i<count;i++){
-AVGWTA+=WTA[i];
-AVGWAITING+=wait_time[i];
-}
-pFile=fopen("scheduler.perf", "w");
-fprintf(pFile, "Cpu utilization = %-4f %% \n Avg WTA = %-4f \n Avg Waiting = %-4f \n ", ((float)total_running_time/getClk())*100 , AVGWTA/total_process , (float)AVGWAITING/total_process );
-fclose(pFile);
             destroyClk(true);
             }
             
