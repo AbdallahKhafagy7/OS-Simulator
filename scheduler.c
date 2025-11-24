@@ -459,6 +459,7 @@ int main(int argc, char * argv[])
 }
 
 
+//
         if(selected_Algorithm_NUM==3 && clock_timer!=getClk() ){
             clock_timer=getClk();
             printf("Clock Timer : %d \n",clock_timer);
