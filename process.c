@@ -13,10 +13,8 @@ int main(int agrc, char * argv[])
     
     printf("Process with remaining time %d started at time %d\n", remainingtime, start_time);
     
-    // Busy wait until our runtime is complete
     while (getClk() - start_time < remainingtime)
     {
-        // Just spin - scheduler controls us with SIGSTOP/SIGCONT
     }
 
     printf("Process finished at time %d\n", getClk());

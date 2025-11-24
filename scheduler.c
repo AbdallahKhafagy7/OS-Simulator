@@ -134,7 +134,7 @@ int main(int argc, char * argv[])
 
     /*---------------------------Omar Syed------------------------------------*/
 
-    while(finished_process < total_process)
+    while(1)
     {
         int rec_status = msgrcv(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(message_buf),2,IPC_NOWAIT);
         if(rec_status!=-1)
@@ -196,7 +196,7 @@ int main(int argc, char * argv[])
                         running_process_index = process_count;
                         process_count++;
 
-                        //LOG file 
+                        //LOG file when start
                         pFile = fopen("scheduler.log", "a");
                         if(pFile) {
                             fprintf(pFile, "At time %-5d process %-5d started arr %-5d total %-5d remain %-5d wait %-5d\n",
@@ -273,8 +273,7 @@ int main(int argc, char * argv[])
             
             if(running_process_index!=-1 && pcb[running_process_index].process_state == Running){
                 pcb[running_process_index].REMAINING_TIME--;
-                
-                // Process finished - do all cleanup here
+
                 if(pcb[running_process_index].REMAINING_TIME <= 0){
                     int finished_id = pcb[running_process_index].process_id;
                     PCB* finished = &pcb[running_process_index];
@@ -304,7 +303,6 @@ int main(int argc, char * argv[])
                     remove_pcb(pcb, &process_count, finished_id);
                     finished_process++;
                     
-                    // Handle next process
                     if(peek_front(&READY_QUEUE) != NULL) {
                         running_process_index = get_pcb_index(pcb, process_count, peek_front(&READY_QUEUE)->Process.ID);
                         
@@ -325,7 +323,7 @@ int main(int argc, char * argv[])
                                 fclose(pFile);
                             }
                         } else if(running_process_index == -1 && peek_front(&READY_QUEUE)->Process.first_time) {
-                            // Start new process
+                            
                             peek_front(&READY_QUEUE)->Process.first_time = false;
                             
                             if(process_count >= max){
@@ -344,10 +342,6 @@ int main(int argc, char * argv[])
                             char str_rem_time[20];
                             sprintf(str_rem_time, "%d", peek_front(&READY_QUEUE)->Process.RUNNING_TIME);
                             int pid = fork();
-                            if(pid == -1){
-                                perror("Fork failed");
-                                continue;
-                            }
                             if(pid == 0){
                                 execl("./process.out", "./process.out", str_rem_time, NULL);
                                 perror("Error in execl\n");
@@ -462,6 +456,7 @@ int main(int argc, char * argv[])
                 }
             }
         }
+
         // Generate performance file
         if(finished_process==total_process){
     int AVGWAITING=0;
@@ -480,6 +475,8 @@ int main(int argc, char * argv[])
         fclose(pFile);
         printf("\nPerformance File Has Been Generated !\n");
     }
+    finished_process=0;
+    total_process=-1;
 }
     }
 
