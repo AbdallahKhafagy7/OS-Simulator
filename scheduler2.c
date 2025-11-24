@@ -228,7 +228,7 @@ int main(int argc, char * argv[])
     if (!pFile) {
         printf("Error opening file.\n");
     }
-     fprintf(pFile, "%-5s %-10s %-10s %-10s %-20s %-5s %-10s %-10s %-10s %-20s %-10s %-20s\n",
+     fprintf(pFile, "%-5s %-10s %-10s %-10s %-10s %-5s %-10s %-10s %-10s %-10s %-10s %-10s\n",
         "#At", "time", "x", "process", "y","state","arr","w","total","z","remain","wait");
         fclose(pFile);
     int clock_timer= 0;
@@ -254,7 +254,6 @@ int main(int argc, char * argv[])
         
             // printf("Scheduling Algorithm is Round Robin with Time Quantum = %d\n",TIME_QUANTUM);
             int firsttime =true; // TODO::fix this to be when queue is empty
-            process_Node* current_process;
             while(1)
     {
                 int rec_status = msgrcv(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(message_buf),2,IPC_NOWAIT);
@@ -275,18 +274,15 @@ int main(int argc, char * argv[])
     // RR
     enqueue(&READY_QUEUE, PROCESS_MESSAGE.p);
     PRINT_READY_QUEUE();
-    
-    // Check if we need to start a process (queue was empty or first process)
     if(running_process_index == -1 && peek_front(&READY_QUEUE) != NULL && peek_front(&READY_QUEUE)->Process.first_time) {
         int current_time = getClk();
-        
         peek_front(&READY_QUEUE)->Process.first_time = false;
         pcb[process_count].arrival_time = peek_front(&READY_QUEUE)->Process.ARRIVAL_TIME;
         pcb[process_count].process_id = peek_front(&READY_QUEUE)->Process.ID;
         pcb[process_count].RUNNING_TIME = peek_front(&READY_QUEUE)->Process.RUNNING_TIME;
         pcb[process_count].REMAINING_TIME = peek_front(&READY_QUEUE)->Process.RUNNING_TIME;
-        pcb[process_count].START_TIME = current_time;
-        pcb[process_count].LAST_EXECUTED_TIME = current_time;
+        pcb[process_count].START_TIME = getClk();
+        pcb[process_count].LAST_EXECUTED_TIME = getClk();
         pcb[process_count].process_state = Running;
         
         char str_rem_time[20];
@@ -321,7 +317,7 @@ int main(int argc, char * argv[])
         }
 
         
-         if(selected_Algorithm_NUM==3 && clock_timer!=getClk()){
+ if(selected_Algorithm_NUM==3 && clock_timer!=getClk()){
     clock_timer=getClk();
     if(peek_front(&READY_QUEUE)==NULL) continue;
     PRINT_READY_QUEUE();
@@ -355,8 +351,7 @@ int main(int argc, char * argv[])
                 pcb[running_process_index].arrival_time,
                 pcb[running_process_index].RUNNING_TIME,
                 pcb[running_process_index].REMAINING_TIME,
-                getClk() - pcb[running_process_index].arrival_time - 
-        (pcb[running_process_index].RUNNING_TIME - pcb[running_process_index].REMAINING_TIME));
+                getClk() - pcb[running_process_index].arrival_time);
         fclose(pFile);
         
     } else {
@@ -368,7 +363,7 @@ int main(int argc, char * argv[])
 
             if(pcb[running_process_index].REMAINING_TIME <= 0){
                 raise(SIGUSR1);
-                 running_process_index = -1;
+                // running_process_index = -1;
                 continue;
             }
                 
@@ -438,6 +433,10 @@ fprintf(pFile, "At time %-5d process %-5d resumed arr %-5d total %-5d remain %-5
         getClk() - pcb[running_process_index].arrival_time - 
         (pcb[running_process_index].RUNNING_TIME - pcb[running_process_index].REMAINING_TIME) );
 fclose(pFile);
+                }
+                else if(next_process_index != -1&&pcb[next_process_index].REMAINING_TIME == 0){
+                    raise(SIGUSR1);
+                    continue;
                 }
             }
         }

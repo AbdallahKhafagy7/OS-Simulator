@@ -11,8 +11,8 @@ build:
 	
 
 clean:
-	rm -f *.out  processes.txt  scheduler.log
-	rm -f *.o   processes.txt   scheduler.log
+	rm -f *.out  processes.txt  scheduler.log scheduler.perf
+	rm -f *.o   processes.txt   scheduler.log scheduler.perf
 all: clean build
 
 run:
