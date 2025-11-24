@@ -2,6 +2,7 @@
 #include "Processes_DataStructure/process_priority_queue.h"
 #include "Processes_DataStructure/process_queue.h"
 #include "headers.h"
+#include <math.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,6 +18,7 @@ PCB pcb[max];
 FILE*pFile;
 int * wait_time ;
 float * WTA;
+float std_dev_sqr=0;
 int count =0;
 int total_running_time=0;
  int selected_Algorithm_NUM=-1;
@@ -712,12 +714,18 @@ int main(int argc, char * argv[])
         AVGWAITING+=wait_time[i];
     }
 
+    for(int i=0;i<count;i++){
+        std_dev_sqr+=pow((WTA[i]-AVGWTA),2);
+    }
+    std_dev_sqr=std_dev_sqr/total_process;
+    float std_dev = sqrt(std_dev_sqr);
+
     pFile=fopen("scheduler.perf", "w");
     if(pFile) {
-        fprintf(pFile, "Cpu utilization = %-4f %% \n Avg WTA = %-4f \n Avg Waiting = %-4f \n ", 
+        fprintf(pFile, "Cpu utilization = %-4f %% \nAvg WTA = %-4f \nAvg Waiting = %-4f \nstd WTA = %-4f \n ", 
                 ((float)total_running_time/getClk())*100, 
                 AVGWTA/total_process, 
-                (float)AVGWAITING/total_process);
+                (float)AVGWAITING/total_process,std_dev );
         fclose(pFile);
         printf("\nPerformance File Has Been Generated !\a\n");
     }
