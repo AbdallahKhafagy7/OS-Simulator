@@ -399,6 +399,7 @@ void myHandler(int signum){
     printLog(finished, "finished");
 
     runningPcb = NULL;
+    pcbArray[pcbCount--] = NULL;
 
     // Update dependent processes
     for (int i = 0; i < pcbCount; i++) {

@@ -1,8 +1,4 @@
-At time 7 process 1 started arrival 6 total 12 remain 12
-At time 14 process 1 stopped arrival 6 total 12 remain 5
-At time 10 process 1 started arrival 9 total 14 remain 14
-At time 16 process 1 stopped arrival 9 total 14 remain 8
-At time 16 process 2 started arrival 15 total 30 remain 30
-At time 46 process 2 finished arrival 15 total 30 remain 0 wait 1 TA 31 WTA 1.03
-At time 46 process 1 resumed arrival 9 total 14 remain 8
-At time 53 process 1 finished arrival 9 total 14 remain 0 wait 30 TA 44 WTA 3.14
+At time 9 process 2 started arrival 8 total 12 remain 12
+At time 21 process 2 finished arrival 8 total 12 remain 0 wait 1 TA 13 WTA 1.08
+At time 21 process 1 started arrival 8 total 5 remain 5
+At time 26 process 1 finished arrival 8 total 5 remain 0 wait 13 TA 18 WTA 3.60
