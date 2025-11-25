@@ -250,10 +250,6 @@ int main(int argc, char * argv[])
                         current_time = getClk();
                         peek_front(&READY_QUEUE)->Process.first_time = false;
                         
-                        if(process_count >= max){
-                            printf("Error: Max processes reached\n");
-                            break;
-                        }
                         
                         pcb[process_count].arrival_time = peek_front(&READY_QUEUE)->Process.ARRIVAL_TIME;
                         pcb[process_count].process_id = peek_front(&READY_QUEUE)->Process.ID;
@@ -266,12 +262,9 @@ int main(int argc, char * argv[])
                         char str_rem_time[20];
                         sprintf(str_rem_time, "%d", peek_front(&READY_QUEUE)->Process.RUNNING_TIME);
                         
-                        //Run the process But this if it in the front of the queue 
+                         
                         int pid = fork();
-                        if(pid == -1){
-                            perror("Fork failed");
-                            break;
-                        }
+                        
                         if(pid == 0) {
                             execl("./process.out", "./process.out", str_rem_time, NULL);
                             perror("Error in execl");
@@ -479,10 +472,7 @@ int main(int argc, char * argv[])
                 char str_rem_time[20];
                 sprintf(str_rem_time,"%d",peek_front(&READY_QUEUE)->Process.RUNNING_TIME);
                 int pid=fork();
-                if(pid == -1){
-                    perror("Fork failed");
-                    continue;
-                }
+                
                 if(pid==0){
                     execl("./process.out","./process.out",str_rem_time,NULL);
                     perror("Error in execl");
@@ -518,11 +508,12 @@ int main(int argc, char * argv[])
                     
                     pFile = fopen("scheduler.log", "a");
                     if(pFile) {
+                        
                         fprintf(pFile, "At time %-5d process %-5d finished arr %-5d total %-5d remain %-5d wait %-5d TA %-5d WTA %.2f\n",
                                 getClk(), finished->process_id,
                                 finished->arrival_time, finished->RUNNING_TIME,
                                 0,
-                                getClk() - finished->arrival_time - finished->RUNNING_TIME,
+                                getClk() - finished->arrival_time - finished->RUNNING_TIME+1,
                                 finished->FINISH_TIME - finished->arrival_time,
                                 (float)(finished->FINISH_TIME - finished->arrival_time) / finished->RUNNING_TIME);
                         fclose(pFile);
@@ -636,10 +627,7 @@ int main(int argc, char * argv[])
                         char str_rem_time[20];
                         sprintf(str_rem_time,"%d",peek_front(&READY_QUEUE)->Process.RUNNING_TIME);
                         int pid=fork();
-                        if(pid == -1){
-                            perror("Fork failed");
-                            continue;
-                        }
+                        
                         if(pid==0){
                             execl("./process.out","./process.out",str_rem_time,NULL);
                             perror("Error in execl");
@@ -691,6 +679,7 @@ int main(int argc, char * argv[])
         AVGWTA+=WTA[i];
         AVGWAITING+=wait_time[i];
     }
+    
 
     for(int i=0;i<count;i++){
         std_dev_sqr+=pow((WTA[i]-AVGWTA),2);
