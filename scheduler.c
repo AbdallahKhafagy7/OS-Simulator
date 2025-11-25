@@ -153,25 +153,22 @@ void handler(int signum){
     pFile = fopen("scheduler.log", "a");
     if (pFile) {
         int TA = finished->FINISH_TIME - finished->arrival_time;
-        int WT = TA - finished->RUNNING_TIME;
+        //int WT = TA - finished->RUNNING_TIME;
+        int wait = finished->FINISH_TIME - finished->arrival_time - finished->RUNNING_TIME;
         float WTA = (float)TA / finished->RUNNING_TIME;
         
         fprintf(pFile, "At time %-5d process %-5d finished arr %-5d total %-5d remain %-5d wait %-5d TA %-5d WTA %.2f\n",
             finished->FINISH_TIME, finished->process_id, finished->arrival_time, 
-            finished->RUNNING_TIME, 0, WT, TA, WTA);
+            finished->RUNNING_TIME, 0, wait, TA, WTA);
         fclose(pFile);
     }
 
     remove_pcb(pcb, &process_count, finished_id);
     
-    // --- FIX 2: REMOVE THE EXTRA DEQUEUE ---
-    // (Line 46 'dequeue(&READY_QUEUE);' was deleted here)
-
+    
     printf("Process %d finished and removed from queue\n", finished_id);
 
-    // --- FIX 3: RESET INDEX AND EXIT ---
-    // Do NOT try to schedule the next process here. 
-    // Just reset the index and let the main loop handle the next start.
+  
     running_process_index = -1; 
         
     }
@@ -549,13 +546,14 @@ int main(int argc, char * argv[])
                             
                             pFile = fopen("scheduler.log", "a");
                             if(pFile) {
+                               int total_executed = pcb[running_process_index].RUNNING_TIME - pcb[running_process_index].REMAINING_TIME;
+                                int wait = getClk() - pcb[running_process_index].arrival_time - total_executed;
                                 fprintf(pFile, "At time %-5d process %-5d resumed arr %-5d total %-5d remain %-5d wait %-5d\n",
                                         getClk(), pcb[running_process_index].process_id,
                                         pcb[running_process_index].arrival_time,
                                         pcb[running_process_index].RUNNING_TIME,
                                         pcb[running_process_index].REMAINING_TIME,
-                                        getClk() - pcb[running_process_index].arrival_time - 
-                                        (pcb[running_process_index].RUNNING_TIME - pcb[running_process_index].REMAINING_TIME));
+                                        wait);
                                 fclose(pFile);
                             }
                         } else if(running_process_index == -1 && peek_front(&READY_QUEUE)->Process.first_time) {
@@ -715,6 +713,6 @@ int main(int argc, char * argv[])
     
 
     
-    
+    return 0;
     destroyClk(true);
 }
