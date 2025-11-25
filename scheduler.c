@@ -21,6 +21,7 @@ PCB pcb[max];
 FILE*pFile;
 int * wait_time ;
 int * total_running_time ;
+int total_running_times=0;
 float * WTA;
 int running_count=0;
 float std_dev_sqr=0;
@@ -33,7 +34,6 @@ int count =0;
  int pid[max];
  int running_process_index=-1;
  int process_count=0;
- int total_time=0;
 /*
 1-Receive processes
 2-Initialize Queues & PCB
@@ -452,8 +452,10 @@ int main(int argc, char * argv[])
              if(running_process_index!=-1 && pcb[running_process_index].process_state == Running)
                 pcb[running_process_index].REMAINING_TIME--;
 
+                if(peek_front(&READY_QUEUE)==NULL) continue;
+
      if(running_process_index!=-1&&pcb[running_process_index].process_state == Running){
-                total_running_time++;
+                total_running_times++;
             }
 
              process_Node* temp = READY_QUEUE.front;
@@ -516,7 +518,7 @@ int main(int argc, char * argv[])
             } 
 
             
-           
+           if(running_process_index!=-1)
 
             if(running_process_index!=-1 && pcb[running_process_index].process_state == Running){
 
@@ -526,7 +528,6 @@ int main(int argc, char * argv[])
                 
                     pcb[running_process_index].process_state = Finished;
                     pcb[running_process_index].FINISH_TIME = getClk();
-                    total_time=getClk();
                     pcb[running_process_index].is_completed = true;
                     pcb[running_process_index].WAITING_TIME=getClk() - pcb[running_process_index].arrival_time - (pcb[running_process_index].RUNNING_TIME - pcb[running_process_index].REMAINING_TIME);
                     pFile = fopen("scheduler.log", "a");
@@ -724,8 +725,8 @@ int main(int argc, char * argv[])
             
             pFile=fopen("scheduler.perf", "w");
             if(pFile) {
-                fprintf(pFile, "Cpu utilization = %-4f %% \nAvg WTA = %-4f \nAvg Waiting = %-4f \nstd WTA = %-4f \n ", 
-                    (running/total_time)*100, 
+                fprintf(pFile, "CPU utilization = %.2f%%\nAvg WTA = %.2f\nAvg Waiting = %.2f\nStd WTA = %.2f\n ", 
+                    ((float)total_running_times/getClk())*100, 
                     AVGWTA, 
                     AVGWAITING,std_dev );
                     fclose(pFile);
