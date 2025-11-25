@@ -26,6 +26,12 @@ typedef short bool;
 #define SHKEY 300
 // struct 
 
+/*========================omar syed========================*/
+// struct message_scheduler_process{
+//     long msgtype;
+//     int flag;
+// }typedef scheduler_process_message ;
+
 typedef enum { Ready, Running, Finished} state;
 
 typedef char* string;
