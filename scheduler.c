@@ -12,7 +12,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-/*---------------------------------Omar Syed------------------------------------*/
+/*---------------------------------Omar Syed Final------------------------------------*/
 int MESSAGE_ID;
 //int MESSAGE_sch_ID;
 int scheduler_process = 0;
@@ -96,87 +96,7 @@ void remove_pcb(PCB*pcb,int *process_count,int process_id){
     (*process_count)--;
 }
 
-/*-----------------------Handler-----------------------*/
-// void handler(int signum){
 
-//      if(selected_Algorithm_NUM==2){
-//           printf("Handler called - Process finished\n");
-
-//     int finished_id = -1;
-
-//     // If SRTN is active (Priority Queue has data)
-//    // 1. GET ID FROM PCB (The one that actually finished)
-//     if (running_process_index == -1) return; // Safety check
-//      finished_id = pcb[running_process_index].process_id;
-
-//     // 2. SEARCH AND REMOVE (SRTN Specific)
-    
-//         if (READY_PRIORITY_QUEUE.front != NULL) {
-//             process_PNode* current = READY_PRIORITY_QUEUE.front;
-//             process_PNode* prev = NULL;
-            
-//             // Loop to find the specific ID (Process 3)
-//             while (current != NULL) {
-//                 if (current->Process.ID == finished_id) {
-//                     // Unlink (Remove) the node
-//                     if (prev == NULL) READY_PRIORITY_QUEUE.front = current->next;
-//                     else prev->next = current->next;
-                    
-//                     free(current); // Delete it
-//                     break; 
-//                 }
-//                 prev = current;
-//                 current = current->next;
-//             }
-//         }
-    
-   
-//     else {
-//         printf("Error: Queue is empty but handler was called\n");
-//         return;
-//     }
-
-//     // --- STANDARD PCB CLEANUP ---
-//     PCB* finished = get_pcb(pcb, process_count, finished_id);
-    
-//     if(finished == NULL) {
-//         printf("Error: Could not find PCB for process %d\n", finished_id);
-//         return;
-//     }
-    
-//     // Wait ensures the process is fully removed from OS process table
-//     waitpid(finished->process_pid, NULL, 0);
-
-//     // Update Process State
-//     finished->process_state = Finished;
-//     finished->FINISH_TIME = getClk();
-//     finished->is_completed = true;
-//     finished->REMAINING_TIME = 0;
-
-//     // Logging
-//     pFile = fopen("scheduler.log", "a");
-//     if (pFile) {
-//         int TA = finished->FINISH_TIME - finished->arrival_time;
-//         //int WT = TA - finished->RUNNING_TIME;
-//         int wait = finished->FINISH_TIME - finished->arrival_time - finished->RUNNING_TIME;
-//         float WTA = (float)TA / finished->RUNNING_TIME;
-        
-//         fprintf(pFile, "At time %-5d process %-5d finished arr %-5d total %-5d remain %-5d wait %-5d TA %-5d WTA %.2f\n",
-//             finished->FINISH_TIME, finished->process_id, finished->arrival_time, 
-//             finished->RUNNING_TIME, 0, wait, TA, WTA);
-//         fclose(pFile);
-//     }
-
-//     remove_pcb(pcb, &process_count, finished_id);
-    
-    
-//     printf("Process %d finished and removed from queue\n", finished_id);
-
-  
-//     running_process_index = -1; 
-        
-//     }
-// }
 
 
 // hpf functions
@@ -347,37 +267,46 @@ bool depCheck(PCB* p) {
 void hpfLoop(int currentTick) {
     timer = currentTick;
 
-    // Preemption check
+    // PREEMPTION CHECK
     if (runningPcb != NULL && !isPriorityQueueEmpty(&readyPriorityQueue)) {
-        if (peekPriorityFront(&readyPriorityQueue)->priority < runningPcb->priority) {
+        PCB* top = peekPriorityFront(&readyPriorityQueue);
+
+        if (top->priority < runningPcb->priority) {
             kill(runningPcb->process_pid, SIGSTOP);
             enqueuePriority(&readyPriorityQueue, runningPcb);
             printLog(runningPcb, "stopped");
-
-            runningPcb = dequeuePriority(&readyPriorityQueue);
-
-            if (depCheck(runningPcb)) {
-                runPcb(runningPcb, timer);
-            } else {
-                enqueuePriority(&readyPriorityQueue, runningPcb);
-                runningPcb = NULL;
-            }
-        }
-    }
-
-    // Picking next process
-    if (runningPcb == NULL && !isPriorityQueueEmpty(&readyPriorityQueue)) {
-        PCB* nextPcb = dequeuePriority(&readyPriorityQueue);
-        if (depCheck(nextPcb)) {
-            runningPcb = nextPcb;
-            runPcb(runningPcb, timer);
-        } else {
-            enqueuePriority(&readyPriorityQueue, nextPcb);
             runningPcb = NULL;
         }
     }
 
-    // Update remaining time
+    // Picking next process (dependency-safe, no infinite loop)
+    if (runningPcb == NULL) {
+        PCB* dep[1000];
+        int depCount = 0;
+
+        PCB* candidate = NULL;
+
+        while (!isPriorityQueueEmpty(&readyPriorityQueue)) {
+            PCB* p = dequeuePriority(&readyPriorityQueue);
+
+            if (depCheck(p)) {
+                candidate = p;
+                break;
+            } else {
+                dep[depCount++] = p;
+            }
+        }
+
+        for (int i = 0; i < depCount; i++)
+            enqueuePriority(&readyPriorityQueue, dep[i]);
+
+        if (candidate != NULL) {
+            runningPcb = candidate;
+            runPcb(runningPcb, timer);
+        }
+    }
+
+    // UPDATE REMAINING TIME
     if (runningPcb != NULL && runningPcb->REMAINING_TIME > 0) {
         runningPcb->REMAINING_TIME--;
         runningPcb->LAST_EXECUTED_TIME = timer;
@@ -400,7 +329,6 @@ void myHandler(int signum){
     printLog(finished, "finished");
 
     runningPcb = NULL;
-    pcbArray[pcbCount--] = NULL;
 
     // Update dependent processes
     for (int i = 0; i < pcbCount; i++) {
@@ -412,8 +340,8 @@ void myHandler(int signum){
     printPCB(finished);
 }
 
-
 /*---------------------------------Omar Syed------------------------------------*/
+
 
 int main(int argc, char * argv[])
 {
