@@ -5,6 +5,7 @@ build:
 
 	gcc test_generator.c -o test_generator.out 
 	gcc process.c -o process.out
+	gcc process2.c -o process2.out
 	
 
 clean:
