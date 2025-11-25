@@ -100,11 +100,8 @@ void scheduler_rr(){
 
 /*-----------------------Handler-----------------------*/
 void handler(int signum){
-    if(selected_Algorithm_NUM==3){
-    if(running_process_index >= 0 && running_process_index < process_count) {
-        pcb[running_process_index].REMAINING_TIME = 0;
-    }}
-    else if(selected_Algorithm_NUM==2){
+
+     if(selected_Algorithm_NUM==2){
           printf("Handler called - Process finished\n");
 
     int finished_id = -1;
