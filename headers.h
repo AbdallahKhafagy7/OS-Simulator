@@ -26,12 +26,6 @@ typedef short bool;
 #define SHKEY 300
 // struct 
 
-/*========================omar syed========================*/
-// struct message_scheduler_process{
-//     long msgtype;
-//     int flag;
-// }typedef scheduler_process_message ;
-
 typedef enum { Ready, Running, Finished} state;
 
 typedef char* string;
@@ -42,18 +36,21 @@ struct message_buf{
 }typedef message_buf ;
 
 struct PCB_struct{
-    int process_id;
-    state process_state;
-    int REMAINING_TIME;
+    int process_id;            // ID of the process (from generator)
+    int process_pid;           // PID of forked child
+    int priority;              // current priority (can be boosted)
+    int dependency_id;         // ID of process it depends on, -1 if none
+    state process_state;       // READY, RUNNING, FINISHED, WAITING
+    bool STARTED;              // true if forked at least once
+    int REMAINING_TIME;        // runtime left
+    int RUNNING_TIME;          // total runtime
+    int START_TIME;            // first execution
+    int LAST_EXECUTED_TIME;    // last time slice
+    int FINISH_TIME;           // termination time
+    int arrival_time;          // arrival time (from Process)
+    int quantum_remaining;     // optional for round-robin
+    bool is_completed;         // true if finished
     int WAITING_TIME;
-    int RUNNING_TIME;
-    int START_TIME;
-    int LAST_EXECUTED_TIME;
-    int FINISH_TIME;
-    int process_pid;
-    int arrival_time;
-    int quantum_remaining;
-    bool is_completed;
 }typedef PCB;
 
 
@@ -75,12 +72,12 @@ typedef struct PCB_linked_list
 void INITIALIZE_PCB(PCB* pcb){
     pcb->process_state=Ready;
     pcb->REMAINING_TIME=0;
-    pcb->WAITING_TIME=0;
     pcb->RUNNING_TIME=0;
     pcb->START_TIME=-1;
     pcb->LAST_EXECUTED_TIME=-1;
     pcb->FINISH_TIME=-1;
     pcb->process_pid=-1;
+    pcb->dependency_id=0;
     pcb->is_completed=false;
 }
 void INITIALIZE_PCB_Node(PCB_node* pcb_node){
@@ -194,8 +191,138 @@ PCB* get_PCB_entry(PCB_linked_list* pcb_list, int process_id){
 }
 
 
+// -=-=-=-=-=-
+typedef struct PcbNode {
+    PCB* pcb;
+    struct PcbNode* next;
+} PcbNode;
 
+typedef struct {
+    PcbNode* front;
+    PcbNode* rear;
+} PcbPriorityQueue;
 
+// Initialize queue
+void initializePriorityQueue(PcbPriorityQueue* queue) {
+    if (!queue) return;
+    queue->front = NULL;
+    queue->rear = NULL;
+}
+
+// Check if queue is empty
+bool isPriorityQueueEmpty(PcbPriorityQueue* queue) {
+    return (!queue || queue->front == NULL);
+}
+
+// Enqueue PCB based on priority (lower number = higher priority)
+bool enqueuePriority(PcbPriorityQueue* queue, PCB* pcb) {
+    if (!queue || !pcb) return false;
+
+    PcbNode* node = malloc(sizeof(PcbNode));
+    if (!node) return false;
+    node->pcb = pcb;
+    node->next = NULL;
+
+    if (isPriorityQueueEmpty(queue)) {
+        queue->front = node;
+        queue->rear = node;
+        return true;
+    }
+
+    PcbNode* current = queue->front;
+    PcbNode* prev = NULL;
+
+    while (current && current->pcb->priority <= pcb->priority) {
+        prev = current;
+        current = current->next;
+    }
+
+    if (!prev) { // insert at front
+        node->next = queue->front;
+        queue->front = node;
+    } else { // middle or end
+        prev->next = node;
+        node->next = current;
+        if (!current) queue->rear = node;
+    }
+
+    return true;
+}
+
+// Dequeue PCB (highest priority, front of queue)
+PCB* dequeuePriority(PcbPriorityQueue* queue) {
+    if (isPriorityQueueEmpty(queue)) return NULL;
+
+    PcbNode* temp = queue->front;
+    PCB* pcb = temp->pcb;
+    queue->front = temp->next;
+    if (!queue->front) queue->rear = NULL;
+    free(temp);
+    return pcb;
+}
+
+// Peek at front PCB
+PCB* peekPriorityFront(PcbPriorityQueue* queue) {
+    if (isPriorityQueueEmpty(queue)) return NULL;
+    return queue->front->pcb;
+}
+
+// Free entire queue
+void freePriorityQueue(PcbPriorityQueue* queue) {
+    if (!queue) return;
+    PcbNode* current = queue->front;
+    PcbNode* next;
+    while (current) {
+        next = current->next;
+        free(current);
+        current = next;
+    }
+    queue->front = NULL;
+    queue->rear = NULL;
+}
+
+bool removeFromQueue(PcbPriorityQueue* queue, PCB* pcb) {
+    if (!queue || !pcb || isPriorityQueueEmpty(queue))
+        return false;
+
+    PcbNode* current = queue->front;
+    PcbNode* prev = NULL;
+
+    while (current) {
+        if (current->pcb == pcb) {
+            // Found node to remove
+            if (!prev) {
+                // Removing front
+                queue->front = current->next;
+                if (!queue->front) queue->rear = NULL;
+            } else {
+                prev->next = current->next;
+                if (!current->next) queue->rear = prev;
+            }
+            free(current);
+            return true;
+        }
+        prev = current;
+        current = current->next;
+    }
+
+    // PCB not found in queue
+    return false;
+}
+
+bool updatePriority(PcbPriorityQueue* queue, PCB* pcb, int newPriority) {
+    if (!queue || !pcb)
+        return false;
+
+    // Change the priority in the PCB itself
+    pcb->priority = newPriority;
+
+    // Remove from queue if it exists
+    removeFromQueue(queue, pcb);
+
+    // Re-insert based on new priority
+    return enqueuePriority(queue, pcb);
+}
 
 ///==============================
 //don't mess with this variable//

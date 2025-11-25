@@ -95,11 +95,6 @@ void remove_pcb(PCB*pcb,int *process_count,int process_id){
     (*process_count)--;
 }
 
-void scheduler_rr(){
-
-    
-}
-
 /*-----------------------Handler-----------------------*/
 void handler(int signum){
 
@@ -182,6 +177,241 @@ void handler(int signum){
     }
 }
 
+
+// hpf functions
+PCB* pcbArray[max];
+int pcbCount = 0;
+PCB* runningPcb = NULL;
+PcbPriorityQueue readyPriorityQueue;
+int timer = 0;
+int childFinished = 0;
+
+PCB* getPcbById(int processId) {
+    for (int i = 0; i < pcbCount; i++)
+        if (pcbArray[i]->process_id == processId)
+            return pcbArray[i];
+    return NULL;
+}
+
+PCB* getPcbByPid(int pid) {
+    for (int i = 0; i < pcbCount; i++){
+        if (pcbArray[i]->process_pid == pid){ /// problem is most probably here
+            return pcbArray[i];
+        }
+    }
+    return NULL;
+}
+
+void printPriorityQueue(PcbPriorityQueue* queue) {
+    if (!queue || isPriorityQueueEmpty(queue)) {
+        printf("Priority Queue is empty.\n");
+        return;
+    }
+
+    printf("Priority Queue (front -> rear):\n");
+    PcbNode* current = queue->front;
+    while (current) {
+        PCB* p = current->pcb;
+        printf("P%d [prio=%d, dep=%d, remaining=%d] -> ",
+               p->process_id, p->priority, p->dependency_id, p->REMAINING_TIME);
+        current = current->next;
+    }
+    printf("NULL\n");
+}
+
+void printPCB(PCB* p) {
+    if (!p) {
+        printf("PCB = NULL\n");
+        return;
+    }
+
+    printf("--------------------------------------------------\n");
+    printf("PCB for process %d\n", p->process_id);
+    printf("--------------------------------------------------\n");
+
+    printf("Process PID        : %d\n", p->process_pid);
+    printf("Priority           : %d\n", p->priority);
+    printf("Dependency ID      : %d\n", p->dependency_id);
+
+    printf("State              : ");
+    switch (p->process_state) {
+        case Ready:    printf("READY\n"); break;
+        case Running:  printf("RUNNING\n"); break;
+        case Finished: printf("FINISHED\n"); break;
+        default:       printf("UNKNOWN\n"); break;
+    }
+
+    printf("Started?           : %s\n", p->STARTED ? "YES" : "NO");
+    printf("Completed?         : %s\n", p->is_completed ? "YES" : "NO");
+
+    printf("Arrival Time       : %d\n", p->arrival_time);
+    printf("Start Time         : %d\n", p->START_TIME);
+    printf("Last Exec Time     : %d\n", p->LAST_EXECUTED_TIME);
+    printf("Finish Time        : %d\n", p->FINISH_TIME);
+
+    printf("Requested Runtime  : %d\n", p->RUNNING_TIME);
+    printf("Remaining Time     : %d\n", p->REMAINING_TIME);
+
+    printf("--------------------------------------------------\n\n");
+}
+
+void printLog(PCB* p, char *string) 
+{
+    pFile = fopen("scheduler_log.txt", "a");
+
+    if (strcmp(string, "finished") == 0)
+    {
+        int TA = p->FINISH_TIME - p->arrival_time;
+        float WTA = (float)TA / p->RUNNING_TIME;
+        int W = TA - p->RUNNING_TIME;
+
+        fprintf(pFile,
+                "At time %d process %d %s arrival %d total %d remain %d wait %d TA %d WTA %.2f\n",
+                getClk(),
+                p->process_id,
+                string,
+                p->arrival_time,
+                p->RUNNING_TIME,
+                p->REMAINING_TIME,
+                W,
+                TA,
+                WTA
+        );
+    }
+    else
+    {
+        fprintf(pFile,
+                "At time %d process %d %s arrival %d total %d remain %d\n",
+            getClk(),
+                p->process_id,
+                string,
+                p->arrival_time,
+                p->RUNNING_TIME,
+                p->REMAINING_TIME
+            );
+    }
+
+    fclose(pFile);
+}
+
+void runPcb(PCB* p, int currentTick) {
+    if (!p->STARTED) {
+        int pid = fork();
+        if (pid == 0) { // child
+            char timeArg[16];
+            sprintf(timeArg, "%d", p->REMAINING_TIME);
+            execl("./process2.out", "./process2.out", timeArg, NULL);
+            exit(1);
+        }
+
+        // Update PCB
+        p->STARTED = true;
+        p->process_pid = pid;
+        p->process_state = Running;
+        p->START_TIME = currentTick;
+        p->LAST_EXECUTED_TIME = currentTick;
+
+        printLog(p, "started");
+    } else {
+        // Resume process
+        kill(p->process_pid, SIGCONT);
+        p->process_state = Running;
+        p->LAST_EXECUTED_TIME = currentTick;
+
+        printLog(p, "resumed");
+    }
+    printPCB(p);
+}
+
+bool depCheck(PCB* p) {
+    // Case 1: No dependency
+    if (p->dependency_id == -1)
+        return true;
+
+    // Get the PCB of the dependency
+    PCB* depPcb = getPcbById(p->dependency_id);
+
+    // Case 2: Dependency not arrived yet
+    if (depPcb == NULL)
+        return false;
+
+    // Case 3: Dependency arrived but not finished
+    if (depPcb->is_completed == false)
+        return false;
+
+    // Case 4: Dependency finished
+    return true;
+}
+
+void hpfLoop(int currentTick) {
+    timer = currentTick;
+
+    // Preemption check
+    if (runningPcb != NULL && !isPriorityQueueEmpty(&readyPriorityQueue)) {
+        if (peekPriorityFront(&readyPriorityQueue)->priority < runningPcb->priority) {
+            kill(runningPcb->process_pid, SIGSTOP);
+            enqueuePriority(&readyPriorityQueue, runningPcb);
+            printLog(runningPcb, "stopped");
+
+            runningPcb = dequeuePriority(&readyPriorityQueue);
+
+            if (depCheck(runningPcb)) {
+                runPcb(runningPcb, timer);
+            } else {
+                enqueuePriority(&readyPriorityQueue, runningPcb);
+                runningPcb = NULL;
+            }
+        }
+    }
+
+    // Picking next process
+    if (runningPcb == NULL && !isPriorityQueueEmpty(&readyPriorityQueue)) {
+        PCB* nextPcb = dequeuePriority(&readyPriorityQueue);
+        if (depCheck(nextPcb)) {
+            runningPcb = nextPcb;
+            runPcb(runningPcb, timer);
+        } else {
+            enqueuePriority(&readyPriorityQueue, nextPcb);
+            runningPcb = NULL;
+        }
+    }
+
+    // Update remaining time
+    if (runningPcb != NULL && runningPcb->REMAINING_TIME > 0) {
+        runningPcb->REMAINING_TIME--;
+        runningPcb->LAST_EXECUTED_TIME = timer;
+    }
+}
+
+void myHandler(int signum){
+    int status;
+    int finishedPid = wait(&status);
+    PCB* finished = getPcbByPid(finishedPid);
+    if (!finished) return;
+
+    int now = timer; // use the tick snapshot
+    finished->FINISH_TIME = now;
+    finished->REMAINING_TIME = 0;
+    finished->process_state = Finished;
+    finished->is_completed = true;
+    printf("now is:%d, finishis:%d\n", now, finished->FINISH_TIME);
+
+    printLog(finished, "finished");
+
+    runningPcb = NULL;
+    pcbArray[pcbCount--] = NULL;
+
+    // Update dependent processes
+    for (int i = 0; i < pcbCount; i++) {
+        if (pcbArray[i]->dependency_id == finished->process_id)
+            pcbArray[i]->dependency_id = -1;
+    }
+
+    childFinished = 1; // main loop will handle next scheduling
+    printPCB(finished);
+}
+
+
 /*---------------------------------Omar Syed------------------------------------*/
 /*
 Note :
@@ -190,8 +420,6 @@ Note :
 
 int main(int argc, char * argv[])
 {
-    signal(SIGUSR1, handler);
-
     //first line in Log File 
     pFile = fopen("scheduler.log", "a");
     if (!pFile) {
@@ -229,19 +457,36 @@ int main(int argc, char * argv[])
     message_buf PROCESS_MESSAGE;
     process_count=0;
 
+    if (selected_Algorithm_NUM == 1) {
+        signal(SIGUSR1, myHandler);
+    } else {
+        signal(SIGUSR1, handler);
+    }
+
     /*---------------------------Omar Syed------------------------------------*/
 
     while(1)
     {
-        int rec_status = msgrcv(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(message_buf),2,IPC_NOWAIT);
+        int rec_status = msgrcv(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(process),2,IPC_NOWAIT);
         total_running_time[running_count]=PROCESS_MESSAGE.p.RUNNING_TIME;
         if(rec_status!=-1)
         {
             switch(selected_Algorithm_NUM) {
                 case 1:
                     // HPF
-                    enqueue_priority(&READY_PRIORITY_QUEUE, PROCESS_MESSAGE.p);
-                    PRINT_READY_PRIORITY_QUEUE();
+                    PCB* p = malloc(sizeof(PCB));
+                    p->process_id = PROCESS_MESSAGE.p.ID;
+                    p->priority = PROCESS_MESSAGE.p.PRIORITY;
+                    p->dependency_id = PROCESS_MESSAGE.p.DEPENDENCY_ID;
+                    p->REMAINING_TIME = PROCESS_MESSAGE.p.RUNNING_TIME;
+                    p->RUNNING_TIME = PROCESS_MESSAGE.p.RUNNING_TIME;
+                    p->arrival_time = PROCESS_MESSAGE.p.ARRIVAL_TIME;
+                    p->STARTED = false;
+                    p->is_completed = false;
+                    p->process_state = Ready;
+
+                    pcbArray[pcbCount++] = p;
+                    enqueuePriority(&readyPriorityQueue, p);
                     break;
                 case 2:
                     // SRTN
@@ -307,6 +552,13 @@ int main(int argc, char * argv[])
             }
         }
 
+        if ((selected_Algorithm_NUM == 1 && timer != getClk()) || childFinished) {
+            timer = getClk();
+
+            hpfLoop(timer);
+
+            childFinished = 0;
+        }
 
 
          if(selected_Algorithm_NUM == 2) {
@@ -440,10 +692,6 @@ int main(int argc, char * argv[])
         }
     }
 }
-
-
-
-
 
         if(selected_Algorithm_NUM==3 && clock_timer!=getClk() ){
 
@@ -701,8 +949,6 @@ int main(int argc, char * argv[])
             }
            }
         
-           
-
         // Generate performance file
         if(finished_process==total_process){
             float AVGWAITING=0;
@@ -737,9 +983,7 @@ int main(int argc, char * argv[])
                 
             }
         }
-    
-
-    
+        
     return 0;
     destroyClk(true);
 }
