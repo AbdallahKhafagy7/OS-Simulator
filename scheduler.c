@@ -432,6 +432,7 @@ int main(int argc, char * argv[])
 
 
         if(selected_Algorithm_NUM==3 && clock_timer!=getClk() ){
+
             clock_timer=getClk();
             printf("Clock Timer : %d \n",clock_timer);
             if(running_process_index!=-1&&pcb[running_process_index].process_state == Running){
@@ -440,7 +441,7 @@ int main(int argc, char * argv[])
              process_Node* temp = READY_QUEUE.front;
         while(temp != NULL){
             int index = get_pcb_index(pcb, process_count, temp->Process.ID);
-            if(index != -1 && pcb[index].process_state != Running) {
+            if(index != -1 && pcb[index].process_state == Ready) {
                 pcb[index].WAITING_TIME++;
              }
             temp = temp->next;
@@ -459,7 +460,7 @@ int main(int argc, char * argv[])
                 current_time = getClk();
                 peek_front(&READY_QUEUE)->Process.first_time = false;
             
-                
+                //INITIALIZE
                 pcb[process_count].arrival_time = peek_front(&READY_QUEUE)->Process.ARRIVAL_TIME;
                 pcb[process_count].process_id = peek_front(&READY_QUEUE)->Process.ID;
                 pcb[process_count].RUNNING_TIME = peek_front(&READY_QUEUE)->Process.RUNNING_TIME;
@@ -494,8 +495,10 @@ int main(int argc, char * argv[])
                 }
             } 
             
-            if(running_process_index!=-1 && pcb[running_process_index].process_state == Running){
+            if(running_process_index!=-1 && pcb[running_process_index].process_state == Running)
                 pcb[running_process_index].REMAINING_TIME--;
+
+            if(running_process_index!=-1 && pcb[running_process_index].process_state == Running){
 
                 if(pcb[running_process_index].REMAINING_TIME <= 0){
                     int finished_id = pcb[running_process_index].process_id;
@@ -512,7 +515,7 @@ int main(int argc, char * argv[])
                         fprintf(pFile, "At time %-5d process %-5d finished arr %-5d total %-5d remain %-5d wait %-5d TA %-5d WTA %.2f\n",
                                 getClk(), finished->process_id,
                                 finished->arrival_time, finished->RUNNING_TIME,
-                                0,
+                                finished->REMAINING_TIME,
                                 getClk() - finished->arrival_time - finished->RUNNING_TIME+1,
                                 finished->FINISH_TIME - finished->arrival_time,
                                 (float)(finished->FINISH_TIME - finished->arrival_time) / finished->RUNNING_TIME);
