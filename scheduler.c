@@ -6,6 +6,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <sys/types.h>
@@ -96,86 +97,86 @@ void remove_pcb(PCB*pcb,int *process_count,int process_id){
 }
 
 /*-----------------------Handler-----------------------*/
-void handler(int signum){
+// void handler(int signum){
 
-     if(selected_Algorithm_NUM==2){
-          printf("Handler called - Process finished\n");
+//      if(selected_Algorithm_NUM==2){
+//           printf("Handler called - Process finished\n");
 
-    int finished_id = -1;
+//     int finished_id = -1;
 
-    // If SRTN is active (Priority Queue has data)
-   // 1. GET ID FROM PCB (The one that actually finished)
-    if (running_process_index == -1) return; // Safety check
-     finished_id = pcb[running_process_index].process_id;
+//     // If SRTN is active (Priority Queue has data)
+//    // 1. GET ID FROM PCB (The one that actually finished)
+//     if (running_process_index == -1) return; // Safety check
+//      finished_id = pcb[running_process_index].process_id;
 
-    // 2. SEARCH AND REMOVE (SRTN Specific)
+//     // 2. SEARCH AND REMOVE (SRTN Specific)
     
-        if (READY_PRIORITY_QUEUE.front != NULL) {
-            process_PNode* current = READY_PRIORITY_QUEUE.front;
-            process_PNode* prev = NULL;
+//         if (READY_PRIORITY_QUEUE.front != NULL) {
+//             process_PNode* current = READY_PRIORITY_QUEUE.front;
+//             process_PNode* prev = NULL;
             
-            // Loop to find the specific ID (Process 3)
-            while (current != NULL) {
-                if (current->Process.ID == finished_id) {
-                    // Unlink (Remove) the node
-                    if (prev == NULL) READY_PRIORITY_QUEUE.front = current->next;
-                    else prev->next = current->next;
+//             // Loop to find the specific ID (Process 3)
+//             while (current != NULL) {
+//                 if (current->Process.ID == finished_id) {
+//                     // Unlink (Remove) the node
+//                     if (prev == NULL) READY_PRIORITY_QUEUE.front = current->next;
+//                     else prev->next = current->next;
                     
-                    free(current); // Delete it
-                    break; 
-                }
-                prev = current;
-                current = current->next;
-            }
-        }
+//                     free(current); // Delete it
+//                     break; 
+//                 }
+//                 prev = current;
+//                 current = current->next;
+//             }
+//         }
     
    
-    else {
-        printf("Error: Queue is empty but handler was called\n");
-        return;
-    }
+//     else {
+//         printf("Error: Queue is empty but handler was called\n");
+//         return;
+//     }
 
-    // --- STANDARD PCB CLEANUP ---
-    PCB* finished = get_pcb(pcb, process_count, finished_id);
+//     // --- STANDARD PCB CLEANUP ---
+//     PCB* finished = get_pcb(pcb, process_count, finished_id);
     
-    if(finished == NULL) {
-        printf("Error: Could not find PCB for process %d\n", finished_id);
-        return;
-    }
+//     if(finished == NULL) {
+//         printf("Error: Could not find PCB for process %d\n", finished_id);
+//         return;
+//     }
     
-    // Wait ensures the process is fully removed from OS process table
-    waitpid(finished->process_pid, NULL, 0);
+//     // Wait ensures the process is fully removed from OS process table
+//     waitpid(finished->process_pid, NULL, 0);
 
-    // Update Process State
-    finished->process_state = Finished;
-    finished->FINISH_TIME = getClk();
-    finished->is_completed = true;
-    finished->REMAINING_TIME = 0;
+//     // Update Process State
+//     finished->process_state = Finished;
+//     finished->FINISH_TIME = getClk();
+//     finished->is_completed = true;
+//     finished->REMAINING_TIME = 0;
 
-    // Logging
-    pFile = fopen("scheduler.log", "a");
-    if (pFile) {
-        int TA = finished->FINISH_TIME - finished->arrival_time;
-        //int WT = TA - finished->RUNNING_TIME;
-        int wait = finished->FINISH_TIME - finished->arrival_time - finished->RUNNING_TIME;
-        float WTA = (float)TA / finished->RUNNING_TIME;
+//     // Logging
+//     pFile = fopen("scheduler.log", "a");
+//     if (pFile) {
+//         int TA = finished->FINISH_TIME - finished->arrival_time;
+//         //int WT = TA - finished->RUNNING_TIME;
+//         int wait = finished->FINISH_TIME - finished->arrival_time - finished->RUNNING_TIME;
+//         float WTA = (float)TA / finished->RUNNING_TIME;
         
-        fprintf(pFile, "At time %-5d process %-5d finished arr %-5d total %-5d remain %-5d wait %-5d TA %-5d WTA %.2f\n",
-            finished->FINISH_TIME, finished->process_id, finished->arrival_time, 
-            finished->RUNNING_TIME, 0, wait, TA, WTA);
-        fclose(pFile);
-    }
+//         fprintf(pFile, "At time %-5d process %-5d finished arr %-5d total %-5d remain %-5d wait %-5d TA %-5d WTA %.2f\n",
+//             finished->FINISH_TIME, finished->process_id, finished->arrival_time, 
+//             finished->RUNNING_TIME, 0, wait, TA, WTA);
+//         fclose(pFile);
+//     }
 
-    remove_pcb(pcb, &process_count, finished_id);
+//     remove_pcb(pcb, &process_count, finished_id);
     
     
-    printf("Process %d finished and removed from queue\n", finished_id);
+//     printf("Process %d finished and removed from queue\n", finished_id);
 
   
-    running_process_index = -1; 
+//     running_process_index = -1; 
         
-    }
-}
+//     }
+// }
 
 
 // hpf functions
@@ -413,15 +414,11 @@ void myHandler(int signum){
 
 
 /*---------------------------------Omar Syed------------------------------------*/
-/*
-Note :
-    In  RR i assume if p2 arrived at the end of quanta of p1 i will execute p1 then p2 
-*/
 
 int main(int argc, char * argv[])
 {
     //first line in Log File 
-    pFile = fopen("scheduler.log", "a");
+    pFile = fopen("scheduler.log", "w");
     if (!pFile) {
         printf("Error opening file.\n");
     } else {
@@ -460,9 +457,7 @@ int main(int argc, char * argv[])
 
     if (selected_Algorithm_NUM == 1) {
         signal(SIGUSR1, myHandler);
-    } else {
-        signal(SIGUSR1, handler);
-    }
+    } 
 
     /*---------------------------Omar Syed------------------------------------*/
 
@@ -490,11 +485,97 @@ int main(int argc, char * argv[])
                     enqueuePriority(&readyPriorityQueue, p);
                     break;
                 case 2:
-                    // SRTN
-                    enqueue_priority_SRTN(&READY_PRIORITY_QUEUE, PROCESS_MESSAGE.p);
-                    PRINT_READY_PRIORITY_QUEUE();
-                    new_process=true;
-                    break;
+
+        enqueue_priority_SRTN(&READY_PRIORITY_QUEUE, PROCESS_MESSAGE.p);
+
+        //    PRINT_READY_PRIORITY_QUEUE();
+
+        running_process_index = get_pcb_index(pcb, process_count, peek_priority_front(&READY_PRIORITY_QUEUE)->ID);
+
+        if (running_process_index == -1 && peek_priority_front(&READY_PRIORITY_QUEUE) != NULL && peek_priority_front(&READY_PRIORITY_QUEUE)->first_time) {
+            current_time = getClk();
+            peek_priority_front(&READY_PRIORITY_QUEUE)->first_time = false;
+
+            pcb[process_count].arrival_time = peek_priority_front(&READY_PRIORITY_QUEUE)->ARRIVAL_TIME;
+            pcb[process_count].process_id = peek_priority_front(&READY_PRIORITY_QUEUE)->ID;
+            pcb[process_count].RUNNING_TIME = peek_priority_front(&READY_PRIORITY_QUEUE)->RUNNING_TIME;
+            pcb[process_count].REMAINING_TIME = pcb[process_count].RUNNING_TIME;
+            pcb[process_count].START_TIME = getClk();
+            pcb[process_count].LAST_EXECUTED_TIME = getClk();
+            pcb[process_count].process_state = Running;
+            pcb[process_count].WAITING_TIME = 0;
+
+            char str_rem_time[20];
+            sprintf(str_rem_time, "%d", pcb[process_count].REMAINING_TIME);
+
+            int pid = fork();
+            if (pid == 0) {
+                execl("./process.out", "./process.out", str_rem_time, NULL);
+                exit(1);
+            }
+
+            pcb[process_count].process_pid = pid;
+            running_process_index = process_count;
+            process_count++;
+
+            pFile = fopen("scheduler.log", "a");
+            if (pFile) {
+                fprintf(pFile, "At time %-5d process %-5d started arr %-5d total %-5d remain %-5d wait %-5d\n",
+                        current_time, pcb[running_process_index].process_id,
+                        pcb[running_process_index].arrival_time,
+                        pcb[running_process_index].RUNNING_TIME,
+                        pcb[running_process_index].REMAINING_TIME,
+                        current_time - pcb[running_process_index].arrival_time);
+                fclose(pFile);
+            }
+    }
+
+    if (running_process_index != -1 && peek_priority_front(&READY_PRIORITY_QUEUE) != NULL &&
+        peek_priority_front(&READY_PRIORITY_QUEUE)->first_time) {
+
+        if (pcb[running_process_index].REMAINING_TIME > peek_priority_front(&READY_PRIORITY_QUEUE)->RUNNING_TIME) {
+            kill(pcb[running_process_index].process_pid, SIGSTOP);
+            pcb[running_process_index].process_state = Ready;
+        }
+
+        current_time = getClk();
+        peek_priority_front(&READY_PRIORITY_QUEUE)->first_time = false;
+
+        pcb[process_count].arrival_time = peek_priority_front(&READY_PRIORITY_QUEUE)->ARRIVAL_TIME;
+        pcb[process_count].process_id = peek_priority_front(&READY_PRIORITY_QUEUE)->ID;
+        pcb[process_count].RUNNING_TIME = peek_priority_front(&READY_PRIORITY_QUEUE)->RUNNING_TIME;
+        pcb[process_count].REMAINING_TIME = pcb[process_count].RUNNING_TIME;
+        pcb[process_count].START_TIME = getClk();
+        pcb[process_count].LAST_EXECUTED_TIME = getClk();
+        pcb[process_count].process_state = Running;
+        pcb[process_count].WAITING_TIME = 0;
+
+        char str_rem_time2[20];
+        sprintf(str_rem_time2, "%d", pcb[process_count].REMAINING_TIME);
+
+        int pid = fork();
+        if (pid == 0) {
+            execl("./process.out", "./process.out", str_rem_time2, NULL);
+            exit(1);
+        }
+
+        pcb[process_count].process_pid = pid;
+        running_process_index = process_count;
+        process_count++;
+
+        pFile = fopen("scheduler.log", "a");
+        if (pFile) {
+            fprintf(pFile, "At time %-5d process %-5d started arr %-5d total %-5d remain %-5d wait %-5d\n",
+                    current_time, pcb[running_process_index].process_id,
+                    pcb[running_process_index].arrival_time,
+                    pcb[running_process_index].RUNNING_TIME,
+                    pcb[running_process_index].REMAINING_TIME,
+                    current_time - pcb[running_process_index].arrival_time);
+            fclose(pFile);
+        }
+    }
+    break;
+
                 case 3:{
                     // RR
                     //PRINT_READY_QUEUE();
@@ -562,137 +643,185 @@ int main(int argc, char * argv[])
         }
 
 
-         if(selected_Algorithm_NUM == 2) {
-        
-   
+        //SRTN
+if (selected_Algorithm_NUM == 2 && clock_timer != getClk()) {
+    clock_timer = getClk();
+    printf("Clock Timer : %d \n",getClk());
+    //PRINT_READY_PRIORITY_QUEUE();
 
-    if(clock_timer != getClk()|| new_process) {
-       
-        if (clock_timer != getClk()) {
-             clock_timer = getClk();
-            time_moved = true;
+    if (running_process_index != -1 && pcb[running_process_index].process_state == Running)
+        pcb[running_process_index].REMAINING_TIME--;
+
+    if (peek_priority_front(&READY_PRIORITY_QUEUE) == NULL)
+        continue;
+
+    if (running_process_index != -1 && pcb[running_process_index].process_state == Running)
+        total_running_times++;
+
+    process_PNode* temp = READY_PRIORITY_QUEUE.front;
+    while (temp != NULL) {
+        int index = get_pcb_index(pcb, process_count, temp->Process.ID);
+        if (index != -1 && pcb[index].process_state == Ready)
+            pcb[index].WAITING_TIME++;
+        temp = temp->next;
+    }
+
+    int front_index = get_pcb_index(pcb, process_count, peek_priority_front(&READY_PRIORITY_QUEUE)->ID);
+
+    if (running_process_index != -1 && front_index != -1 && pcb[front_index].REMAINING_TIME < pcb[running_process_index].REMAINING_TIME) {
+        kill(pcb[running_process_index].process_pid, SIGSTOP);
+        pcb[running_process_index].process_state = Ready;
+        pcb[running_process_index].LAST_EXECUTED_TIME = getClk();
+    }
+
+    running_process_index = get_pcb_index(pcb, process_count, peek_priority_front(&READY_PRIORITY_QUEUE)->ID);
+
+    if (running_process_index == -1 && peek_priority_front(&READY_PRIORITY_QUEUE)->first_time) {
+        current_time = getClk();
+        peek_priority_front(&READY_PRIORITY_QUEUE)->first_time = false;
+
+        pcb[process_count].arrival_time = peek_priority_front(&READY_PRIORITY_QUEUE)->ARRIVAL_TIME;
+        pcb[process_count].process_id = peek_priority_front(&READY_PRIORITY_QUEUE)->ID;
+        pcb[process_count].RUNNING_TIME = peek_priority_front(&READY_PRIORITY_QUEUE)->RUNNING_TIME;
+        pcb[process_count].REMAINING_TIME = pcb[process_count].RUNNING_TIME;
+        pcb[process_count].START_TIME = getClk();
+        pcb[process_count].LAST_EXECUTED_TIME = getClk();
+        pcb[process_count].process_state = Running;
+        pcb[process_count].WAITING_TIME = 0;
+
+        char str_rem_time[20];
+        sprintf(str_rem_time, "%d", pcb[process_count].REMAINING_TIME);
+
+        int pid = fork();
+        if (pid == 0) {
+            execl("./process.out", "./process.out", str_rem_time, NULL);
+            exit(1);
         }
-        new_process=false;
-        printf("Clock Timer: %d\n", clock_timer);
-        if (clock_timer ==0)
-        printf("Scheduling Algorithm is SRTN\n");
 
-        
-        if (peek_priority_front(&READY_PRIORITY_QUEUE) == NULL) {
-            continue; // forces to next iteration of while loop if queue is empty 
-        }
+        pcb[process_count].process_pid = pid;
+        running_process_index = process_count;
+        process_count++;
 
-        // Identify shortest ID and Currently Running ID
-        int shortest_id = peek_priority_front(&READY_PRIORITY_QUEUE)->ID;
-        int current_running_id = -1;
-
-        if (running_process_index != -1) {
-            current_running_id = pcb[running_process_index].process_id;
-        }
-
-          if (time_moved) {
-            
-        
-        if (current_running_id != -1 && current_running_id == shortest_id) //  process running and running is the shortest
-        {
-           
-            
-        
-            if (running_process_index == -1) {
-                running_process_index = get_pcb_index(pcb, process_count, shortest_id);
-                // nothing was running so set the index to shortest
-            }
-
-            // Decrement Time id there is a running process and it has remaining time
-            if (running_process_index != -1 && pcb[running_process_index].REMAINING_TIME > 0) {
-                pcb[running_process_index].REMAINING_TIME--;
-                if (peek_priority_front(&READY_PRIORITY_QUEUE) != NULL)
-                peek_priority_front(&READY_PRIORITY_QUEUE)->RUNNING_TIME=pcb[running_process_index].REMAINING_TIME; //change running time so queue understand
-            }
-              
-        }
-        } 
-        if (current_running_id == -1 || current_running_id != shortest_id) 
-        
-        {
-            // not shortest running (preemption needed)
-
-            //  stop signal to current running process
-            if (running_process_index != -1) {
-                kill(pcb[running_process_index].process_pid, SIGSTOP);
-                pcb[running_process_index].process_state = Ready;
-                pcb[running_process_index].LAST_EXECUTED_TIME = getClk();
-
-                printf("Preempted process %d\n", pcb[running_process_index].process_id);
-                
-                // Log Stop
-                pFile = fopen("scheduler.log", "a");
-                fprintf(pFile, "At time %-5d process %-5d stopped arr %-5d total %-5d remain %-5d wait %-5d\n",
-                    getClk(), pcb[running_process_index].process_id,
-                    pcb[running_process_index].arrival_time, pcb[running_process_index].RUNNING_TIME,
+        pFile = fopen("scheduler.log", "a");
+        if (pFile) {
+            fprintf(pFile, "At time %-5d process %-5d started arr %-5d total %-5d remain %-5d wait %-5d\n",
+                    current_time, pcb[running_process_index].process_id,
+                    pcb[running_process_index].arrival_time,
+                    pcb[running_process_index].RUNNING_TIME,
                     pcb[running_process_index].REMAINING_TIME,
-                    getClk() - pcb[running_process_index].arrival_time - (pcb[running_process_index].RUNNING_TIME - pcb[running_process_index].REMAINING_TIME));
+                    current_time - pcb[running_process_index].arrival_time);
+            fclose(pFile);
+        }
+    }
+
+    if (running_process_index != -1) {
+        if (pcb[running_process_index].REMAINING_TIME <= 0) {
+
+            pcb[running_process_index].process_state = Finished;
+            pcb[running_process_index].FINISH_TIME = getClk();
+            pcb[running_process_index].is_completed = true;
+            pcb[running_process_index].WAITING_TIME =
+                pcb[running_process_index].FINISH_TIME -
+                pcb[running_process_index].arrival_time -
+                pcb[running_process_index].RUNNING_TIME;
+
+            pFile = fopen("scheduler.log", "a");
+            if (pFile) {
+                fprintf(pFile,
+                        "At time %-5d process %-5d finished arr %-5d total %-5d remain %-5d wait %-5d TA %-5d WTA %.2f\n",
+                        getClk(), pcb[running_process_index].process_id,
+                        pcb[running_process_index].arrival_time,
+                        pcb[running_process_index].RUNNING_TIME,
+                        pcb[running_process_index].REMAINING_TIME,
+                        pcb[running_process_index].WAITING_TIME,
+                        pcb[running_process_index].FINISH_TIME - pcb[running_process_index].arrival_time,
+                        (float)(pcb[running_process_index].FINISH_TIME - pcb[running_process_index].arrival_time) /
+                        pcb[running_process_index].RUNNING_TIME);
                 fclose(pFile);
             }
 
-            // B. Start/Resume the new shortest Process
-            process* shortest_process_node = peek_priority_front(&READY_PRIORITY_QUEUE);
+           WTA[count] = (float)(pcb[running_process_index].FINISH_TIME - pcb[running_process_index].arrival_time) / pcb[running_process_index].RUNNING_TIME;
+            wait_time[count] = pcb[running_process_index].WAITING_TIME;
+            count++;
 
-            if (shortest_process_node->first_time) {
-                // Frist time process needs forking and initialization
-                pcb[process_count].process_id = shortest_process_node->ID;
-                pcb[process_count].arrival_time = shortest_process_node->ARRIVAL_TIME;
-                pcb[process_count].RUNNING_TIME = shortest_process_node->RUNNING_TIME;
-                pcb[process_count].REMAINING_TIME = shortest_process_node->RUNNING_TIME;
-                pcb[process_count].START_TIME = getClk();
-                pcb[process_count].process_state = Running;
-                
-                char str_rem_time[20];
-                sprintf(str_rem_time, "%d", pcb[process_count].RUNNING_TIME);
-                
-                int pid = fork();
-                if (pid == 0) {
-                    execl("./process.out", "./process.out", str_rem_time, NULL);
-                    exit(0);
-                } else {
-                    pcb[process_count].process_pid = pid;
-                    shortest_process_node->first_time = false;
-                    running_process_index = process_count;
-                    process_count++;
-                    
-                    printf("Started new process %d\n", pcb[running_process_index].process_id);
-                    
-                    // Log Start
-                    pFile = fopen("scheduler.log", "a");
-                    fprintf(pFile, "At time %-5d process %-5d started arr %-5d total %-5d remain %-5d wait %-5d\n",
-                        getClk(), pcb[running_process_index].process_id,
-                        pcb[running_process_index].arrival_time, pcb[running_process_index].RUNNING_TIME,
-                        pcb[running_process_index].REMAINING_TIME,
-                        getClk() - pcb[running_process_index].arrival_time);
-                    fclose(pFile);
-                }
-            } else {
-                // RESUME EXISTING PROCESS NO FORKING
-                running_process_index = get_pcb_index(pcb, process_count, shortest_process_node->ID);
-                if (running_process_index != -1) {
+            dequeue_priority(&READY_PRIORITY_QUEUE);
+
+            kill(pcb[running_process_index].process_pid, SIGUSR2);
+
+            remove_pcb(pcb, &process_count, pcb[running_process_index].process_id);
+            finished_process++;
+
+            if (finished_process == total_process)
+                continue;
+
+            if (peek_priority_front(&READY_PRIORITY_QUEUE) != NULL) {
+                running_process_index = get_pcb_index(pcb, process_count, peek_priority_front(&READY_PRIORITY_QUEUE)->ID);
+
+                if (running_process_index != -1 &&pcb[running_process_index].process_state == Ready &&peek_priority_front(&READY_PRIORITY_QUEUE)->first_time!=true) {
+
                     kill(pcb[running_process_index].process_pid, SIGCONT);
                     pcb[running_process_index].process_state = Running;
-                    
-                    printf("Resumed process %d\n", pcb[running_process_index].process_id);
-                    
-                    // Log Resume
+                    pcb[running_process_index].LAST_EXECUTED_TIME = getClk();
+                    pcb[running_process_index].WAITING_TIME =getClk() - pcb[running_process_index].arrival_time -(pcb[running_process_index].RUNNING_TIME - pcb[running_process_index].REMAINING_TIME);
+
                     pFile = fopen("scheduler.log", "a");
-                    fprintf(pFile, "At time %-5d process %-5d resumed arr %-5d total %-5d remain %-5d wait %-5d\n",
-                        getClk(), pcb[running_process_index].process_id,
-                        pcb[running_process_index].arrival_time, pcb[running_process_index].RUNNING_TIME,
-                        pcb[running_process_index].REMAINING_TIME,
-                        getClk() - pcb[running_process_index].arrival_time - (pcb[running_process_index].RUNNING_TIME - pcb[running_process_index].REMAINING_TIME));
-                    fclose(pFile);
+                    if (pFile) {
+                        fprintf(pFile,
+                                "At time %-5d process %-5d resumed arr %-5d total %-5d remain %-5d wait %-5d\n",
+                                getClk(), pcb[running_process_index].process_id,
+                                pcb[running_process_index].arrival_time,
+                                pcb[running_process_index].RUNNING_TIME,
+                                pcb[running_process_index].REMAINING_TIME,
+                                pcb[running_process_index].WAITING_TIME);
+                        fclose(pFile);
+                    }
+
+                } else if (running_process_index != -1 &&pcb[running_process_index].process_state == Ready &&peek_priority_front(&READY_PRIORITY_QUEUE)->first_time) {
+
+                    current_time = getClk();
+                    peek_priority_front(&READY_PRIORITY_QUEUE)->first_time = false;
+
+                    pcb[process_count].arrival_time = peek_priority_front(&READY_PRIORITY_QUEUE)->ARRIVAL_TIME;
+                    pcb[process_count].process_id = peek_priority_front(&READY_PRIORITY_QUEUE)->ID;
+                    pcb[process_count].RUNNING_TIME = peek_priority_front(&READY_PRIORITY_QUEUE)->RUNNING_TIME;
+                    pcb[process_count].REMAINING_TIME = pcb[process_count].RUNNING_TIME;
+                    pcb[process_count].START_TIME = getClk();
+                    pcb[process_count].LAST_EXECUTED_TIME = getClk();
+                    pcb[process_count].process_state = Running;
+                    pcb[process_count].WAITING_TIME = 0;
+
+                    char str_rem_time2[20];
+                    sprintf(str_rem_time2, "%d", pcb[process_count].REMAINING_TIME);
+
+                    int pid = fork();
+                    if (pid == 0) {
+                        execl("./process.out", "./process.out", str_rem_time2, NULL);
+                        exit(1);
+                    }
+
+                    pcb[process_count].process_pid = pid;
+                    running_process_index = process_count;
+                    process_count++;
+
+                    pFile = fopen("scheduler.log", "a");
+                    if (pFile) {
+                        fprintf(pFile, "At time %-5d process %-5d started arr %-5d total %-5d remain %-5d wait %-5d\n",
+                                current_time, pcb[running_process_index].process_id,
+                                pcb[running_process_index].arrival_time,
+                                pcb[running_process_index].RUNNING_TIME,
+                                pcb[running_process_index].REMAINING_TIME,
+                                current_time - pcb[running_process_index].arrival_time);
+                        fclose(pFile);
+                    }
                 }
             }
         }
     }
 }
+
+
+
+
 
         if(selected_Algorithm_NUM==3 && clock_timer!=getClk() ){
 
@@ -701,7 +830,7 @@ int main(int argc, char * argv[])
              if(running_process_index!=-1 && pcb[running_process_index].process_state == Running)
                 pcb[running_process_index].REMAINING_TIME--;
 
-                if(peek_front(&READY_QUEUE)==NULL) continue;
+            if(peek_front(&READY_QUEUE)==NULL) continue;
 
      if(running_process_index!=-1&&pcb[running_process_index].process_state == Running){
                 total_running_times++;
@@ -766,8 +895,8 @@ int main(int argc, char * argv[])
                 }
             } 
 
-            
-           if(running_process_index!=-1)
+            if(running_process_index==-1)
+            continue;
 
             if(running_process_index!=-1 && pcb[running_process_index].process_state == Running){
 
@@ -973,7 +1102,7 @@ int main(int argc, char * argv[])
             pFile=fopen("scheduler.perf", "w");
             if(pFile) {
                 fprintf(pFile, "CPU utilization = %.2f%%\nAvg WTA = %.2f\nAvg Waiting = %.2f\nStd WTA = %.2f\n ", 
-                    ((float)total_running_times/getClk())*100, 
+                    ((float)(total_running_times)/getClk())*100, 
                     AVGWTA, 
                     AVGWAITING,std_dev );
                     fclose(pFile);
@@ -983,6 +1112,9 @@ int main(int argc, char * argv[])
                 total_process=-1;
                 
             }
+
+
+
         }
         
     return 0;
