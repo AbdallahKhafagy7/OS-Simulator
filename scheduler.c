@@ -36,6 +36,7 @@ Done by Omar Syed
 process_queue READY_QUEUE;
 process_priority_queue READY_PRIORITY_QUEUE;
 int TIME_QUANTUM;
+int current_time = 0;
 int pid[max];
 int running_process_index=-1;
 int process_count=0;
@@ -87,6 +88,11 @@ void remove_pcb(PCB*pcb,int *process_count,int process_id){
         pcb[i]=pcb[i+1];
     }
     (*process_count)--;
+}
+
+void scheduler_rr(){
+
+    
 }
 
 /*-----------------------Handler-----------------------*/
@@ -435,19 +441,24 @@ int main(int argc, char * argv[])
 
             clock_timer=getClk();
             printf("Clock Timer : %d \n",clock_timer);
-            if(running_process_index!=-1&&pcb[running_process_index].process_state == Running){
+             if(running_process_index!=-1 && pcb[running_process_index].process_state == Running)
+                pcb[running_process_index].REMAINING_TIME--;
+
+     if(running_process_index!=-1&&pcb[running_process_index].process_state == Running){
                 total_running_time++;
             }
+
              process_Node* temp = READY_QUEUE.front;
-        while(temp != NULL){
-            int index = get_pcb_index(pcb, process_count, temp->Process.ID);
-            if(index != -1 && pcb[index].process_state == Ready) {
-                pcb[index].WAITING_TIME++;
-             }
-            temp = temp->next;
-            if(temp == READY_QUEUE.rear)
-            break;
-            }
+        
+             while(temp != NULL){
+                int index = get_pcb_index(pcb, process_count, temp->Process.ID);
+                if(index != -1 && pcb[index].process_state == Ready) {
+                    pcb[index].WAITING_TIME++;
+                }
+                    temp = temp->next;
+                     if(temp == READY_QUEUE.rear)
+                break;
+                }
             
             if(peek_front(&READY_QUEUE)==NULL) continue;
             //PRINT_READY_QUEUE();
@@ -479,6 +490,7 @@ int main(int argc, char * argv[])
                     perror("Error in execl");
                     exit(1);
                 }
+
                 pcb[process_count].process_pid=pid;
                 running_process_index=process_count;
                 process_count++;
@@ -494,40 +506,39 @@ int main(int argc, char * argv[])
                     fclose(pFile);
                 }
             } 
+
             
-            if(running_process_index!=-1 && pcb[running_process_index].process_state == Running)
-                pcb[running_process_index].REMAINING_TIME--;
+           
 
             if(running_process_index!=-1 && pcb[running_process_index].process_state == Running){
 
                 if(pcb[running_process_index].REMAINING_TIME <= 0){
-                    int finished_id = pcb[running_process_index].process_id;
-                    PCB* finished = &pcb[running_process_index];
                     
-                    waitpid(finished->process_pid, NULL, 0);
-                    finished->process_state = Finished;
-                    finished->FINISH_TIME = getClk();
-                    finished->is_completed = true;
+                    
+                    waitpid(pcb[running_process_index].process_pid, NULL, 0);
+                    pcb[running_process_index].process_state = Finished;
+                    pcb[running_process_index].FINISH_TIME = getClk();
+                    pcb[running_process_index].is_completed = true;
                     
                     pFile = fopen("scheduler.log", "a");
                     if(pFile) {
                         
                         fprintf(pFile, "At time %-5d process %-5d finished arr %-5d total %-5d remain %-5d wait %-5d TA %-5d WTA %.2f\n",
-                                getClk(), finished->process_id,
-                                finished->arrival_time, finished->RUNNING_TIME,
-                                finished->REMAINING_TIME,
-                                getClk() - finished->arrival_time - finished->RUNNING_TIME+1,
-                                finished->FINISH_TIME - finished->arrival_time,
-                                (float)(finished->FINISH_TIME - finished->arrival_time) / finished->RUNNING_TIME);
+                                getClk(), pcb[running_process_index].process_id,
+                                pcb[running_process_index].arrival_time, pcb[running_process_index].RUNNING_TIME,
+                                pcb[running_process_index].REMAINING_TIME,
+                                getClk() - pcb[running_process_index].arrival_time - pcb[running_process_index].RUNNING_TIME,
+                                pcb[running_process_index].FINISH_TIME - pcb[running_process_index].arrival_time,
+                                (float)(pcb[running_process_index].FINISH_TIME - pcb[running_process_index].arrival_time) / pcb[running_process_index].RUNNING_TIME);
                         fclose(pFile);
                     }
                     
-                    WTA[count] = (float)(finished->FINISH_TIME - finished->arrival_time) / finished->RUNNING_TIME;
-                    wait_time[count] = (getClk() - finished->arrival_time - finished->RUNNING_TIME);
+                    WTA[count] = (float)(pcb[running_process_index].FINISH_TIME - pcb[running_process_index].arrival_time) / pcb[running_process_index].RUNNING_TIME;
+                    wait_time[count] = (getClk() - pcb[running_process_index].arrival_time - pcb[running_process_index].RUNNING_TIME);
                     count++;
                     
                     process_Node* temp = dequeue(&READY_QUEUE);
-                    remove_pcb(pcb, &process_count, finished_id);
+                    remove_pcb(pcb, &process_count,pcb[running_process_index].process_id);
                     finished_process++;
                     
                     if(peek_front(&READY_QUEUE) != NULL) {
@@ -671,37 +682,40 @@ int main(int argc, char * argv[])
                     }
                 }
             }
-        }
-    }
+           }
+        
+           
 
         // Generate performance file
         if(finished_process==total_process){
-    int AVGWAITING=0;
-    float AVGWTA = 0;
-    for(int i=0;i<count;i++){
-        AVGWTA+=WTA[i];
-        AVGWAITING+=wait_time[i];
-    }
-    
-
-    for(int i=0;i<count;i++){
-        std_dev_sqr+=pow((WTA[i]-AVGWTA),2);
-    }
-    std_dev_sqr=std_dev_sqr/total_process;
-    float std_dev = sqrt(std_dev_sqr);
-
-    pFile=fopen("scheduler.perf", "w");
-    if(pFile) {
-        fprintf(pFile, "Cpu utilization = %-4f %% \nAvg WTA = %-4f \nAvg Waiting = %-4f \nstd WTA = %-4f \n ", 
-                ((float)total_running_time/getClk())*100, 
-                AVGWTA/total_process, 
-                (float)AVGWAITING/total_process,std_dev );
-        fclose(pFile);
-        printf("\nPerformance File Has Been Generated !\a\n");
-    }
-    finished_process=0;
-    total_process=-1;
-}
+            int AVGWAITING=0;
+            float AVGWTA = 0;
+            for(int i=0;i<count;i++){
+                AVGWTA+=WTA[i];
+                AVGWAITING+=wait_time[i];
+            }
+            
+            
+            for(int i=0;i<count;i++){
+                std_dev_sqr+=pow((WTA[i]-AVGWTA),2);
+            }
+            std_dev_sqr=std_dev_sqr/total_process;
+            float std_dev = sqrt(std_dev_sqr);
+            
+            pFile=fopen("scheduler.perf", "w");
+            if(pFile) {
+                fprintf(pFile, "Cpu utilization = %-4f %% \nAvg WTA = %-4f \nAvg Waiting = %-4f \nstd WTA = %-4f \n ", 
+                    ((float)total_running_time/getClk())*100, 
+                    AVGWTA/total_process, 
+                    (float)AVGWAITING/total_process,std_dev );
+                    fclose(pFile);
+                    printf("\nPerformance File Has Been Generated !\a\n");
+                }
+                finished_process=0;
+                total_process=-1;
+                
+            }
+        }
     
 
     
