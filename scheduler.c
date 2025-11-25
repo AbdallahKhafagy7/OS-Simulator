@@ -466,7 +466,7 @@ int main(int argc, char * argv[])
 
     while(1)
     {
-        int rec_status = msgrcv(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(message_buf),2,IPC_NOWAIT);
+        int rec_status = msgrcv(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(process),2,IPC_NOWAIT);
         total_running_time[running_count]=PROCESS_MESSAGE.p.RUNNING_TIME;
         if(rec_status!=-1)
         {
