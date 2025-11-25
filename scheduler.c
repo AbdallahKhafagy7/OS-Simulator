@@ -450,6 +450,7 @@ int main(int argc, char * argv[])
     //key_t key_sch_process = ftok("keyfile_sch", 'B');
     //MESSAGE_sch_ID = msgget(key_sch_process, 0666|IPC_CREAT);
     //printf("queue id  is: %d\n",MESSAGE_ID);
+    //
     if(MESSAGE_ID==-1){
         printf("Error In Creating Message Queue!\n");
     }
