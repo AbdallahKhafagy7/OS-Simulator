@@ -44,8 +44,7 @@ int main(int agrc, char * argv[])
      //printf("Process finished at time %d\n", getClk());
 
 
-   // printf("Process finished at time %d\n", getClk()); 
-    kill(getppid(),SIGUSR1); //--> youssef cov
+   // printf("Process finished at time %d\n", getClk());  
     destroyClk(false);
     return 0;
 }

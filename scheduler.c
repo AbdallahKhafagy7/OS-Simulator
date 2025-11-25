@@ -20,10 +20,11 @@ int count_pid=-1;
 PCB pcb[max];
 FILE*pFile;
 int * wait_time ;
+int * total_running_time ;
 float * WTA;
+int running_count=0;
 float std_dev_sqr=0;
 int count =0;
-int total_running_time=0;
  int selected_Algorithm_NUM=-1;
  process_queue READY_QUEUE;
  process_priority_queue READY_PRIORITY_QUEUE;
@@ -32,6 +33,7 @@ int total_running_time=0;
  int pid[max];
  int running_process_index=-1;
  int process_count=0;
+ int total_time=0;
 /*
 1-Receive processes
 2-Initialize Queues & PCB
@@ -93,7 +95,10 @@ void remove_pcb(PCB*pcb,int *process_count,int process_id){
     (*process_count)--;
 }
 
+void scheduler_rr(){
 
+    
+}
 
 /*-----------------------Handler-----------------------*/
 void handler(int signum){
@@ -201,6 +206,7 @@ int main(int argc, char * argv[])
     int total_process = atoi(argv[3]);
     wait_time = malloc(sizeof(int)*total_process);
     WTA = malloc(sizeof(float)*total_process);
+    total_running_time = malloc(sizeof(float)*total_process);
     bool new_process= false;
     bool time_moved= false;
     initClk();
@@ -228,6 +234,7 @@ int main(int argc, char * argv[])
     while(1)
     {
         int rec_status = msgrcv(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(message_buf),2,IPC_NOWAIT);
+        total_running_time[running_count]=PROCESS_MESSAGE.p.RUNNING_TIME;
         if(rec_status!=-1)
         {
             switch(selected_Algorithm_NUM) {
@@ -281,7 +288,7 @@ int main(int argc, char * argv[])
                         running_process_index = process_count;
                         process_count++;
 
-                        //Write the log file
+                        //LOG file when start
                         pFile = fopen("scheduler.log", "a");
                         if(pFile) {
                             fprintf(pFile, "At time %-5d process %-5d started arr %-5d total %-5d remain %-5d wait %-5d\n",
@@ -519,6 +526,7 @@ int main(int argc, char * argv[])
                 
                     pcb[running_process_index].process_state = Finished;
                     pcb[running_process_index].FINISH_TIME = getClk();
+                    total_time=getClk();
                     pcb[running_process_index].is_completed = true;
                     pcb[running_process_index].WAITING_TIME=getClk() - pcb[running_process_index].arrival_time - (pcb[running_process_index].RUNNING_TIME - pcb[running_process_index].REMAINING_TIME);
                     pFile = fopen("scheduler.log", "a");
@@ -544,7 +552,11 @@ int main(int argc, char * argv[])
 
                     remove_pcb(pcb, &process_count,pcb[running_process_index].process_id);
                     finished_process++;
-                    
+                    //
+                    if(finished_process==total_process){
+                    continue;
+                }
+                //
                     if(peek_front(&READY_QUEUE) != NULL) {
                         running_process_index = get_pcb_index(pcb, process_count, peek_front(&READY_QUEUE)->Process.ID);
                         
@@ -692,13 +704,17 @@ int main(int argc, char * argv[])
 
         // Generate performance file
         if(finished_process==total_process){
-            int AVGWAITING=0;
+            float AVGWAITING=0;
             float AVGWTA = 0;
+            float running = 0;
             for(int i=0;i<count;i++){
                 AVGWTA+=WTA[i];
                 AVGWAITING+=wait_time[i];
+                running+=total_running_time[i];
             }
             
+            AVGWAITING=AVGWAITING/total_process;
+            AVGWTA=AVGWTA/total_process;
             
             for(int i=0;i<count;i++){
                 std_dev_sqr+=pow((WTA[i]-AVGWTA),2);
@@ -709,9 +725,9 @@ int main(int argc, char * argv[])
             pFile=fopen("scheduler.perf", "w");
             if(pFile) {
                 fprintf(pFile, "Cpu utilization = %-4f %% \nAvg WTA = %-4f \nAvg Waiting = %-4f \nstd WTA = %-4f \n ", 
-                    ((float)total_running_time/getClk())*100, 
-                    AVGWTA/total_process, 
-                    (float)AVGWAITING/total_process,std_dev );
+                    (running/total_time)*100, 
+                    AVGWTA, 
+                    AVGWAITING,std_dev );
                     fclose(pFile);
                     printf("\nPerformance File Has Been Generated !\a\n");
                 }
