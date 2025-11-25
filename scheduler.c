@@ -93,10 +93,7 @@ void remove_pcb(PCB*pcb,int *process_count,int process_id){
     (*process_count)--;
 }
 
-void scheduler_rr(){
 
-    
-}
 
 /*-----------------------Handler-----------------------*/
 void handler(int signum){
@@ -284,7 +281,7 @@ int main(int argc, char * argv[])
                         running_process_index = process_count;
                         process_count++;
 
-                        //LOG file when start
+                        //Write the log file
                         pFile = fopen("scheduler.log", "a");
                         if(pFile) {
                             fprintf(pFile, "At time %-5d process %-5d started arr %-5d total %-5d remain %-5d wait %-5d\n",
