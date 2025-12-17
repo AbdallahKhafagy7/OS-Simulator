@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
-
+typedef short bool;
 // Global memory manager instance
 MemoryManager mem_mgr;
 FILE* memory_log_file;

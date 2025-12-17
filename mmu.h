@@ -1,9 +1,6 @@
 #ifndef MMU_H
 #define MMU_H
-
-#include <stdbool.h>
-#include <stdint.h>
-
+typedef short bool;
 // System Constants
 #define ADDRESS_BITS 10          //10-bit address 
 #define PAGE_SIZE 16             // page size 16-bit
