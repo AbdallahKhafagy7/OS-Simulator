@@ -17,7 +17,7 @@
 #include "Processes_DataStructure/process_priority_queue.h"
 #include "Processes_DataStructure/process_queue.h"
 #include "Processes_DataStructure/process.h"
-
+#include "mmu.h"
 #define max 400
 typedef short bool;
 #define true 1
@@ -51,6 +51,10 @@ struct PCB_struct{
     int quantum_remaining;     // optional for round-robin
     bool is_completed;         // true if finished
     int WAITING_TIME;
+    ProcessPageTable page_table;        // Page table for the process
+    int num_pages;             // Number of pages required
+    int disk_base;             // Base address on disk for this process
+    int limit;                
 }typedef PCB;
 
 

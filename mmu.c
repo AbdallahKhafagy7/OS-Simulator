@@ -1,0 +1,108 @@
+#include "mmu.h"
+#include "headers.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <string.h>
+
+// Global memory manager instance
+MemoryManager mem_mgr;
+FILE* memory_log_file;
+
+/**
+ * Initialize the memory manager
+ * All physical pages start as free
+ */
+void init_memory() {
+    for (int i = 0; i < NUM_PHYSICAL_PAGES; i++) {
+        mem_mgr.pages[i].is_free = true;
+        mem_mgr.pages[i].process_id = -1;
+        mem_mgr.pages[i].virtual_page_number = -1;
+        mem_mgr.pages[i].referenced = false;
+        mem_mgr.pages[i].modified = false;
+    }
+    
+    mem_mgr.free_page_count = NUM_PHYSICAL_PAGES;
+    mem_mgr.clock_pointer = 0;  
+    
+    // Open memory log file
+    memory_log_file = fopen("memory.log", "w");
+    if (memory_log_file == NULL) {
+        perror("Error opening memory.log");
+        exit(1);
+    }
+    
+    fprintf(memory_log_file, "#Memory Management Log\n");
+    fprintf(memory_log_file, "#Format: PageFault/Allocation/Swapping events\n\n");
+    fclose(memory_log_file);
+    
+    printf("Memory Manager initialized: %d pages available\n", NUM_PHYSICAL_PAGES);
+}
+
+int init_process_page_table(PCB* pcb) {
+    pcb->page_table.entries = (PageTableEntry*)calloc(pcb->num_pages, sizeof(PageTableEntry));
+    
+    if (pcb->page_table.entries == NULL) {
+        printf("Error: Failed to allocate page table for process %d\n", pcb->process_id);
+        return -1;
+    }
+    
+    // Initialize all entries 
+    for (int i = 0; i < pcb->num_pages; i++) {
+        pcb->page_table.entries[i].present = false;
+        pcb->page_table.entries[i].modified = false;
+        pcb->page_table.entries[i].referenced = false;
+        pcb->page_table.entries[i].physical_page_number = 0;
+    }
+    
+    pcb->page_table.num_pages = pcb->num_pages;
+    pcb->page_table.disk_base = pcb->disk_base;
+    pcb->page_table.physical_page_number = -1;  
+    
+    printf("Page table initialized for process %d (%d pages)\n", 
+           pcb->process_id, pcb->num_pages);
+    
+    return 0;
+}
+
+//allocate a free page, return its index or -1 if none free
+int allocate_free_page(int process_id, int virtual_page) {
+    for (int i = 0; i < NUM_PHYSICAL_PAGES; i++) {
+        if (mem_mgr.pages[i].is_free) {
+            // Allocate this page
+            mem_mgr.pages[i].is_free = false;
+            mem_mgr.pages[i].process_id = process_id;
+            mem_mgr.pages[i].virtual_page_number = virtual_page;
+            mem_mgr.pages[i].referenced = true;
+            mem_mgr.pages[i].modified = false;
+            mem_mgr.free_page_count--;
+            
+            print_memory_log("Free Physical page %d allocated\n", i);
+            printf("Allocated free page %d for process %d (VP: %d)\n", 
+                   i, process_id, virtual_page);
+            
+            return i;
+        }
+    }
+    
+    return -1;  // No free pages available
+}
+
+//Free all pages belonging to a process
+void free_process_pages(int process_id) {
+    int freed_count = 0;
+    
+    for (int i = 0; i < NUM_PHYSICAL_PAGES; i++) {
+        if (!mem_mgr.pages[i].is_free && mem_mgr.pages[i].process_id == process_id) {
+            mem_mgr.pages[i].is_free = true;
+            mem_mgr.pages[i].process_id = -1;
+            mem_mgr.pages[i].virtual_page_number = -1;
+            mem_mgr.pages[i].referenced = false;
+            mem_mgr.pages[i].modified = false;
+            mem_mgr.free_page_count++;
+            freed_count++;
+        }
+    }
+    
+    printf("Freed %d pages from process %d\n", freed_count, process_id);
+}
