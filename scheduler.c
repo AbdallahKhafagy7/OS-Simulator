@@ -11,7 +11,7 @@
 #include <sys/msg.h>
 #include <sys/types.h>
 #include <unistd.h>
-
+#include "mmu.h"
 /*---------------------------------Omar Syed Final------------------------------------*/
 int MESSAGE_ID;
 //int MESSAGE_sch_ID;
@@ -366,6 +366,7 @@ int main(int argc, char * argv[])
     /*---------------------------Omar Syed------------------------------------*/
 
     //Inititalizations
+    init_memory();
     initialize_queue(&READY_QUEUE);
     initialize_priority_queue(&READY_PRIORITY_QUEUE);
      selected_Algorithm_NUM=atoi(argv[1]);

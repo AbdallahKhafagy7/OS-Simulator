@@ -76,8 +76,6 @@ int allocate_free_page(int process_id, int virtual_page) {
             mem_mgr.pages[i].referenced = true;
             mem_mgr.pages[i].modified = false;
             mem_mgr.free_page_count--;
-            
-            print_memory_log("Free Physical page %d allocated\n", i);
             printf("Allocated free page %d for process %d (VP: %d)\n", 
                    i, process_id, virtual_page);
             

@@ -1,4 +1,3 @@
 #id   arrival    runtime    priority   dependencyId        
-1     11         12         7          -1                  
-2     15         29         9          -1                  
-3     23         21         1          1                   
+1     1          29         6          -1                  
+2     6          17         9          -1                  
