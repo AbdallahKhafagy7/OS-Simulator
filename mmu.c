@@ -6,14 +6,11 @@
 #include <stdarg.h>
 #include <string.h>
 typedef short bool;
-// Global memory manager instance
+
 MemoryManager mem_mgr;
 FILE* memory_log_file;
 
-/**
- * Initialize the memory manager
- * All physical pages start as free
- */
+
 void init_memory() {
     for (int i = 0; i < NUM_PHYSICAL_PAGES; i++) {
         mem_mgr.pages[i].is_free = true;
@@ -25,8 +22,7 @@ void init_memory() {
     
     mem_mgr.free_page_count = NUM_PHYSICAL_PAGES;
     mem_mgr.clock_pointer = 0;  
-    
-    // Open memory log file
+   
     memory_log_file = fopen("memory.log", "w");
     if (memory_log_file == NULL) {
         perror("Error opening memory.log");
@@ -48,7 +44,7 @@ int init_process_page_table(PCB* pcb) {
         return -1;
     }
     
-    // Initialize all entries 
+     
     for (int i = 0; i < pcb->num_pages; i++) {
         pcb->page_table.entries[i].present = false;
         pcb->page_table.entries[i].modified = false;
@@ -66,11 +62,9 @@ int init_process_page_table(PCB* pcb) {
     return 0;
 }
 
-//allocate a free page, return its index or -1 if none free
 int allocate_free_page(int process_id, int virtual_page) {
     for (int i = 0; i < NUM_PHYSICAL_PAGES; i++) {
         if (mem_mgr.pages[i].is_free) {
-            // Allocate this page
             mem_mgr.pages[i].is_free = false;
             mem_mgr.pages[i].process_id = process_id;
             mem_mgr.pages[i].virtual_page_number = virtual_page;
@@ -84,10 +78,10 @@ int allocate_free_page(int process_id, int virtual_page) {
         }
     }
     
-    return -1;  // No free pages available
+    return -1;  
 }
 
-//Free all pages belonging to a process
+
 void free_process_pages(int process_id) {
     int freed_count = 0;
     

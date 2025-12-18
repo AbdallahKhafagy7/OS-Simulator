@@ -28,7 +28,7 @@ typedef short bool;
 #define SHKEY 300
 // struct 
 
-typedef enum { Ready, Running, Finished} state;
+typedef enum { Ready, Running, Finished, Waiting } state;  
 
 typedef char* string;
 
@@ -36,6 +36,8 @@ struct message_buf{
     long msgtype;
     process p;
 }typedef message_buf ;
+
+
 
 struct PCB_struct{
     int process_id;            // ID of the process (from generator)
@@ -53,12 +55,14 @@ struct PCB_struct{
     int quantum_remaining;     // optional for round-robin
     bool is_completed;         // true if finished
     int WAITING_TIME;
-    // for memory management
-    ProcessPageTable page_table;        // Page table for the process
-    int num_pages;             // Number of pages required
-    int disk_base;             // Base address on disk for this process
-    int limit;                
+    ProcessPageTable page_table;
+    request* memory_requests[1000];
+    int num_requests;
+    int num_pages;
+    int disk_base;
+    int limit;             
 }typedef PCB;
+
 
 
 typedef struct PCB_node

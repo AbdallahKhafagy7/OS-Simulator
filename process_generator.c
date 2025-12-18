@@ -57,14 +57,100 @@ int main(int argc, char * argv[])
                 s=fgets(line,2*max,input_File);
                 continue;
             }
-        sscanf(line,"%d %d %d %d %d",&process_list[count].ID,&process_list[count].ARRIVAL_TIME,&process_list[count].RUNNING_TIME,&process_list[count].PRIORITY,&process_list[count].DEPENDENCY_ID);//read int from str
+        sscanf(line,"%d %d %d %d %d %d %d",&process_list[count].ID,&process_list[count].ARRIVAL_TIME,&process_list[count].RUNNING_TIME,&process_list[count].PRIORITY,&process_list[count].DEPENDENCY_ID,&process_list[count].disk_base,&process_list[count].limit);//read int from str
          count++;
         s=fgets(line,2*max,input_File);
     }
         fclose(input_File);
+
+
+        
+   for(int i = 0; i < count; i++) {
+    char filename[50];
+    sprintf(filename, "requests_%d.txt", i+1);
+    
+    FILE* request_file = fopen(filename, "r");
+    if(request_file == NULL) {
+        printf("Warning: Could not open request file %s for process %d\n", filename, i+1);
+        process_list[i].num_requests = 0;
+        process_list[i].current_request = 0;
+        continue;
+    }
+
+    //printf("Reading requests from %s for process %d\n", filename, i+1);
+    
+    char line[200];
+    
+   
+    fgets(line, sizeof(line), request_file);
+    
+   
+    process_list[i].num_requests = 0;
+    process_list[i].current_request = 0;
+    
+    while(fgets(line, sizeof(line), request_file) != NULL) {
+        if(line[0] == '#' || line[0] == '\n' || line[0] == '\r') {
+            continue;
+        }
+        
+        int time;
+        char binary_addr[20];
+        char rw;
+        char* token;
+        char* rest = line;
+
+        token = strtok(rest, " \t\n");
+        if(token == NULL) continue;
+        time = atoi(token);
+        
+        token = strtok(NULL, " \t\n");
+        if(token == NULL) continue;
+        strncpy(binary_addr, token, sizeof(binary_addr)-1);
+        binary_addr[sizeof(binary_addr)-1] = '\0';
+        
+        token = strtok(NULL, " \t\n");
+        if(token == NULL) continue;
+        rw = token[0];
+        
+        int address = 0;
+        for(int bit = 0; bit < 10 && binary_addr[bit] != '\0'; bit++) {
+            if(binary_addr[bit] == '1') {
+                address = (address << 1) | 1;
+            } else if(binary_addr[bit] == '0') {
+                address = address << 1;
+            }
+        }
+
+            int idx = process_list[i].num_requests;
+            process_list[i].memory_requests[idx].time = time;
+            process_list[i].memory_requests[idx].address = address;
+            process_list[i].memory_requests[idx].rw = rw;
+            process_list[i].num_requests++;
+            
+            // printf("  Request %d: time=%d, address=%d (%s), r/w=%c\n", 
+            //        idx+1, time, address, binary_addr, rw);
+    }
+    
+    fclose(request_file);
+ //   printf("  Total requests loaded: %d\n\n", process_list[i].num_requests);
+}
+
+        // for (int i=0; i < count; i++)
+        // {
+        //     printf("process id is %d\n", process_list[i].ID);
+        //     printf("process arrival time is %d\n", process_list[i].ARRIVAL_TIME);
+        //     printf("process running time is %d\n", process_list[i].RUNNING_TIME);
+        //     printf("process priority is %d\n", process_list[i].PRIORITY);
+        //     printf("process dependency id is %d\n", process_list[i].DEPENDENCY_ID);
+        //     printf("process disk base is %d\n", process_list[i].disk_base); 
+        //     printf("process limit is %d\n", process_list[i].limit);
+        //     printf("process num_requests is %d\n", process_list[i].num_requests);
+        //     for(int j=0;j<process_list[i].num_requests;j++){
+        //         printf("    request %d : time %d , address %d , rw %c\n",j,process_list[i].memory_requests[j].time,process_list[i].memory_requests[j].address,process_list[i].memory_requests[j].rw);
+        // }
+        // }
         
         
-        // 2. Ask the user for the chosen scheduling algorithm and its parameters, if there are any.
         
         /*---------------------------Omar Syed------------------------------------*/
         printf("1.HPF\n2.SRTN\n3.RR\n");
@@ -148,7 +234,7 @@ int main(int argc, char * argv[])
                 if(msgsnd(MESSAGE_ID,&PROCESS_MESSAGE,sizeof(process),!IPC_NOWAIT)==-1){
                     printf("Error In Sending Message To Scheduler!\n");
                 }else{
-                //    printf("Process with id %d sent to scheduler at time %d\n",process_list[i].ID,getClk());
+                    //printf("Process with id %d sent to scheduler at time %d\n",process_list[i].limit,getClk());
                     c++;
                     break;
                 }
