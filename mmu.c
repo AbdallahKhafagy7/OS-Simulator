@@ -105,8 +105,32 @@ void print_memory_log(const char* format, ...){
 }
 void load_page_from_disk(int process_id, int virtual_page, int physical_page){}
 void swap_page_to_disk(int process_id, int virtual_page, int physical_page){}
-int second_chance_replacement(int requesting_process_id){}
+int second_chance_replacement() {
+    int victim_frame_index;
+    PhysicalPage* page;
 
+    while (1) {
+        page = &mem_mgr.pages[mem_mgr.clock_pointer];
+
+        if (page->is_free) {
+            mem_mgr.clock_pointer = (mem_mgr.clock_pointer + 1) % NUM_PHYSICAL_PAGES;
+            return mem_mgr.clock_pointer; // free page found
+        }
+
+        if (page->referenced == 1) {
+			mem_mgr.clock_pointer = (mem_mgr.clock_pointer + 1) % NUM_PHYSICAL_PAGES;
+            page->referenced = 0; // second chance
+			continue;
+        }
+
+        if (page->referenced == 0) {
+			victim_frame_index = mem_mgr.clock_pointer; // victim found
+            break;
+        }
+    }
+	mem_mgr.clock_pointer = (mem_mgr.clock_pointer + 1) % NUM_PHYSICAL_PAGES; // increase clock hand for next time
+	return victim_frame_index;
+}
 
 void handle_page_fault(PCB *pcb, int process_Count ,int process_id, int virtual_page, char readwrite_flag) {
     
@@ -161,7 +185,9 @@ void handle_page_fault(PCB *pcb, int process_Count ,int process_id, int virtual_
         victim_frame->modified = (readwrite_flag == 'W') ? true : false;
         victim_frame->is_free = false;
     }
+
     PCB* current_pcb = get_pcb(pcb, process_Count, process_id);
+
     if (current_pcb) {
         PageTableEntry* entry = &current_pcb->page_table.entries[virtual_page];
         

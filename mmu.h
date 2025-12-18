@@ -46,11 +46,22 @@ typedef struct {
     int clock_pointer;                           // For Clock algorithm
 } MemoryManager;
 
+typedef struct {
+    int free;       // 1 = free, 0 = used
+    int pid;        // owning process
+    int vpn;        // virtual page number
+    int ref;        // for Second Chance
+    int dirty;      // modified page
+    int isTable;    // 1 if this frame holds a page table
+} Frame;
+
+
+
 
 
 void init_memory();
 int allocate_free_page(int process_id, int virtual_page);
-int second_chance_replacement(int requesting_process_id);
+int second_chance_replacement();
 void handle_page_fault(struct PCB_struct *pcb, int process_Count ,int process_id, int virtual_page, char readwrite_flag);
 void load_page_from_disk(int process_id, int virtual_page, int physical_page);
 void swap_page_to_disk(int process_id, int virtual_page, int physical_page);
