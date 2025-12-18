@@ -13,6 +13,7 @@ typedef struct process{
     int DEPENDENCY_ID;
     //char* NAME;
     int first_time;
+    
 } process;
 
 #endif //PROCESS_H
