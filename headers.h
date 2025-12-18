@@ -1,6 +1,6 @@
 #ifndef HEADERS_H
 #define HEADERS_H
-#include <stdio.h>      //if you don't use scanf/printf change this include
+#include <stdio.h>    
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/file.h>
@@ -28,7 +28,7 @@ typedef short bool;
 #define SHKEY 300
 // struct 
 
-typedef enum { Ready, Running, Finished} state;
+typedef enum { Ready, Running, Finished, Waiting ,Blocked} state;  
 
 typedef char* string;
 
@@ -36,6 +36,8 @@ struct message_buf{
     long msgtype;
     process p;
 }typedef message_buf ;
+
+
 
 struct PCB_struct{
     int process_id;            // ID of the process (from generator)
@@ -53,11 +55,15 @@ struct PCB_struct{
     int quantum_remaining;     // optional for round-robin
     bool is_completed;         // true if finished
     int WAITING_TIME;
-    ProcessPageTable page_table;        // Page table for the process
-    int num_pages;             // Number of pages required
-    int disk_base;             // Base address on disk for this process
-    int limit;                
+    int blocked_time;
+    ProcessPageTable page_table;
+    request* memory_requests[1000];
+    int num_requests;
+    int num_pages;
+    int disk_base;
+    int limit;             
 }typedef PCB;
+
 
 
 typedef struct PCB_node
@@ -105,8 +111,9 @@ int Remove_PCB(PCB_linked_list* pcb_list, int process_id);
 //     }
 //     return pcb_entry; // Not found
 // }
-
-
+PCB* get_pcb(PCB*pcb,int process_count,int process_id);
+int get_pcb_index(PCB*pcb,int process_count,int process_id);
+void remove_pcb(PCB*pcb,int *process_count,int process_id);
 int get_count_PCB(PCB_linked_list* pcb_list);
 PCB* get_PCB_entry(PCB_linked_list* pcb_list, int process_id);
 

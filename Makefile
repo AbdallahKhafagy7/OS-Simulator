@@ -9,14 +9,14 @@ build:
 	gcc test_generator.c -o test_generator.out 
 	gcc process.c headers.c mmu.c -o process.out
 	gcc process2.c headers.c mmu.c -o process2.out
-	
+
 
 clean:
-	rm -f *.out  processes.txt  scheduler.log scheduler.perf
-	rm -f *.o   processes.txt   scheduler.log scheduler.perf
+	rm -f *.out  *.txt  *.log *.perf
+	rm -f *.o   *.txt   *.log *.perf
 
 all: clean build
 
 run:
 	./test_generator.out 
-	./process_generator.out processes.txt
+	./process_generator.out processes.txt 
