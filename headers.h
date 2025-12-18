@@ -28,7 +28,7 @@ typedef short bool;
 #define SHKEY 300
 // struct 
 
-typedef enum { Ready, Running, Finished, Waiting } state;  
+typedef enum { Ready, Running, Finished, Waiting ,Blocked} state;  
 
 typedef char* string;
 

@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <unistd.h>
+#include "signal.h"
 typedef short bool;
 
 MemoryManager mem_mgr;
@@ -104,7 +106,9 @@ void print_memory_log(const char* format, ...){
 
 }
 void load_page_from_disk(int process_id, int virtual_page, int physical_page){}
+
 void swap_page_to_disk(int process_id, int virtual_page, int physical_page){}
+
 int second_chance_replacement() {
     int victim_frame_index;
     PhysicalPage* page;
@@ -145,6 +149,7 @@ void handle_page_fault(PCB *pcb, int process_Count ,int process_id, int virtual_
     else { // No free page, need to replace
         frame_index = second_chance_replacement(process_id);
         
+        // sigal to process  to block the 10ms until page is loaded
         if (frame_index == -1) {
             printf("Error: MMU failed to find a victim page.\n");
             return;
@@ -202,3 +207,6 @@ void handle_page_fault(PCB *pcb, int process_Count ,int process_id, int virtual_
 
 }
 
+void signal_page_loaded(int PID, int virtual_page) {
+   kill(PID, SIGUSR2);
+}
