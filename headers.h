@@ -1,6 +1,6 @@
 #ifndef HEADERS_H
 #define HEADERS_H
-#include <stdio.h>      //if you don't use scanf/printf change this include
+#include <stdio.h>    
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/file.h>
@@ -110,8 +110,9 @@ int Remove_PCB(PCB_linked_list* pcb_list, int process_id);
 //     }
 //     return pcb_entry; // Not found
 // }
-
-
+PCB* get_pcb(PCB*pcb,int process_count,int process_id);
+int get_pcb_index(PCB*pcb,int process_count,int process_id);
+void remove_pcb(PCB*pcb,int *process_count,int process_id);
 int get_count_PCB(PCB_linked_list* pcb_list);
 PCB* get_PCB_entry(PCB_linked_list* pcb_list, int process_id);
 

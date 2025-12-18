@@ -27,14 +27,14 @@ float * WTA;
 int running_count=0;
 float std_dev_sqr=0;
 int count =0;
- int selected_Algorithm_NUM=-1;
- process_queue READY_QUEUE;
- process_priority_queue READY_PRIORITY_QUEUE;
- int TIME_QUANTUM;
- int current_time = 0;
- int pid[max];
- int running_process_index=-1;
- int process_count=0;
+int selected_Algorithm_NUM=-1;
+process_queue READY_QUEUE;
+process_priority_queue READY_PRIORITY_QUEUE;
+int TIME_QUANTUM;
+int current_time = 0;
+int pid[max];
+int running_process_index=-1;
+int process_count=0;
 /*
 1-Receive processes
 2-Initialize Queues & PCB
@@ -70,31 +70,7 @@ void PRINT_READY_PRIORITY_QUEUE(){
     printf("\n");
 }
 
-PCB* get_pcb(PCB*pcb,int process_count,int process_id){
-    for(int i = 0 ;i<process_count;i++){
-        if(pcb[i].process_id==process_id){
-            return &pcb[i];
-        }
-    }
-    return NULL;
-}
 
-int get_pcb_index(PCB*pcb,int process_count,int process_id){
-    for(int i = 0 ;i<process_count;i++){
-        if(pcb[i].process_id==process_id){
-            return i;
-        }
-    }
-    return -1;
-}
-
-void remove_pcb(PCB*pcb,int *process_count,int process_id){
-    int k= get_pcb_index(pcb,  *process_count,  process_id);
-    for(int i=k;i<*process_count-1;i++){
-        pcb[i]=pcb[i+1];
-    }
-    (*process_count)--;
-}
 
 
 

@@ -75,6 +75,18 @@ typedef struct {
     int page_replacements;
 } MemoryManager;
 
+typedef struct {
+    int free;       // 1 = free, 0 = used
+    int pid;        // owning process
+    int vpn;        // virtual page number
+    int ref;        // for Second Chance
+    int dirty;      // modified page
+    int isTable;    // 1 if this frame holds a page table
+} Frame;
+
+
+
+
 
 void init_memory(void);
 int allocate_free_page(int process_id, int virtual_page);

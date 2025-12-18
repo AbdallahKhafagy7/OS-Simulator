@@ -274,3 +274,28 @@ PCB* get_PCB_entry(PCB_linked_list* pcb_list, int process_id){
     }
     return NULL; // Not found
 }
+PCB* get_pcb(PCB*pcb,int process_count,int process_id){
+    for(int i = 0 ;i<process_count;i++){
+        if(pcb[i].process_id==process_id){
+            return &pcb[i];
+        }
+    }
+    return NULL;
+}
+
+int get_pcb_index(PCB*pcb,int process_count,int process_id){
+    for(int i = 0 ;i<process_count;i++){
+        if(pcb[i].process_id==process_id){
+            return i;
+        }
+    }
+    return -1;
+}
+
+void remove_pcb(PCB*pcb,int *process_count,int process_id){
+    int k= get_pcb_index(pcb,  *process_count,  process_id);
+    for(int i=k;i<*process_count-1;i++){
+        pcb[i]=pcb[i+1];
+    }
+    (*process_count)--;
+}

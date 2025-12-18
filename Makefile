@@ -9,7 +9,7 @@ build:
 	gcc test_generator.c -o test_generator.out 
 	gcc process.c headers.c mmu.c -o process.out
 	gcc process2.c headers.c mmu.c -o process2.out
-	
+
 
 clean:
 	rm -f *.out  *.txt  *.log *.perf
