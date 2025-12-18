@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include <string.h>
 typedef short bool;
+//Omar
 // Global memory manager instance
 MemoryManager mem_mgr;
 FILE* memory_log_file;
