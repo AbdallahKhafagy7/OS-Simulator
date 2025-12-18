@@ -182,23 +182,7 @@ int allocate_free_page(int process_id, int virtual_page) {
     return ppn;
 }
 
-void free_process_pages(int process_id) {
-    int freed_count = 0;
-    
-    for (int i = 0; i < NUM_PHYSICAL_PAGES; i++) {
-        if (!mem_mgr.pages[i].is_free && mem_mgr.pages[i].process_id == process_id) {
-            mem_mgr.pages[i].is_free = true;
-            mem_mgr.pages[i].process_id = -1;
-            mem_mgr.pages[i].virtual_page_number = -1;
-            mem_mgr.pages[i].referenced = false;
-            mem_mgr.pages[i].modified = false;
-            mem_mgr.free_page_count++;
-            freed_count++;
-        }
-    }
-    
-    printf("Freed %d pages from process %d\n", freed_count, process_id);
-}
+
 
 void print_memory_log(const char* format, ...){
 

@@ -55,6 +55,7 @@ struct PCB_struct{
     int quantum_remaining;     // optional for round-robin
     bool is_completed;         // true if finished
     int WAITING_TIME;
+    int blocked_time;
     ProcessPageTable page_table;
     request* memory_requests[1000];
     int num_requests;

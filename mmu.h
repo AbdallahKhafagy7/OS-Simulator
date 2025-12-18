@@ -85,8 +85,8 @@ typedef struct {
 void init_memory(void);
 int allocate_free_page(int process_id, int virtual_page);
 void free_process_pages(int process_id);
-int second_chance_replacement(int requesting_process_id);
-void handle_page_fault(int process_id, int virtual_address, char rw_flag, PCB* pcb);
+int second_chance_replacement();
+void handle_page_fault(PCB *pcb, int process_Count ,int process_id, int virtual_page, char readwrite_flag);
 void load_page_from_disk(int process_id, int virtual_page, int physical_page);
 void swap_page_to_disk(int process_id, int virtual_page, int physical_page);
 int translate_address(int process_id, int virtual_address, PCB* pcb, char rw_flag);

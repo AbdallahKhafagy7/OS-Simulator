@@ -729,14 +729,47 @@ int main(int argc, char * argv[])
 if(selected_Algorithm_NUM == 3 && clock_timer != getClk()) {
     clock_timer = getClk();
     printf("Clock Timer : %d \n", clock_timer);
-    
-   
-    if(running_process_index != -1 && 
-       pcb[running_process_index].process_state == Running && 
-       pcb[running_process_index].REMAINING_TIME > 0) {
-        pcb[running_process_index].REMAINING_TIME--;
-          total_running_times++; 
+    process_Node * temp_process= BLOCKED_QUEUE.front;
+    while(temp_process!=NULL){
+        int index=get_pcb_index(pcb,process_count,temp_process->Process.ID);
+        if(index!=-1&&pcb[index].process_state==Blocked){
+            pcb[index].blocked_time--;
+            if(pcb[index].blocked_time<=0){
+                process_Node* unblocked_process=dequeue(&BLOCKED_QUEUE);
+                enqueue(&READY_QUEUE,unblocked_process->Process);
+                pcb[index].process_state=Ready;
+            }
+        }
+        temp_process=temp_process->next;
+        if(temp_process==BLOCKED_QUEUE.rear->next){
+            break;
+        }
     }
+    
+    if(running_process_index!=-1&&pcb[running_process_index].process_state == Running){ 
+                // IF THIS PROCESS HAS A REQUEST 
+                if (pcb[running_process_index].num_requests > 0) {
+                    request* current_request = pcb[running_process_index].memory_requests[0];
+                    if (current_request->time == getClk()) {
+                        handle_page_fault(pcb,process_count,runningPcb->process_id,0,current_request->rw);
+                        for (int i = 1; i < pcb[running_process_index].num_requests; i++) {
+                            pcb[running_process_index].memory_requests[i - 1] = pcb[running_process_index].memory_requests[i];
+                        }
+                        pcb[running_process_index].num_requests--;
+                        process_Node* process_node = dequeue(&READY_QUEUE);
+                        enqueue(&BLOCKED_QUEUE, process_node->Process);
+                        pcb[running_process_index].process_state = Blocked;
+                        pcb[running_process_index].LAST_EXECUTED_TIME = getClk();
+                        pcb[running_process_index].blocked_time = 10; // BLOCK TIME
+                        kill(pcb[running_process_index].process_pid, SIGSTOP);
+                    }
+                     pcb[running_process_index].REMAINING_TIME--;
+                     total_running_times++;
+                }else{
+                pcb[running_process_index].REMAINING_TIME--;
+                total_running_times++;
+                 }
+            }
     
     
     if(peek_front(&READY_QUEUE) == NULL) {
