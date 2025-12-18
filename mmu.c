@@ -13,6 +13,86 @@ FILE* memory_log_file;
  * Initialize the memory manager
  * All physical pages start as free
  */
+
+    void load_page_from_disk(int process_id, int virtual_page, int physical_page)
+    {
+        int count=0;    
+        PhysicalPage* ppage;
+        int current_pointer=mem_mgr.clock_pointer;
+    while (1){
+
+        if(mem_mgr.pages[mem_mgr.clock_pointer].is_free == false){
+            mem_mgr.clock_pointer = (mem_mgr.clock_pointer + 1) % NUM_PHYSICAL_PAGES;
+            if(mem_mgr.clock_pointer == current_pointer){
+                //all pages are used, should not reach here
+                printf("Error: No free pages available during load_page_from_disk\n");
+                break;
+            }
+        }
+        else{
+            mem_mgr.pages[count].referenced = true;
+            mem_mgr.pages[count].is_free = false;
+            mem_mgr.pages[count].process_id = process_id;
+            mem_mgr.pages[count].virtual_page_number = virtual_page;
+            ppage=&mem_mgr.pages[count];
+            break;
+        }
+
+
+    }
+     if(mem_mgr.clock_pointer == current_pointer){
+
+        
+        swap_page_to_disk(process_id, virtual_page, physical_page);
+        
+
+     }
+        
+
+
+
+    }
+
+
+
+void swap_page_to_disk(int process_id, int virtual_page, int physical_page){
+
+    if(mem_mgr.pages[physical_page].modified == false){
+
+        mem_mgr.pages[physical_page].is_free = true;
+
+        
+        mem_mgr.pages[physical_page].process_id = -1;
+        mem_mgr.free_page_count++;
+
+    }
+    else{
+        //write to disk
+        mem_mgr.pages[physical_page].is_free = true;
+
+        
+        mem_mgr.pages[physical_page].process_id = -1;
+        mem_mgr.free_page_count++;
+
+    }
+
+    
+
+
+}
+
+
+int translate_address(int process_id, int virtual_address){
+
+
+}
+
+
+void print_memory_log(const char* format, ...){}
+
+
+
+
 void init_memory() {
     for (int i = 0; i < NUM_PHYSICAL_PAGES; i++) {
         mem_mgr.pages[i].is_free = true;
