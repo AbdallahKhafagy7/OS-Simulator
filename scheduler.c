@@ -510,7 +510,6 @@ int main(int argc, char * argv[])
                         
                          
                         int pid = fork();
-                        
                         if(pid == 0) {
                             execl("./process.out", "./process.out", str_rem_time, NULL);
                             perror("Error in execl");
@@ -520,6 +519,7 @@ int main(int argc, char * argv[])
                         pcb[process_count].process_pid = pid;
                         running_process_index = process_count;
                         process_count++;
+                        
 
                         //LOG file when start
                         pFile = fopen("scheduler.log", "a");

@@ -295,6 +295,7 @@ void free_process_pages(int process_id, PCB* pcb) {
     
     printf("Freed %d pages from process %d\n", freed_count, process_id);
 }
+
 int init_process_page_table(PCB* pcb) {
     if (pcb->num_pages <= 0) return -1;
     
