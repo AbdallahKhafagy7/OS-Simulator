@@ -135,11 +135,6 @@ void swap_page_to_disk(int process_id, int virtual_page, int physical_page){
 }
 
 
-int translate_address(int process_id, int virtual_address){
-
-
-}
-
 
 void print_memory_log(const char* format, ...){}
 
@@ -263,13 +258,6 @@ int allocate_free_page(int process_id, int virtual_page) {
 }
 
 
-
-void print_memory_log(const char* format, ...){
-
-}
-void load_page_from_disk(int process_id, int virtual_page, int physical_page){}
-
-void swap_page_to_disk(int process_id, int virtual_page, int physical_page){}
 
 int second_chance_replacement() {
     while (1) {
