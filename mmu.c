@@ -305,7 +305,7 @@ int second_chance_replacement() {
     }
 }
 
-int translate_address(int process_id, long virtual_address, PCB* pcb, char rw_flag) {
+int translate_address(int process_id, int virtual_address, PCB* pcb, char rw_flag) {
     int vpn = (virtual_address >> OFFSET_BITS) & 0x3F;
     int offset = virtual_address & 0x0F;
 
@@ -319,11 +319,11 @@ int translate_address(int process_id, long virtual_address, PCB* pcb, char rw_fl
     pte->referenced = true;
     PhysicalPage *frame = &mem_mgr.pages[pte->physical_page_number];
     frame->referenced = true;
-    if (rw_flag == 'w') {
+    if (rw_flag == 'w' || rw_flag == 'W') {
         pte->modified = true;
         frame->modified = true;
     }
-    return (pte->physical_page_number << OFFSET_BITS) | offset; // physical address as decimal
+    return (pte->physical_page_number << OFFSET_BITS) | offset;
 }
 
 void allocate_page_table(PCB *pcb) {
@@ -331,6 +331,27 @@ void allocate_page_table(PCB *pcb) {
 
     if (ppn == -1) {
         ppn = second_chance_replacement();
+
+        if (ppn == -1) {
+            printf("Error: No victim found for page table allocation!\n");
+            return;
+        }
+
+        // --- update victim ---
+        // PhysicalPage *victim = &mem_mgr.pages[ppn];
+        // if (!victim->is_page_table && victim->process_id != -1) {
+        //     PCB *victim_pcb = get_pcb();
+        //     if (victim_pcb) {
+        //         int vpn = victim->virtual_page_number;
+        //         victim_pcb->page_table.entries[vpn].present = false;
+        //         victim_pcb->page_table.entries[vpn].physical_page_number = -1;
+        //     }
+        //     if (victim->modified) {
+        //         swap_page_to_disk(victim->process_id, victim->virtual_page_number, ppn);
+        //         victim->modified = false;
+        //         mem_mgr.disk_writes++;
+        //     }
+        // }
     }
 
     // update ppn for page table
