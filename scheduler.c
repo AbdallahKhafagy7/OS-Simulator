@@ -870,7 +870,7 @@ int main(int argc, char * argv[])
                    pcb[running_process_index].process_state == Running &&
                    pcb[running_process_index].REMAINING_TIME <= 0) { // if process finished
                   
-                  
+                    free_process_pages(running_process_index);
                     pcb[running_process_index].process_state = Finished;
                     pcb[running_process_index].FINISH_TIME = getClk();
                     pcb[running_process_index].is_completed = true;
