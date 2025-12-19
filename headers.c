@@ -1,9 +1,6 @@
 #include "headers.h"
-///==============================
-//don't mess with this variable//
-int * shmaddr;                 //
-//===============================
 
+int * shmaddr;
 
 void INITIALIZE_PCB(PCB* pcb){
     pcb->process_state=Ready;
@@ -15,7 +12,15 @@ void INITIALIZE_PCB(PCB* pcb){
     pcb->process_pid=-1;
     pcb->dependency_id=0;
     pcb->is_completed=false;
+    pcb->STARTED=false;
+    pcb->WAITING_TIME=0;
+    pcb->blocked_time=0;
+    pcb->num_requests=0;
+    pcb->num_pages=0;
+    pcb->disk_base=0;
+    pcb->limit=0;
 }
+
 void INITIALIZE_PCB_Node(PCB_node* pcb_node){
     INITIALIZE_PCB(&pcb_node->PCB_entry);
     pcb_node->next=NULL;
@@ -26,8 +31,6 @@ void INITIALIZE_PCB_Linked_List(PCB_linked_list* pcb_list){
     INITIALIZE_PCB_Node(pcb_list->tail);
     pcb_list->count=0;
 }
-
-
 
 void ADD_PCB(PCB_linked_list* pcb_list, PCB pcb_entry){
     PCB_node* new_node=(PCB_node*)malloc(sizeof(PCB_node));
@@ -53,6 +56,7 @@ void ADD_PCB(PCB_linked_list* pcb_list, PCB pcb_entry){
         return;
     }
 }
+
 int Remove_PCB(PCB_linked_list* pcb_list, int process_id){
     if(pcb_list->head==NULL){
         return -1;
@@ -85,21 +89,16 @@ int Remove_PCB(PCB_linked_list* pcb_list, int process_id){
     return -1;
 }
 
-
-
-// Initialize queue
 void initializePriorityQueue(PcbPriorityQueue* queue) {
     if (!queue) return;
     queue->front = NULL;
     queue->rear = NULL;
 }
 
-// Check if queue is empty
 bool isPriorityQueueEmpty(PcbPriorityQueue* queue) {
     return (!queue || queue->front == NULL);
 }
 
-// Enqueue PCB based on priority (lower number = higher priority)
 bool enqueuePriority(PcbPriorityQueue* queue, PCB* pcb) {
     if (!queue || !pcb) return false;
 
@@ -134,7 +133,6 @@ bool enqueuePriority(PcbPriorityQueue* queue, PCB* pcb) {
     return true;
 }
 
-// Dequeue PCB (highest priority, front of queue)
 PCB* dequeuePriority(PcbPriorityQueue* queue) {
     if (isPriorityQueueEmpty(queue)) return NULL;
 
@@ -146,13 +144,11 @@ PCB* dequeuePriority(PcbPriorityQueue* queue) {
     return pcb;
 }
 
-// Peek at front PCB
 PCB* peekPriorityFront(PcbPriorityQueue* queue) {
     if (isPriorityQueueEmpty(queue)) return NULL;
     return queue->front->pcb;
 }
 
-// Free entire queue
 void freePriorityQueue(PcbPriorityQueue* queue) {
     if (!queue) return;
     PcbNode* current = queue->front;
@@ -199,36 +195,18 @@ bool updatePriority(PcbPriorityQueue* queue, PCB* pcb, int newPriority) {
     if (!queue || !pcb)
         return false;
 
-    // Change the priority in the PCB itself
     pcb->priority = newPriority;
-
-    // Remove from queue if it exists
     removeFromQueue(queue, pcb);
-
-    // Re-insert based on new priority
     return enqueuePriority(queue, pcb);
 }
 
-
-
-
-
-int getClk()
-{
+int getClk() {
     return *shmaddr;
 }
 
-
-/*
- * All process call this function at the beginning to establish communication between them and the clock module.
- * Again, remember that the clock is only emulation!
-*/
-void initClk()
-{
+void initClk() {
     int shmid = shmget(SHKEY, 4, 0444);
-    while ((int)shmid == -1)
-    {
-        //Make sure that the clock exists
+    while ((int)shmid == -1) {
         printf("Wait! The clock not initialized yet!\n");
         sleep(1);
         shmid = shmget(SHKEY, 4, 0444);
@@ -236,32 +214,20 @@ void initClk()
     shmaddr = (int *) shmat(shmid, (void *)0, 0);
 }
 
-
-/*
- * All process call this function at the end to release the communication
- * resources between them and the clock module.
- * Again, Remember that the clock is only emulation!
- * Input: terminateAll: a flag to indicate whether that this is the end of simulation.
- *                      It terminates the whole system and releases resources.
-*/
-
-void destroyClk(bool terminateAll)
-{
+void destroyClk(bool terminateAll) {
     shmdt(shmaddr);
-    if (terminateAll)
-    {
+    if (terminateAll) {
         killpg(getpgrp(), SIGINT);
     }
 }
 
-
-
 int get_count_PCB(PCB_linked_list* pcb_list){
     return pcb_list->count;
 }
+
 PCB* get_PCB_entry(PCB_linked_list* pcb_list, int process_id){
     if(pcb_list->head==NULL){
-        return NULL; // Empty list
+        return NULL;
     }
 
     PCB_node* current=pcb_list->head;
@@ -272,30 +238,34 @@ PCB* get_PCB_entry(PCB_linked_list* pcb_list, int process_id){
         }
         current=current->next;
     }
-    return NULL; // Not found
+    return NULL;
 }
-PCB* get_pcb(PCB*pcb,int process_count,int process_id){
-    for(int i = 0 ;i<process_count;i++){
-        if(pcb[i].process_id==process_id){
-            return &pcb[i];
+
+// FIXED: This function was searching in PCB array, not linked list
+PCB* get_pcb(PCB* pcb_array, int process_count, int process_id){
+    for(int i = 0; i < process_count; i++){
+        if(pcb_array[i].process_id == process_id){
+            return &pcb_array[i];
         }
     }
     return NULL;
 }
 
-int get_pcb_index(PCB*pcb,int process_count,int process_id){
-    for(int i = 0 ;i<process_count;i++){
-        if(pcb[i].process_id==process_id){
+int get_pcb_index(PCB* pcb_array, int process_count, int process_id){
+    for(int i = 0; i < process_count; i++){
+        if(pcb_array[i].process_id == process_id){
             return i;
         }
     }
     return -1;
 }
 
-void remove_pcb(PCB*pcb,int *process_count,int process_id){
-    int k= get_pcb_index(pcb,  *process_count,  process_id);
-    for(int i=k;i<*process_count-1;i++){
-        pcb[i]=pcb[i+1];
+void remove_pcb(PCB* pcb_array, int *process_count, int process_id){
+    int k = get_pcb_index(pcb_array, *process_count, process_id);
+    if(k == -1) return;
+    
+    for(int i = k; i < *process_count - 1; i++){
+        pcb_array[i] = pcb_array[i + 1];
     }
     (*process_count)--;
 }
