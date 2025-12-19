@@ -305,6 +305,27 @@ int second_chance_replacement() {
     }
 }
 
+int translate_address(int process_id, long virtual_address, PCB* pcb, char rw_flag) {
+    int vpn = (virtual_address >> OFFSET_BITS) & 0x3F;
+    int offset = virtual_address & 0x0F;
+
+    if (vpn >= pcb->page_table.num_pages) return -1;
+
+    PageTableEntry *pte = &pcb->page_table.entries[vpn];
+
+    if (!pte->present) return -1;
+
+    // update ref and modified
+    pte->referenced = true;
+    PhysicalPage *frame = &mem_mgr.pages[pte->physical_page_number];
+    frame->referenced = true;
+    if (rw_flag == 'W') {
+        pte->modified = true;
+        frame->modified = true;
+    }
+    return (pte->physical_page_number << OFFSET_BITS) | offset; // physical address as decimal
+}
+
 void handle_page_fault(PCB *pcb, int process_Count ,int process_id, int virtual_page, char readwrite_flag) {
     
     // 1. Try to get a free page first
