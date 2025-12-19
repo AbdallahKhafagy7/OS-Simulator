@@ -319,11 +319,32 @@ int translate_address(int process_id, long virtual_address, PCB* pcb, char rw_fl
     pte->referenced = true;
     PhysicalPage *frame = &mem_mgr.pages[pte->physical_page_number];
     frame->referenced = true;
-    if (rw_flag == 'W') {
+    if (rw_flag == 'w') {
         pte->modified = true;
         frame->modified = true;
     }
     return (pte->physical_page_number << OFFSET_BITS) | offset; // physical address as decimal
+}
+
+void allocate_page_table(PCB *pcb) {
+    int ppn = allocate_free_page(pcb->process_id, -1);
+
+    if (ppn == -1) {
+        ppn = second_chance_replacement();
+    }
+
+    // update ppn for page table
+    pcb->page_table.physical_page_number = ppn;
+
+    // update physical page for page table
+    PhysicalPage *page = &mem_mgr.pages[ppn];
+    page->is_free = false;
+    page->process_id = pcb->process_id;
+    page->virtual_page_number = -1;
+    page->is_page_table = true;
+    page->referenced = false;
+    page->modified = false;
+    page->locked = false;
 }
 
 void handle_page_fault(PCB *pcb, int process_Count ,int process_id, int virtual_page, char readwrite_flag) {
