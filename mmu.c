@@ -244,7 +244,7 @@ int init_process_page_table(PCB* pcb) {
         pcb->page_table.entries[i].present = false;
         pcb->page_table.entries[i].modified = false;
         pcb->page_table.entries[i].referenced = false;
-        pcb->page_table.entries[i].physical_page_number = 0;
+        pcb->page_table.entries[i].physical_page_number = -1;
     }
     
     pcb->page_table.num_pages = pcb->num_pages;
@@ -326,7 +326,7 @@ int translate_address(int process_id, int virtual_address, PCB* pcb, char rw_fla
     pte->referenced = true;
     PhysicalPage *frame = &mem_mgr.pages[pte->physical_page_number];
     frame->referenced = true;
-    if (rw_flag == 'w' || rw_flag == 'W') {
+    if (rw_flag == 'w') {
         pte->modified = true;
         frame->modified = true;
     }
