@@ -135,13 +135,6 @@ void swap_page_to_disk(int process_id, int virtual_page, int physical_page){
 
 }
 
-
-int translate_address(int process_id, int virtual_address){
-
-
-}
-
-
 void print_memory_log(const char* format, ...) {
     memory_log_file = fopen("memory.log", "a");
     if (memory_log_file == NULL) {
