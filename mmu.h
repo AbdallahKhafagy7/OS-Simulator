@@ -76,7 +76,7 @@ typedef struct {
 int Request(PCB* pcb,int process_cpunt ,int process_id,int virtual_page,char readwrite_flag);
 void init_memory(void);
 int allocate_free_page(int process_id, int virtual_page);
-void free_process_pages(int process_id);
+void free_process_pages(int process_id, PCB* pcb);
 int second_chance_replacement();
 void allocate_page_table(PCB *pcb);
 int translate_address(int process_id, int virtual_address, PCB* pcb, char rw_flag);
