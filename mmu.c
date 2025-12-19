@@ -66,6 +66,86 @@ void print_free_list() {
     printf("(Total: %d pages)\n", count);
 }
 
+
+    void load_page_from_disk(int process_id, int virtual_page, int physical_page)
+    {
+        int count=0;    
+        PhysicalPage* ppage;
+        int current_pointer=mem_mgr.clock_pointer;
+    while (1){
+
+        if(mem_mgr.pages[mem_mgr.clock_pointer].is_free == false){
+            mem_mgr.clock_pointer = (mem_mgr.clock_pointer + 1) % NUM_PHYSICAL_PAGES;
+            if(mem_mgr.clock_pointer == current_pointer){
+                //all pages are used, should not reach here
+                printf("Error: No free pages available during load_page_from_disk\n");
+                break;
+            }
+        }
+        else{
+            mem_mgr.pages[count].referenced = true;
+            mem_mgr.pages[count].is_free = false;
+            mem_mgr.pages[count].process_id = process_id;
+            mem_mgr.pages[count].virtual_page_number = virtual_page;
+            ppage=&mem_mgr.pages[count];
+            break;
+        }
+
+
+    }
+     if(mem_mgr.clock_pointer == current_pointer){
+
+        
+        swap_page_to_disk(process_id, virtual_page, physical_page);
+        
+
+     }
+        
+
+
+
+    }
+
+
+
+void swap_page_to_disk(int process_id, int virtual_page, int physical_page){
+
+    if(mem_mgr.pages[physical_page].modified == false){
+
+        mem_mgr.pages[physical_page].is_free = true;
+
+        
+        mem_mgr.pages[physical_page].process_id = -1;
+        mem_mgr.free_page_count++;
+
+    }
+    else{
+        //write to disk
+        mem_mgr.pages[physical_page].is_free = true;
+
+        
+        mem_mgr.pages[physical_page].process_id = -1;
+        mem_mgr.free_page_count++;
+
+    }
+
+    
+
+
+}
+
+
+int translate_address(int process_id, int virtual_address){
+
+
+}
+
+
+void print_memory_log(const char* format, ...){}
+
+
+
+
 void init_memory() {
     for (int i = 0; i < NUM_PHYSICAL_PAGES; i++) {
         mem_mgr.pages[i].is_free = true;
@@ -192,30 +272,100 @@ void load_page_from_disk(int process_id, int virtual_page, int physical_page){}
 void swap_page_to_disk(int process_id, int virtual_page, int physical_page){}
 
 int second_chance_replacement() {
-    int victim_frame_index;
-    PhysicalPage* page;
-
     while (1) {
-        page = &mem_mgr.pages[mem_mgr.clock_pointer];
+        PhysicalPage *page = &mem_mgr.pages[mem_mgr.clock_pointer];
 
         if (page->is_free) {
             mem_mgr.clock_pointer = (mem_mgr.clock_pointer + 1) % NUM_PHYSICAL_PAGES;
-            return mem_mgr.clock_pointer; // free page found
+            continue;
         }
 
-        if (page->referenced == 1) {
-			mem_mgr.clock_pointer = (mem_mgr.clock_pointer + 1) % NUM_PHYSICAL_PAGES;
-            page->referenced = 0; // second chance
-			continue;
+        if (page->is_page_table) {
+            mem_mgr.clock_pointer = (mem_mgr.clock_pointer + 1) % NUM_PHYSICAL_PAGES;
+            continue;
         }
 
-        if (page->referenced == 0) {
-			victim_frame_index = mem_mgr.clock_pointer; // victim found
-            break;
+        if (page->locked) {
+            mem_mgr.clock_pointer = (mem_mgr.clock_pointer + 1) % NUM_PHYSICAL_PAGES;
+            continue;
         }
+
+        if (page->referenced) {
+            page->referenced = false;
+            mem_mgr.clock_pointer = (mem_mgr.clock_pointer + 1) % NUM_PHYSICAL_PAGES;
+            continue;
+        }
+
+        int victim = mem_mgr.clock_pointer;
+
+        mem_mgr.clock_pointer = (mem_mgr.clock_pointer + 1) % NUM_PHYSICAL_PAGES;
+
+        mem_mgr.page_replacements++;
+        return victim;
     }
-	mem_mgr.clock_pointer = (mem_mgr.clock_pointer + 1) % NUM_PHYSICAL_PAGES; // increase clock hand for next time
-	return victim_frame_index;
+}
+
+int translate_address(int process_id, int virtual_address, PCB* pcb, char rw_flag) {
+    int vpn = (virtual_address >> OFFSET_BITS) & 0x3F;
+    int offset = virtual_address & 0x0F;
+
+    if (vpn >= pcb->page_table.num_pages) return -1;
+
+    PageTableEntry *pte = &pcb->page_table.entries[vpn];
+
+    if (!pte->present) return -1;
+
+    // update ref and modified
+    pte->referenced = true;
+    PhysicalPage *frame = &mem_mgr.pages[pte->physical_page_number];
+    frame->referenced = true;
+    if (rw_flag == 'w' || rw_flag == 'W') {
+        pte->modified = true;
+        frame->modified = true;
+    }
+    return (pte->physical_page_number << OFFSET_BITS) | offset;
+}
+
+void allocate_page_table(PCB *pcb) {
+    int ppn = allocate_free_page(pcb->process_id, -1);
+
+    if (ppn == -1) {
+        ppn = second_chance_replacement();
+
+        if (ppn == -1) {
+            printf("Error: No victim found for page table allocation!\n");
+            return;
+        }
+
+        // --- update victim ---
+        // PhysicalPage *victim = &mem_mgr.pages[ppn];
+        // if (!victim->is_page_table && victim->process_id != -1) {
+        //     PCB *victim_pcb = get_pcb();
+        //     if (victim_pcb) {
+        //         int vpn = victim->virtual_page_number;
+        //         victim_pcb->page_table.entries[vpn].present = false;
+        //         victim_pcb->page_table.entries[vpn].physical_page_number = -1;
+        //     }
+        //     if (victim->modified) {
+        //         swap_page_to_disk(victim->process_id, victim->virtual_page_number, ppn);
+        //         victim->modified = false;
+        //         mem_mgr.disk_writes++;
+        //     }
+        // }
+    }
+
+    // update ppn for page table
+    pcb->page_table.physical_page_number = ppn;
+
+    // update physical page for page table
+    PhysicalPage *page = &mem_mgr.pages[ppn];
+    page->is_free = false;
+    page->process_id = pcb->process_id;
+    page->virtual_page_number = -1;
+    page->is_page_table = true;
+    page->referenced = false;
+    page->modified = false;
+    page->locked = false;
 }
 
 void handle_page_fault(PCB *pcb, int process_Count ,int process_id, int virtual_page, char readwrite_flag) {

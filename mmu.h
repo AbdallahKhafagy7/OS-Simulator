@@ -27,11 +27,12 @@ typedef struct {
 
 typedef struct {
     bool is_free;                // Is this frame free?
-    int process_id;              //  process ID
+    int process_id;              // process ID
     int virtual_page_number;     // Virtual page number mapped here
     bool referenced;             // Reference bit 
     bool modified;               // Dirty bit
     bool locked;                 // Locked for I/O (cannot be evicted)
+    bool is_page_table;
 } PhysicalPage;
 
 
@@ -69,15 +70,6 @@ typedef struct {
     int page_replacements;
 } MemoryManager;
 
-typedef struct {
-    int free;       // 1 = free, 0 = used
-    int pid;        // owning process
-    int vpn;        // virtual page number
-    int ref;        // for Second Chance
-    int dirty;      // modified page
-    int isTable;    // 1 if this frame holds a page table
-} Frame;
-
 
 
 
@@ -86,10 +78,11 @@ void init_memory(void);
 int allocate_free_page(int process_id, int virtual_page);
 void free_process_pages(int process_id);
 int second_chance_replacement();
+void allocate_page_table(PCB *pcb);
+int translate_address(int process_id, int virtual_address, PCB* pcb, char rw_flag);
 void handle_page_fault(PCB *pcb, int process_Count ,int process_id, int virtual_page, char readwrite_flag);
 void load_page_from_disk(int process_id, int virtual_page, int physical_page);
 void swap_page_to_disk(int process_id, int virtual_page, int physical_page);
-int translate_address(int process_id, int virtual_address, PCB* pcb, char rw_flag);
 void update_disk_operations(int current_time);
 bool is_page_in_disk_queue(int process_id, int virtual_page);
 void print_memory_log(const char* format, ...);
