@@ -25,6 +25,8 @@ void init_free_list() {
     printf("Free list initialized with %d pages\n", NUM_PHYSICAL_PAGES);
 }
 
+
+
 void add_to_free_list(int page_number) {
     FreePageNode* node = (FreePageNode*)malloc(sizeof(FreePageNode));
     if (node == NULL) {
@@ -134,9 +136,6 @@ void swap_page_to_disk(int process_id, int virtual_page, int physical_page){
 
 
 }
-
-
-
 
 
 void print_memory_log(const char* format, ...) {
