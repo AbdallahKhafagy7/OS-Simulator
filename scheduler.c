@@ -824,7 +824,6 @@ int main(int argc, char * argv[])
                     pcb[process_count].process_state = Blocked;
                     pcb[process_count].blocked_time = 10; 
 
-                    // IMPORTANT: Commit this process to the PCB array so the system tracks it
                     running_process_index = process_count;
                     process_count++; 
                 } 
@@ -863,38 +862,38 @@ int main(int argc, char * argv[])
             }
     
   
-    if(running_process_index == -1) // if there are no ready processes
-        continue;
+                if(running_process_index == -1) // if there are no ready processes
+                continue;
     
    
-    if(running_process_index != -1 && 
-       pcb[running_process_index].process_state == Running &&
-       pcb[running_process_index].REMAINING_TIME <= 0) { // if process finished
-        
-      
-        pcb[running_process_index].process_state = Finished;
-        pcb[running_process_index].FINISH_TIME = getClk();
-        pcb[running_process_index].is_completed = true;
-        pcb[running_process_index].REMAINING_TIME = 0; 
-        
-       
-        int turnaround_time = pcb[running_process_index].FINISH_TIME - 
-                              pcb[running_process_index].arrival_time;
-        float wta = (float)turnaround_time / pcb[running_process_index].RUNNING_TIME;
-        
-       
-        pFile = fopen("scheduler.log", "a");
-        if(pFile) {
-            fprintf(pFile, "At time %-5d process %-5d finished arr %-5d total %-5d remain %-5d wait %-5d TA %-5d WTA %.2f\n",
-                    getClk(), pcb[running_process_index].process_id,
-                    pcb[running_process_index].arrival_time,
-                    pcb[running_process_index].RUNNING_TIME,
-                    pcb[running_process_index].REMAINING_TIME,
-                    pcb[running_process_index].WAITING_TIME,
-                    turnaround_time,
-                    wta);
-            fclose(pFile);
-        }
+                if(running_process_index != -1 && 
+                   pcb[running_process_index].process_state == Running &&
+                   pcb[running_process_index].REMAINING_TIME <= 0) { // if process finished
+                  
+                  
+                    pcb[running_process_index].process_state = Finished;
+                    pcb[running_process_index].FINISH_TIME = getClk();
+                    pcb[running_process_index].is_completed = true;
+                    pcb[running_process_index].REMAINING_TIME = 0; 
+                  
+                  
+                    int turnaround_time = pcb[running_process_index].FINISH_TIME - 
+                                          pcb[running_process_index].arrival_time;
+                    float wta = (float)turnaround_time / pcb[running_process_index].RUNNING_TIME;
+                  
+                  
+                    pFile = fopen("scheduler.log", "a");
+                    if(pFile) {
+                        fprintf(pFile, "At time %-5d process %-5d finished arr %-5d total %-5d remain %-5d wait %-5d TA %-5d WTA %.2f\n",
+                                getClk(), pcb[running_process_index].process_id,
+                                pcb[running_process_index].arrival_time,
+                                pcb[running_process_index].RUNNING_TIME,
+                                pcb[running_process_index].REMAINING_TIME,
+                                pcb[running_process_index].WAITING_TIME,
+                                turnaround_time,
+                                wta);
+                        fclose(pFile);
+                    }
         
         
         WTA[count] = wta;
