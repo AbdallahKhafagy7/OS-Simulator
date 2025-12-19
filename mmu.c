@@ -193,18 +193,29 @@ void init_memory() {
 }
 
 
-void free_process_pages(int process_id) {
+void free_process_pages(int process_id, PCB* pcb) {
     int freed_count = 0;
     
     printf("\n=== Freeing pages for process %d ===\n", process_id);
     
     for (int i = 0; i < NUM_PHYSICAL_PAGES; i++) {
         if (!mem_mgr.pages[i].is_free && mem_mgr.pages[i].process_id == process_id) {
-            printf("Freeing page %d (VP: %d)\n", i, mem_mgr.pages[i].virtual_page_number);
+           int vpn = mem_mgr.pages[i].virtual_page_number;
+            printf("Freeing page %d (VP: %d)\n", i, vpn);
             if (mem_mgr.pages[i].modified) {
                 printf("Writing modified page %d to disk before freeing\n", i);
-                swap_page_to_disk(process_id, mem_mgr.pages[i].virtual_page_number, i);
-            }            
+                swap_page_to_disk(process_id, vpn, i);
+            }
+
+            //update page table entry
+           if (vpn >= 0 && vpn < MAX_VIRTUAL_PAGES) {
+                PageTableEntry* entry = &pcb->page_table.entries[vpn];
+                entry->present = false;
+                entry->physical_page_number = -1;
+            } else {
+                printf("Error: Frame %d had invalid VPN %d\n", i, vpn);
+            }
+
             mem_mgr.pages[i].is_free = true;
             mem_mgr.pages[i].process_id = -1;
             mem_mgr.pages[i].virtual_page_number = -1;
@@ -214,6 +225,7 @@ void free_process_pages(int process_id) {
             
             
             add_to_free_list(i);
+            
             
             mem_mgr.free_page_count++;
             freed_count++;
