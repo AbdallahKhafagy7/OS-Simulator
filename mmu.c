@@ -226,7 +226,7 @@ void free_process_pages(int process_id, PCB* pcb) {
             
             add_to_free_list(i);
             
-            
+
             mem_mgr.free_page_count++;
             freed_count++;
         }
