@@ -93,6 +93,9 @@ void print_memory_log(const char* format, ...);
 void print_memory_status(void);
 int init_process_page_table(PCB* pcb);
 int remove_from_free_list();
+int allocate_process_page_table(PCB *pcb);
+// Add this line with other function declarations:
+int allocate_process_page_table(PCB *pcb);
 
 static inline int get_vpn(int virtual_address) {
     return virtual_address >> OFFSET_BITS;
