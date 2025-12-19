@@ -7,6 +7,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "signal.h"
+#include <stdarg.h>
 typedef short bool;
 
 MemoryManager mem_mgr;
@@ -141,8 +142,21 @@ int translate_address(int process_id, int virtual_address){
 }
 
 
-void print_memory_log(const char* format, ...){}
+void print_memory_log(const char* format, ...) {
+    memory_log_file = fopen("memory.log", "a");
+    if (memory_log_file == NULL) {
+        perror("Error opening memory.log");
+        return;
+    }
 
+    va_list args;
+    va_start(args, format);
+
+    vfprintf(memory_log_file, format, args);
+
+    va_end(args);
+    fclose(memory_log_file);
+}
 
 
 
@@ -264,12 +278,8 @@ int allocate_free_page(int process_id, int virtual_page) {
 
 
 
-void print_memory_log(const char* format, ...){
 
-}
-void load_page_from_disk(int process_id, int virtual_page, int physical_page){}
 
-void swap_page_to_disk(int process_id, int virtual_page, int physical_page){}
 
 int second_chance_replacement() {
     while (1) {
@@ -452,6 +462,6 @@ int Request(PCB* pcb,int process_cpunt ,int process_id,int virtual_page,char rea
         }
     }
     print_memory_log("Page fault occurred for process %d on virtual page %d\n", process_id, virtual_page);
-    handle_page_fault(&pcb,process_cpunt,process_id,virtual_page,readwrite_flag);
+    handle_page_fault(pcb,process_cpunt,process_id,virtual_page,readwrite_flag);
     return 1; // for page fault
 }
