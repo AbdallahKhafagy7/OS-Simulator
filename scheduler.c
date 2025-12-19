@@ -750,10 +750,10 @@ int main(int argc, char * argv[])
                 // IF THIS PROCESS HAS A REQUEST 
                 if (pcb[running_process_index].num_requests > 0) 
                 {
-                    request* current_request = pcb[running_process_index].memory_requests[0];
-                    if (current_request->time == getClk()) {
-                        int Virtual_page = get_vpn(current_request->address);
-                        int k = Request(pcb,process_count,pcb[running_process_index].process_id,Virtual_page,current_request->rw);
+                    request current_request = pcb[running_process_index].memory_requests[0];
+                    if (current_request.time == getClk()) {
+                        int Virtual_page = get_vpn(current_request.address);
+                        int k = Request(pcb,process_count,pcb[running_process_index].process_id,Virtual_page,current_request.rw);
                         for (int i = 1; i < pcb[running_process_index].num_requests; i++) {
                             pcb[running_process_index].memory_requests[i - 1] = pcb[running_process_index].memory_requests[i];
                         }
