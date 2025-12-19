@@ -1019,6 +1019,7 @@ int main(int argc, char * argv[])
                 
                 process* proc = &peek_front(&READY_QUEUE)->Process;
                 
+                
                 pcb[process_count].process_id = proc->ID;
                 pcb[process_count].arrival_time = proc->ARRIVAL_TIME;
                 pcb[process_count].RUNNING_TIME = proc->RUNNING_TIME;
@@ -1027,6 +1028,7 @@ int main(int argc, char * argv[])
                 pcb[process_count].START_TIME = getClk(); // Note: Actual start might be delayed if blocked
                 pcb[process_count].LAST_EXECUTED_TIME = getClk();
                 
+                init_process_page_table(&pcb[process_count]);
                 
                 int page_fault = Request(pcb, process_count, pcb[process_count].process_id, 0, 'R');
                 
@@ -1076,7 +1078,8 @@ int main(int argc, char * argv[])
             else if(running_process_index != -1 && 
                     pcb[running_process_index].REMAINING_TIME > 0) {                
                 if (pcb[running_process_index].num_requests > 0) {
-                    int page_fault = Request(pcb, process_count, pcb[running_process_index].process_id, 0, 'R');
+                    int Virtual_page = get_vpn(pcb[running_process_index].memory_requests[0]->address);
+                    int page_fault = Request(pcb, process_count, pcb[running_process_index].process_id, Virtual_page, 'R');
                     if (page_fault == 1) {
                         process_Node* process_node = dequeue(&READY_QUEUE);
                         enqueue(&BLOCKED_QUEUE, process_node->Process);
@@ -1086,9 +1089,9 @@ int main(int argc, char * argv[])
                 else
                 {
                                     
-                    kill(pcb[running_process_index].process_pid, SIGCONT);
-                    pcb[running_process_index].LAST_EXECUTED_TIME = getClk();
-                    pcb[running_process_index].process_state = Running;
+                        kill(pcb[running_process_index].process_pid, SIGCONT);
+                        pcb[running_process_index].LAST_EXECUTED_TIME = getClk();
+                        pcb[running_process_index].process_state = Running;
                     pFile = fopen("scheduler.log", "a");
                     if(pFile) {
                         fprintf(pFile, "At time %-5d process %-5d resumed arr %-5d total %-5d remain %-5d wait %-5d\n",
