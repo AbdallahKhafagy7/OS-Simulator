@@ -201,8 +201,10 @@ void free_process_pages(int process_id) {
     for (int i = 0; i < NUM_PHYSICAL_PAGES; i++) {
         if (!mem_mgr.pages[i].is_free && mem_mgr.pages[i].process_id == process_id) {
             printf("Freeing page %d (VP: %d)\n", i, mem_mgr.pages[i].virtual_page_number);
-            
-            
+            if (mem_mgr.pages[i].modified) {
+                printf("Writing modified page %d to disk before freeing\n", i);
+                swap_page_to_disk(process_id, mem_mgr.pages[i].virtual_page_number, i);
+            }            
             mem_mgr.pages[i].is_free = true;
             mem_mgr.pages[i].process_id = -1;
             mem_mgr.pages[i].virtual_page_number = -1;
