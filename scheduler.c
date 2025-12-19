@@ -496,7 +496,7 @@ int main(int argc, char * argv[])
                         current_time = getClk();
                         peek_front(&READY_QUEUE)->Process.first_time = false;
                         
-                        
+               
                         pcb[process_count].arrival_time = peek_front(&READY_QUEUE)->Process.ARRIVAL_TIME;
                         pcb[process_count].process_id = peek_front(&READY_QUEUE)->Process.ID;
                         pcb[process_count].RUNNING_TIME = peek_front(&READY_QUEUE)->Process.RUNNING_TIME;
