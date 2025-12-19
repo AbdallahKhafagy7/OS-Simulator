@@ -81,7 +81,7 @@ typedef struct {
 
 
 
-
+int Request(PCB* pcb,int process_cpunt ,int process_id,int virtual_page,char readwrite_flag);
 void init_memory(void);
 int allocate_free_page(int process_id, int virtual_page);
 void free_process_pages(int process_id);

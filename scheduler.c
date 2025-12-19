@@ -730,7 +730,7 @@ if(selected_Algorithm_NUM == 3 && clock_timer != getClk()) {
     clock_timer = getClk();
     printf("Clock Timer : %d \n", clock_timer);
     process_Node * temp_process= BLOCKED_QUEUE.front;
-    while(temp_process!=NULL){
+    while(temp_process!=NULL){ // increamting time for blocked processes     
         int index=get_pcb_index(pcb,process_count,temp_process->Process.ID);
         if(index!=-1&&pcb[index].process_state==Blocked){
             pcb[index].blocked_time--;
@@ -748,24 +748,31 @@ if(selected_Algorithm_NUM == 3 && clock_timer != getClk()) {
     
     if(running_process_index!=-1&&pcb[running_process_index].process_state == Running){ 
                 // IF THIS PROCESS HAS A REQUEST 
-                if (pcb[running_process_index].num_requests > 0) {
+                if (pcb[running_process_index].num_requests > 0) 
+                {
                     request* current_request = pcb[running_process_index].memory_requests[0];
                     if (current_request->time == getClk()) {
-                        handle_page_fault(pcb,process_count,runningPcb->process_id,0,current_request->rw);
+                        int Virtual_page = get_vpn(current_request->address);
+                        int k = Request(pcb,process_count,pcb[running_process_index].process_id,Virtual_page,current_request->rw);
                         for (int i = 1; i < pcb[running_process_index].num_requests; i++) {
                             pcb[running_process_index].memory_requests[i - 1] = pcb[running_process_index].memory_requests[i];
                         }
                         pcb[running_process_index].num_requests--;
-                        process_Node* process_node = dequeue(&READY_QUEUE);
-                        enqueue(&BLOCKED_QUEUE, process_node->Process);
-                        pcb[running_process_index].process_state = Blocked;
-                        pcb[running_process_index].LAST_EXECUTED_TIME = getClk();
-                        pcb[running_process_index].blocked_time = 10; // BLOCK TIME
-                        kill(pcb[running_process_index].process_pid, SIGSTOP);
+                        if (k == 0)
+                        {
+                             process_Node* process_node = dequeue(&READY_QUEUE);
+                             enqueue(&BLOCKED_QUEUE, process_node->Process);
+                             pcb[running_process_index].process_state = Blocked;
+                             pcb[running_process_index].LAST_EXECUTED_TIME = getClk();
+                             pcb[running_process_index].blocked_time = 10; // BLOCK TIME
+                             kill(pcb[running_process_index].process_pid, SIGSTOP);
+                        }
                     }
                      pcb[running_process_index].REMAINING_TIME--;
                      total_running_times++;
-                }else{
+                }
+                else
+                {
                 pcb[running_process_index].REMAINING_TIME--;
                 total_running_times++;
                  }
@@ -794,8 +801,20 @@ if(selected_Algorithm_NUM == 3 && clock_timer != getClk()) {
  
     running_process_index = get_pcb_index(pcb, process_count, peek_front(&READY_QUEUE)->Process.ID);
     
-    if(running_process_index == -1 && peek_front(&READY_QUEUE)->Process.first_time) {
-        peek_front(&READY_QUEUE)->Process.first_time = false;
+    if(running_process_index == -1 && peek_front(&READY_QUEUE)->Process.first_time) { // if new process
+        int page_fault = Request(pcb,process_count,pcb[process_count].process_id,0,'R');
+        if (page_fault == 1)
+        {
+             process_Node* process_node = dequeue(&READY_QUEUE);
+             enqueue(&BLOCKED_QUEUE, process_node->Process);
+             pcb[process_count].process_state = Blocked;
+             pcb[process_count].LAST_EXECUTED_TIME = getClk();
+             pcb[process_count].blocked_time = 10; // BLOCK TIME
+            
+        }
+        else
+        {
+            peek_front(&READY_QUEUE)->Process.first_time = false;
         
       
         pcb[process_count].arrival_time = peek_front(&READY_QUEUE)->Process.ARRIVAL_TIME;
@@ -817,22 +836,23 @@ if(selected_Algorithm_NUM == 3 && clock_timer != getClk()) {
             perror("Error in execl");
             exit(1);
         }
-        
-        pcb[process_count].process_pid = pid;
-        running_process_index = process_count;
-        process_count++;
-        
-        
-        pFile = fopen("scheduler.log", "a");
-        if(pFile) {
-            fprintf(pFile, "At time %-5d process %-5d started arr %-5d total %-5d remain %-5d wait %-5d\n",
-                    getClk(), pcb[running_process_index].process_id,
-                    pcb[running_process_index].arrival_time,
-                    pcb[running_process_index].RUNNING_TIME,
-                    pcb[running_process_index].REMAINING_TIME,
-                    pcb[running_process_index].WAITING_TIME);
-            fclose(pFile);
-        }
+            pcb[process_count].process_pid = pid;
+            running_process_index = process_count;
+            process_count++;
+            
+            
+            pFile = fopen("scheduler.log", "a");
+            if(pFile) {
+                fprintf(pFile, "At time %-5d process %-5d started arr %-5d total %-5d remain %-5d wait %-5d\n",
+                        getClk(), 
+                        pcb[running_process_index].process_id,
+                        pcb[running_process_index].arrival_time,
+                        pcb[running_process_index].RUNNING_TIME,
+                        pcb[running_process_index].REMAINING_TIME,
+                        pcb[running_process_index].WAITING_TIME);
+                fclose(pFile);
+            }
+        }  
     }
     
   

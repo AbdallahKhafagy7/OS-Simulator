@@ -229,7 +229,7 @@ void handle_page_fault(PCB *pcb, int process_Count ,int process_id, int virtual_
                          getClk(), virtual_page, process_id, frame_index);
     } 
     else { // No free page, need to replace
-        frame_index = second_chance_replacement(process_id);
+        frame_index = second_chance_replacement();
         
         // sigal to process  to block the 10ms until page is loaded
         if (frame_index == -1) {
@@ -289,6 +289,19 @@ void handle_page_fault(PCB *pcb, int process_Count ,int process_id, int virtual_
 
 }
 
-void signal_page_loaded(int PID, int virtual_page) {
-   kill(PID, SIGUSR2);
+int Request(PCB* pcb,int process_cpunt ,int process_id,int virtual_page,char readwrite_flag){
+    for (int i =0;i<31;i++){
+        if (mem_mgr.pages[i].process_id==process_id&&mem_mgr.pages[i].virtual_page_number==virtual_page){
+            if (readwrite_flag=='R'){
+                mem_mgr.pages[i].referenced=true;
+            }else if (readwrite_flag=='W'){
+                mem_mgr.pages[i].referenced=true;
+                mem_mgr.pages[i].modified=true;
+            }
+            return 0; // for no page fault
+        }
+    }
+    print_memory_log("Page fault occurred for process %d on virtual page %d\n", process_id, virtual_page);
+    handle_page_fault(&pcb,process_cpunt,process_id,virtual_page,readwrite_flag);
+    return 1; // for page fault
 }
