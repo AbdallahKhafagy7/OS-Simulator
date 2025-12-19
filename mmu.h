@@ -73,6 +73,10 @@ typedef struct {
 
 
 
+void add_to_free_list(int page_number);
+void print_free_list();
+void init_free_list();
+int remove_from_free_list() ;
 int Request(PCB* pcb,int process_cpunt ,int process_id,int virtual_page,char readwrite_flag);
 void init_memory(void);
 int allocate_free_page(int process_id, int virtual_page);
@@ -81,16 +85,17 @@ int second_chance_replacement();
 void allocate_page_table(PCB *pcb);
 int translate_address(int process_id, int virtual_address, PCB* pcb, char rw_flag);
 void handle_page_fault(PCB *pcb, int process_Count ,int process_id, int virtual_page, char readwrite_flag);
-void load_page_from_disk(int process_id, int virtual_page, int physical_page);
+void load_page_from_disk(int process_id, int virtual_page, int physical_page, int disk_base);
 void swap_page_to_disk(int process_id, int virtual_page, int physical_page);
 void update_disk_operations(int current_time);
 bool is_page_in_disk_queue(int process_id, int virtual_page);
 void print_memory_log(const char* format, ...);
 void print_memory_status(void);
 int init_process_page_table(PCB* pcb);
-void print_free_list();
-void add_to_free_list(int page_number);
 int remove_from_free_list();
+int allocate_process_page_table(PCB *pcb);
+// Add this line with other function declarations:
+int allocate_process_page_table(PCB *pcb);
 
 static inline int get_vpn(int virtual_address) {
     return virtual_address >> OFFSET_BITS;
