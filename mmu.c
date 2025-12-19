@@ -208,7 +208,6 @@ void free_process_pages(int process_id, PCB* pcb) {
             }
 
             //update page table entry
-            PageTableEntry* entry = &pcb->page_table.entries[mem_mgr.pages[i].virtual_page_number];
            if (vpn >= 0 && vpn < MAX_VIRTUAL_PAGES) {
                 PageTableEntry* entry = &pcb->page_table.entries[vpn];
                 entry->present = false;
