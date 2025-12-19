@@ -136,10 +136,7 @@ void swap_page_to_disk(int process_id, int virtual_page, int physical_page){
 }
 
 
-int translate_address(int process_id, int virtual_address){
 
-
-}
 
 
 void print_memory_log(const char* format, ...) {
@@ -380,7 +377,6 @@ void allocate_page_table(PCB *pcb) {
 
 void handle_page_fault(PCB *pcb, int process_Count ,int process_id, int virtual_page, char readwrite_flag) {
     
-    // 1. Try to get a free page first
     int frame_index = allocate_free_page(process_id, virtual_page);
     
     if (frame_index != -1) {
@@ -388,10 +384,10 @@ void handle_page_fault(PCB *pcb, int process_Count ,int process_id, int virtual_
         print_memory_log("At time %d page %d for process %d is loaded into memory page %d.\n", 
                          getClk(), virtual_page, process_id, frame_index);
     } 
-    else { // No free page, need to replace
+    else { 
         frame_index = second_chance_replacement();
+        mem_mgr.page_faults++;
         
-        // sigal to process  to block the 10ms until page is loaded
         if (frame_index == -1) {
             printf("Error: MMU failed to find a victim page.\n");
             return;
@@ -450,7 +446,7 @@ void handle_page_fault(PCB *pcb, int process_Count ,int process_id, int virtual_
 }
 
 int Request(PCB* pcb,int process_cpunt ,int process_id,int virtual_page,char readwrite_flag){
-    for (int i =0;i<31;i++){
+    for (int i =0;i<NUM_PHYSICAL_PAGES;i++){
         if (mem_mgr.pages[i].process_id==process_id&&mem_mgr.pages[i].virtual_page_number==virtual_page){
             if (readwrite_flag=='R'){
                 mem_mgr.pages[i].referenced=true;
