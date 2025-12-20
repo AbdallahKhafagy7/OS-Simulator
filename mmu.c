@@ -338,8 +338,6 @@ int allocate_free_page(int process_id, int virtual_page) {
 
 
 
-
-
 int second_chance_replacement() {
     int start_pointer = mem_mgr.clock_pointer;
     int iterations = 0;
