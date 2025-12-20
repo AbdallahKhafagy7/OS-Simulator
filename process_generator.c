@@ -12,14 +12,7 @@ void clearResources(int);
  
 
 /*---------------------------Omar Syed------------------------------------*/
-/*
-1-Read From File
-2-Create Message Buffer
-3-fork Scheduler & Clk
-4-send processes to the scheduler
-5-clear resource 
-Done by Omar Syed
-*/
+
 
 typedef char* string;
 

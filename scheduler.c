@@ -340,11 +340,11 @@ int main(int argc, char * argv[])
     bool new_process= false;
     bool time_moved= false;
     initClk();
-    init_memory();
     /*---------------------------Omar Syed------------------------------------*/
 
     //Inititalizations
     init_memory();
+    init_free_list();
     initialize_queue(&READY_QUEUE);
     initialize_priority_queue(&READY_PRIORITY_QUEUE);
      selected_Algorithm_NUM=atoi(argv[1]);
