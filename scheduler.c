@@ -785,7 +785,7 @@ int main(int argc, char * argv[])
                             pcb[running_process_index].memory_requests[i - 1] = pcb[running_process_index].memory_requests[i];
                         }
                         pcb[running_process_index].num_requests--;
-                        if (k == 0)
+                        if (k == 1)
                         {
                              process_Node* process_node = dequeue(&READY_QUEUE);
                              enqueue(&BLOCKED_QUEUE, process_node->Process);
@@ -940,8 +940,7 @@ int main(int argc, char * argv[])
         
         
         if(peek_front(&READY_QUEUE) != NULL) {
-            running_process_index = get_pcb_index(pcb, process_count, 
-                                                   peek_front(&READY_QUEUE)->Process.ID);
+            running_process_index = get_pcb_index(pcb, process_count, peek_front(&READY_QUEUE)->Process.ID);
             
             
             if(running_process_index != -1 && 
