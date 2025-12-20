@@ -344,6 +344,7 @@ int main(int argc, char * argv[])
 
     //Inititalizations
     init_memory();
+    init_free_list();
     initialize_queue(&READY_QUEUE);
     initialize_priority_queue(&READY_PRIORITY_QUEUE);
      selected_Algorithm_NUM=atoi(argv[1]);
@@ -482,10 +483,10 @@ int main(int argc, char * argv[])
     }
     break;
                 case 3:{
-                            // RR
-                            enqueue(&READY_QUEUE, PROCESS_MESSAGE.p);
-
-                            running_process_index = get_pcb_index(pcb, process_count, peek_front(&READY_QUEUE)->Process.ID);
+                              enqueue(&READY_QUEUE, PROCESS_MESSAGE.p);
+                    
+                    running_process_index = get_pcb_index(pcb, process_count, 
+                                                           peek_front(&READY_QUEUE)->Process.ID);
 
                             if(running_process_index == -1 && peek_front(&READY_QUEUE) != NULL && peek_front(&READY_QUEUE)->Process.first_time) {
 
