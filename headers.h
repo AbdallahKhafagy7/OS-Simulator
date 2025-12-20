@@ -54,7 +54,7 @@ struct PCB_struct {
     int WAITING_TIME;
     int blocked_time;
     ProcessPageTable page_table;
-    request memory_requests[1000];
+    request memory_requests[100]; // max 100 requests
     int num_requests;
     int num_pages;
     int disk_base;
