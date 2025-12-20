@@ -58,7 +58,8 @@ struct PCB_struct {
     int num_requests;
     int num_pages;
     int disk_base;
-    int limit;             
+    int limit;    
+     int execution_time;         // total execution time         
 } typedef PCB;
 
 typedef struct PCB_node {

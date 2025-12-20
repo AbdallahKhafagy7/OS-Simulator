@@ -80,7 +80,6 @@ void add_to_free_list(int page_number) {
 
 int remove_from_free_list() {
     if (mem_mgr.free_list_head == NULL) {
-        printf("Error: No free pages available\n");
         return -1;
     }
     
@@ -105,13 +104,6 @@ int remove_from_free_list() {
     free(node);
     
     mem_mgr.pages[page_number].is_free = false;
-    mem_mgr.pages[page_number].process_id = -1;
-    mem_mgr.pages[page_number].virtual_page_number = -1;
-    mem_mgr.pages[page_number].referenced = false;
-    mem_mgr.pages[page_number].modified = false;
-    mem_mgr.pages[page_number].locked = false;
-    mem_mgr.pages[page_number].is_page_table = false;
-    
     mem_mgr.free_page_count--;
     
     printf("Free Physical page %d allocated\n", page_number);
@@ -138,7 +130,6 @@ void load_page_from_disk(int process_id, int virtual_page,
                          int physical_page, int disk_base) {
     if (physical_page < 0 || physical_page >= NUM_PHYSICAL_PAGES) return;
     
-    int disk_page = disk_base + virtual_page;
     PhysicalPage* page = &mem_mgr.pages[physical_page];
     
     mem_mgr.disk_reads++;
@@ -160,14 +151,14 @@ void swap_page_to_disk(int process_id, int virtual_page, int physical_page) {
     
     PhysicalPage* page = &mem_mgr.pages[physical_page];
     
-    printf("Swapping out page %d to disk\n", physical_page);
-    
+    // Write to disk if modified
     if (page->modified) {
         mem_mgr.disk_writes++;
-        page->modified = false;
     }
     
-    add_to_free_list(physical_page);
+    // Clear metadata (but DON'T add to free list - frame is being reused!)
+    page->modified = false;
+    page->referenced = false;
 }
 
 void print_memory_log(const char* format, ...) {
@@ -179,10 +170,9 @@ void print_memory_log(const char* format, ...) {
 
     va_list args;
     va_start(args, format);
-    
     vfprintf(memory_log_file, format, args);
-    
     va_end(args);
+    
     fclose(memory_log_file);
 }
 
@@ -209,48 +199,66 @@ void init_memory() {
     mem_mgr.disk_writes = 0;
     mem_mgr.page_replacements = 0;
     
-    init_free_list();
     
     printf("Memory Manager initialized: %d pages available\n", NUM_PHYSICAL_PAGES);
 }
 
-
 void free_process_pages(int process_id, PCB* pcb) {
     int freed_count = 0;
     
+    // Free all data pages belonging to this process
     for (int i = 0; i < NUM_PHYSICAL_PAGES; i++) {
         if (!mem_mgr.pages[i].is_free && mem_mgr.pages[i].process_id == process_id) {
             int vpn = mem_mgr.pages[i].virtual_page_number;
             
+            // Write back modified pages
             if (mem_mgr.pages[i].modified) {
-                swap_page_to_disk(process_id, vpn, i);
+                mem_mgr.disk_writes++;
             }
 
+            // Update page table if valid entry
             if (vpn >= 0 && vpn < pcb->page_table.num_pages) {
                 PageTableEntry* entry = &pcb->page_table.entries[vpn];
                 entry->present = false;
                 entry->physical_page_number = -1;
             }
 
+            // Add to free list
             add_to_free_list(i);
             freed_count++;
         }
     }
     
+    // Free the page table's physical page
+    if (pcb->page_table.physical_page_number != -1) {
+        int pt_page = pcb->page_table.physical_page_number;
+        
+        // Unlock and free it
+        mem_mgr.pages[pt_page].locked = false;
+        mem_mgr.pages[pt_page].is_page_table = false;
+        add_to_free_list(pt_page);
+        freed_count++;
+        
+        printf("Freed page table page %d from process %d\n", pt_page, process_id);
+    }
+    
+    // Free page table structure (software memory)
     if (pcb->page_table.entries) {
         free(pcb->page_table.entries);
         pcb->page_table.entries = NULL;
     }
     
-    printf("Freed %d pages from process %d\n", freed_count, process_id);
+    printf("Freed %d total pages from process %d\n", freed_count, process_id);
 }
 
 int init_process_page_table(PCB* pcb) {
     if (pcb->num_pages <= 0) return -1;
     
+    // Allocate page table in software memory (malloc)
     pcb->page_table.entries = (PageTableEntry*)calloc(pcb->num_pages, sizeof(PageTableEntry));
     if (!pcb->page_table.entries) return -1;
     
+    // Initialize all entries as invalid
     for (int i = 0; i < pcb->num_pages; i++) {
         pcb->page_table.entries[i].present = false;
         pcb->page_table.entries[i].modified = false;
@@ -260,7 +268,7 @@ int init_process_page_table(PCB* pcb) {
     
     pcb->page_table.num_pages = pcb->num_pages;
     pcb->page_table.disk_base = pcb->disk_base;
-    pcb->page_table.physical_page_number = -1;
+    pcb->page_table.physical_page_number = -1;  // Not tracked in physical memory
     
     return 0;
 }
@@ -277,61 +285,39 @@ int allocate_free_page(int process_id, int virtual_page) {
     p->modified = false;
     p->locked = false;
     p->is_page_table = false;
+    p->is_free = false;
     
     return ppn;
 }
-
-
-
 int second_chance_replacement() {
-    int start_pointer = mem_mgr.clock_pointer;
-    int iterations = 0;
-    int max_iterations = NUM_PHYSICAL_PAGES * 2;
+    int start = mem_mgr.clock_pointer;
     
-    while (1) {
-        if (iterations >= max_iterations) {
-            printf("Error: Second chance algorithm stuck in infinite loop!\n");
-            return -1;
-        }
-        iterations++;
-
+    // Search for victim (max 2 full cycles)
+    for(int i = 0; i < NUM_PHYSICAL_PAGES * 2; i++) {
         PhysicalPage *page = &mem_mgr.pages[mem_mgr.clock_pointer];
-
-        if (page->is_free) {
+        
+        // Skip free, locked, and page table pages
+        if (page->is_free || page->locked || page->is_page_table) {
             mem_mgr.clock_pointer = (mem_mgr.clock_pointer + 1) % NUM_PHYSICAL_PAGES;
-            if (mem_mgr.clock_pointer == start_pointer) break;
             continue;
         }
-
-        if (page->is_page_table) {
+        
+        // Found unreferenced page - victim!
+        if (!page->referenced) {
+            int victim = mem_mgr.clock_pointer;
             mem_mgr.clock_pointer = (mem_mgr.clock_pointer + 1) % NUM_PHYSICAL_PAGES;
-            if (mem_mgr.clock_pointer == start_pointer) break;
-            continue;
+            mem_mgr.page_replacements++;
+            return victim;
         }
-
-        if (page->locked) {
-            mem_mgr.clock_pointer = (mem_mgr.clock_pointer + 1) % NUM_PHYSICAL_PAGES;
-            if (mem_mgr.clock_pointer == start_pointer) break;
-            continue;
-        }
-
-        if (page->referenced) {
-            page->referenced = false;
-            mem_mgr.clock_pointer = (mem_mgr.clock_pointer + 1) % NUM_PHYSICAL_PAGES;
-            if (mem_mgr.clock_pointer == start_pointer) break;
-            continue;
-        }
-
-        int victim = mem_mgr.clock_pointer;
+        
+        // Give second chance
+        page->referenced = false;
         mem_mgr.clock_pointer = (mem_mgr.clock_pointer + 1) % NUM_PHYSICAL_PAGES;
-        mem_mgr.page_replacements++;
-        return victim;
     }
     
-    printf("Error: No victim found after checking all pages\n");
+    printf("Error: No victim found in Second Chance algorithm\n");
     return -1;
 }
-
 int translate_address(int process_id, int virtual_address, PCB* pcb, char rw_flag) {
     int vpn = (virtual_address >> OFFSET_BITS) & 0x3F;
     int offset = virtual_address & 0x0F;
@@ -345,10 +331,12 @@ int translate_address(int process_id, int virtual_address, PCB* pcb, char rw_fla
     pte->referenced = true;
     PhysicalPage *frame = &mem_mgr.pages[pte->physical_page_number];
     frame->referenced = true;
-    if (rw_flag == 'w') {
+    
+    if (rw_flag == 'w' || rw_flag == 'W') {
         pte->modified = true;
         frame->modified = true;
     }
+    
     return (pte->physical_page_number << OFFSET_BITS) | offset;
 }
 
@@ -363,10 +351,12 @@ void handle_page_fault(PCB *pcb, int process_Count, int process_id,
     int disk_base = current_pcb->page_table.disk_base;
     int current_time = getClk();
     
+    // Try to allocate free page first
     int frame_index = allocate_free_page(process_id, virtual_page);
     bool used_free_page = (frame_index != -1);
     
     if (!used_free_page) {
+        // Need to evict a page
         frame_index = second_chance_replacement();
         
         if (frame_index == -1) {
@@ -376,6 +366,7 @@ void handle_page_fault(PCB *pcb, int process_Count, int process_id,
 
         PhysicalPage* victim_frame = &mem_mgr.pages[frame_index];
         
+        // Update victim's page table entry
         if (victim_frame->process_id != -1) {
             PCB* victim_pcb = get_pcb(pcb, process_Count, victim_frame->process_id);
             if (victim_pcb && victim_frame->virtual_page_number >= 0) {
@@ -386,9 +377,10 @@ void handle_page_fault(PCB *pcb, int process_Count, int process_id,
                 }
             }
 
+            // Write back if modified
             if (victim_frame->modified) {
-                printf("Swapping out page %d to disk\n", frame_index);
                 print_memory_log("Swapping out page %d to disk\n", frame_index);
+                printf("Swapping out page %d to disk\n", frame_index);
                 swap_page_to_disk(victim_frame->process_id, 
                                  victim_frame->virtual_page_number, 
                                  frame_index);
@@ -396,7 +388,7 @@ void handle_page_fault(PCB *pcb, int process_Count, int process_id,
         }
     }
     
-    // Load the page
+    // Load the new page from disk
     load_page_from_disk(process_id, virtual_page, frame_index, disk_base);
     
     // Update page table entry
@@ -408,17 +400,14 @@ void handle_page_fault(PCB *pcb, int process_Count, int process_id,
         entry->modified = (readwrite_flag == 'W' || readwrite_flag == 'w');
     }
     
-    // Calculate disk address (disk_base is page number, multiply by PAGE_SIZE to get byte address)
-    int disk_address = (disk_base + virtual_page) * PAGE_SIZE;
-    
-    // Log to console and file
-    char log_msg[256];
-    sprintf(log_msg, "At time %d disk address %d for process %d is loaded into memory page %d.\n", 
-            current_time, disk_address, process_id, frame_index);
-    
-    print_memory_log("%s", log_msg);
-    printf("%s", log_msg);
+    // Log the page load - ONLY ONCE
+    int disk_page = disk_base + virtual_page;
+    print_memory_log("At time %d disk address %d for process %d is loaded into memory page %d.\n", 
+                     current_time, disk_page, process_id, frame_index);
+    printf("At time %d disk address %d for process %d is loaded into memory page %d.\n", 
+           current_time, disk_page, process_id, frame_index);
 }
+
 int Request(PCB* pcb, int process_count, int process_id, 
             int virtual_page, char readwrite_flag) {
     PCB* current_pcb = get_pcb(pcb, process_count, process_id);
@@ -432,6 +421,7 @@ int Request(PCB* pcb, int process_count, int process_id,
     
     PageTableEntry* pte = &current_pcb->page_table.entries[virtual_page];
     
+    // PAGE HIT - Page is present
     if (pte->present) {
         pte->referenced = true;
         
@@ -451,51 +441,53 @@ int Request(PCB* pcb, int process_count, int process_id,
         return 0; // No page fault
     }
     
-    // PAGE FAULT
-    int virtual_address = virtual_page * PAGE_SIZE;
+    // PAGE FAULT - Only log here!
+    int virtual_address = virtual_page << OFFSET_BITS;
     print_memory_log("PageFault upon VA %d from process %d\n", 
                      virtual_address, process_id);
-    
     printf("PageFault upon VA %d from process %d\n", 
            virtual_address, process_id);
     
     mem_mgr.page_faults++;
     
-    handle_page_fault(current_pcb, process_count, process_id, virtual_page, readwrite_flag);
+    handle_page_fault(pcb, process_count, process_id, virtual_page, readwrite_flag);
     return 1; // Page fault occurred
 }
 
-int allocate_process_page_table(PCB *pcb) {
-    int pt_page = allocate_free_page(pcb->process_id, -1);
+int allocate_process_page_table(PCB *pcb, PCB* pcb_array, int process_count) {
+    // 1. Try to get a free physical frame for the table 
+    int pt_frame = remove_from_free_list();
     
-    if (pt_page == -1) {
-        pt_page = second_chance_replacement();
-        if (pt_page == -1) {
-            printf("Error: Cannot allocate page for page table!\n");
-            return -1;
-        }
+    // 2. If no free pages, use Second Chance to find a victim [cite: 32]
+    if (pt_frame == -1) {
+        pt_frame = second_chance_replacement();
         
-        PhysicalPage* victim = &mem_mgr.pages[pt_page];
-        if (victim->is_page_table) {
-            printf("Warning: Trying to evict page table %d\n", pt_page);
-            return -1;
-        }
-        
-        if (victim->process_id != -1 && victim->modified) {
-            swap_page_to_disk(victim->process_id, 
-                             victim->virtual_page_number, 
-                             pt_page);
+        if (pt_frame != -1) {
+            PhysicalPage* victim = &mem_mgr.pages[pt_frame];
+            // Update victim's PTE so it knows it was evicted
+            PCB* v_pcb = get_pcb(pcb_array, process_count, victim->process_id);
+            if (v_pcb) {
+                v_pcb->page_table.entries[victim->virtual_page_number].present = false;
+            }
+            // Swap to disk if modified [cite: 42]
+            if (victim->modified) swap_page_to_disk(victim->process_id, victim->virtual_page_number, pt_frame);
         }
     }
+
+    if (pt_frame == -1) return -1;
+
+    // 3. Mark this frame as a Page Table so it isn't evicted later 
+    mem_mgr.pages[pt_frame].is_page_table = true;
+    mem_mgr.pages[pt_frame].process_id = pcb->process_id;
+    mem_mgr.pages[pt_frame].is_free = false;
     
-    pcb->page_table.physical_page_number = pt_page;
-    mem_mgr.pages[pt_page].is_page_table = true;
-    mem_mgr.pages[pt_page].virtual_page_number = -1;
-    mem_mgr.pages[pt_page].process_id = pcb->process_id;
-    mem_mgr.pages[pt_page].is_free = false;
+    // 4. Update the PCB with the physical address/frame [cite: 33]
+    pcb->page_table.physical_page_number = pt_frame;
     
-    printf("Process %d: Page table at physical page %d\n", 
-           pcb->process_id, pt_page);
-    
-    return pt_page;
+    // Allocate the actual software entries (malloc is still needed for the array itself)
+    pcb->page_table.entries = (PageTableEntry*)calloc(pcb->num_pages, sizeof(PageTableEntry));
+    pcb->page_table.num_pages = pcb->num_pages;
+
+    printf("Process %d: Page table allocated at physical frame %d\n", pcb->process_id, pt_frame);
+    return pt_frame;
 }

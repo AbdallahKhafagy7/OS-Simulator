@@ -509,19 +509,9 @@ int main(int argc, char * argv[])
 
                                 init_process_page_table(&pcb[process_count]);
                             
-                                int pt_frame = allocate_process_page_table(&pcb[process_count]);
+                                
 
-                                if (pt_frame == -1) {
-                                    printf("Error: Cannot allocate page table for process %d\n", pcb[process_count].process_id);
-                                    pcb[process_count].process_state = Blocked;
-                                    pcb[process_count].blocked_time = DISK_ACCESS_TIME;
-
-                                    process_count++; 
-
-                                    process_Node* Blocked = dequeue(&READY_QUEUE);
-                                    enqueue(&BLOCKED_QUEUE, Blocked->Process);
-                                    continue; // Skip execution, wait for memory
-                                }
+                              
                             
                                 //  REQUEST PAGE 0
                                 int fault = Request(pcb, process_count, pcb[process_count].process_id, 0, 'r');

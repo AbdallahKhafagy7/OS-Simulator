@@ -85,8 +85,7 @@ bool is_page_in_disk_queue(int process_id, int virtual_page);
 void print_memory_log(const char* format, ...);
 void print_memory_status(void);
 int init_process_page_table(PCB* pcb);
-int allocate_process_page_table(PCB *pcb);
-
+int allocate_process_page_table(PCB *pcb, PCB* pcb_array, int process_count);
 // Inline functions
 static inline int get_vpn(int virtual_address) {
     return virtual_address >> OFFSET_BITS;

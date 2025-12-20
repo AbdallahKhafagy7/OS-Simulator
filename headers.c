@@ -19,6 +19,7 @@ void INITIALIZE_PCB(PCB* pcb){
     pcb->num_pages=0;
     pcb->disk_base=0;
     pcb->limit=0;
+    pcb->execution_time=0;
 }
 
 void INITIALIZE_PCB_Node(PCB_node* pcb_node){
