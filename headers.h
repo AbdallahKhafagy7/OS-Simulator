@@ -36,6 +36,8 @@ struct message_buf {
     process p;
 } typedef message_buf;
 
+// COMPLETE PCB Structure - Ensure all these fields exist in headers.h
+
 struct PCB_struct {
     int process_id;            // ID of the process (from generator)
     int process_pid;           // PID of forked child
@@ -51,15 +53,17 @@ struct PCB_struct {
     int arrival_time;          // arrival time (from Process)
     int quantum_remaining;     // optional for round-robin
     bool is_completed;         // true if finished
-    int WAITING_TIME;
-    int blocked_time;
+    int WAITING_TIME;          // total waiting time
+    int blocked_time;          // cycles remaining in blocked state
+    int execution_time;        // execution time counter for memory requests
+    
+    // Memory management fields
     ProcessPageTable page_table;
     request memory_requests[100]; // max 100 requests
-    int num_requests;
-    int num_pages;
-    int disk_base;
-    int limit;    
-     int execution_time;         // total execution time         
+    int num_requests;          // number of memory requests
+    int num_pages;             // number of pages needed
+    int disk_base;             // base page on disk
+    int limit;                 // limit (number of pages)
 } typedef PCB;
 
 typedef struct PCB_node {

@@ -340,7 +340,6 @@ int main(int argc, char * argv[])
     bool new_process= false;
     bool time_moved= false;
     initClk();
-    init_memory();
     /*---------------------------Omar Syed------------------------------------*/
 
     //Inititalizations
@@ -482,7 +481,6 @@ int main(int argc, char * argv[])
         }
     }
     break;
-
                 case 3:{
                             // RR
                             enqueue(&READY_QUEUE, PROCESS_MESSAGE.p);
@@ -500,18 +498,14 @@ int main(int argc, char * argv[])
 
                                 
                                 pcb[process_count].START_TIME = -1; 
-                                pcb[process_count].process_state = Ready; // Kept as Ready until we actually run or block
+                                pcb[process_count].process_state = Ready; 
                                 pcb[process_count].WAITING_TIME = 0;
 
-                                pcb[process_count].disk_base = peek_front(&READY_QUEUE)->Process.disk_base; // Don't forget disk_base!
+                                pcb[process_count].disk_base = peek_front(&READY_QUEUE)->Process.disk_base; 
                                 pcb[process_count].limit = peek_front(&READY_QUEUE)->Process.limit;
                                 pcb[process_count].num_pages = (pcb[process_count].limit + PAGE_SIZE - 1) / PAGE_SIZE;
 
                                 init_process_page_table(&pcb[process_count]);
-                            
-                                
-
-                              
                             
                                 //  REQUEST PAGE 0
                                 int fault = Request(pcb, process_count, pcb[process_count].process_id, 0, 'r');
@@ -521,7 +515,7 @@ int main(int argc, char * argv[])
                                     pcb[process_count].blocked_time = DISK_ACCESS_TIME;
 
                                     process_count++; 
-
+                                    printf("Process %d blocked due to page fault on initial request.\n", pcb[process_count - 1].process_id);
                                     process_Node* Blocked = dequeue(&READY_QUEUE);
                                     enqueue(&BLOCKED_QUEUE, Blocked->Process);
                                     continue; // Skip execution
@@ -756,266 +750,399 @@ int main(int argc, char * argv[])
                 clock_timer = getClk();
                 printf("Clock Timer : %d \n", clock_timer);
 
-                process_Node * temp_process= BLOCKED_QUEUE.front;
-                while(temp_process!=NULL){ // increamting time for blocked processes     
-                    int index=get_pcb_index(pcb,process_count,temp_process->Process.ID);
-                         if(index!=-1&&pcb[index].process_state==Blocked){
-                              pcb[index].blocked_time--;
-                              if(pcb[index].blocked_time<=0){
-                                      process_Node* unblocked_process=dequeue(&BLOCKED_QUEUE);
-                                      enqueue(&READY_QUEUE,unblocked_process->Process);
-                                      pcb[index].process_state=Ready;
-                         }
-                     }
-                      temp_process=temp_process->next;
-                      if(temp_process==BLOCKED_QUEUE.rear->next){
-                          break;
-                      }
-                  }
-
-                if(running_process_index!=-1&&pcb[running_process_index].process_state == Running){ 
-                // IF THIS PROCESS HAS A REQUEST 
-                if (pcb[running_process_index].num_requests > 0) 
-                {
-                    request current_request = pcb[running_process_index].memory_requests[0];
-                    if (current_request.time == getClk()) {
-                        int Virtual_page = get_vpn(current_request.address);
-                        int k = Request(pcb,process_count,pcb[running_process_index].process_id,Virtual_page,current_request.rw);
-                        for (int i = 1; i < pcb[running_process_index].num_requests; i++) {
-                            pcb[running_process_index].memory_requests[i - 1] = pcb[running_process_index].memory_requests[i];
-                        }
-                        pcb[running_process_index].num_requests--;
-                        if (k == 1)
-                        {
-                             process_Node* process_node = dequeue(&READY_QUEUE);
-                             enqueue(&BLOCKED_QUEUE, process_node->Process);
-                             pcb[running_process_index].process_state = Blocked;
-                             pcb[running_process_index].LAST_EXECUTED_TIME = getClk();
-                             pcb[running_process_index].blocked_time = DISK_ACCESS_TIME; // BLOCK TIME
-                             kill(pcb[running_process_index].process_pid, SIGSTOP);
-                        }
-                    }
-                     pcb[running_process_index].REMAINING_TIME--;
-                     total_running_times++;
-                }
-                else
-                {
-                pcb[running_process_index].REMAINING_TIME--;
-                total_running_times++;
-                 }
-            }
-
-
-                if(peek_front(&READY_QUEUE) == NULL) {
-                    if(finished_process >= total_process) {
-                        // All processes finished, will exit below
-                    }
-                    continue;  
-                }
-
-                // increment waiting time for ready processes
-                process_Node* temp = READY_QUEUE.front;
-                while(temp != NULL) {
-        int index = get_pcb_index(pcb, process_count, temp->Process.ID);
-        if(index != -1 && pcb[index].process_state == Ready) {
-            pcb[index].WAITING_TIME++;
-        }
-        temp = temp->next;
-        if(temp == READY_QUEUE.rear->next)
-            break;
-    }
-
-
-                 running_process_index = get_pcb_index(pcb, process_count, peek_front(&READY_QUEUE)->Process.ID);
-
-                if (running_process_index == -1 && peek_front(&READY_QUEUE)->Process.first_time) {
+                  process_Node* temp_process = BLOCKED_QUEUE.front;
+    while(temp_process != NULL) {
+        int index = get_pcb_index(pcb, process_count, temp_process->Process.ID);
+        
+        if(index != -1 && pcb[index].process_state == Blocked) {
+            pcb[index].blocked_time--;
+            
+            // Check if blocking period is over
+            if(pcb[index].blocked_time <= 0) {
+                printf("Process %d unblocking at time %d\n", pcb[index].process_id, getClk());
                 
-                process* proc = &peek_front(&READY_QUEUE)->Process;
+                // Remove from blocked queue and add to ready queue
+                process_Node* unblocked_process = dequeue(&BLOCKED_QUEUE);
+                enqueue(&READY_QUEUE, unblocked_process->Process);
+                pcb[index].process_state = Ready;
                 
-                pcb[process_count].process_id = proc->ID;
-                pcb[process_count].arrival_time = proc->ARRIVAL_TIME;
-                pcb[process_count].RUNNING_TIME = proc->RUNNING_TIME;
-                pcb[process_count].REMAINING_TIME = proc->RUNNING_TIME;
-                pcb[process_count].WAITING_TIME = 0;
-                pcb[process_count].START_TIME = getClk(); // Note: Actual start might be delayed if blocked
-                pcb[process_count].LAST_EXECUTED_TIME = getClk();
-                
-                
-                int page_fault = Request(pcb, process_count, pcb[process_count].process_id, 0, 'R');
-                
-                if (page_fault == 1) {
-                    // --- PAGE FAULT CASE ---
-                    process_Node* process_node = dequeue(&READY_QUEUE);
-                    enqueue(&BLOCKED_QUEUE, process_node->Process);
-                
-                    pcb[process_count].process_state = Blocked;
-                    pcb[process_count].blocked_time = DISK_ACCESS_TIME; 
-
-                    running_process_index = process_count;
-                    process_count++; 
-                } 
-                else {
-                    // --- SUCCESS CASE ---
-                    proc->first_time = false;
-                    pcb[process_count].process_state = Running;
-                
+                // If process was never started (blocked on first page load), fork it now
+                if(pcb[index].process_pid == -1) {
+                    printf("Forking process %d after unblocking\n", pcb[index].process_id);
+                    
                     char str_rem_time[20];
-                    sprintf(str_rem_time, "%d", pcb[process_count].RUNNING_TIME);
-                
+                    sprintf(str_rem_time, "%d", pcb[index].REMAINING_TIME);
+                    
                     int pid = fork();
-                    if (pid == 0) {
+                    if(pid == 0) {
                         execl("./process.out", "./process.out", str_rem_time, NULL);
                         perror("Error in execl");
                         exit(1);
                     }
+                    
+                    pcb[index].process_pid = pid;
+                    
+                    // Immediately stop it since it's going to ready queue, not running
+                    kill(pcb[index].process_pid, SIGSTOP);
+                    
+                    // Set start time if not set
+                    if(pcb[index].START_TIME == -1) {
+                        pcb[index].START_TIME = getClk();
+                    }
+                }
                 
-                    pcb[process_count].process_pid = pid;
-                    running_process_index = process_count;
-                    process_count++;
+                // Log unblocking
+                pFile = fopen("scheduler.log", "a");
+                if(pFile) {
+                    fprintf(pFile, "At time %-5d process %-5d unblocked arr %-5d total %-5d remain %-5d wait %-5d\n",
+                            getClk(), pcb[index].process_id,
+                            pcb[index].arrival_time,
+                            pcb[index].RUNNING_TIME,
+                            pcb[index].REMAINING_TIME,
+                            pcb[index].WAITING_TIME);
+                    fclose(pFile);
+                }
+            }
+        }
+        
+        temp_process = temp_process->next;
+        if(temp_process == BLOCKED_QUEUE.front) {
+            break;
+        }
+    }
+
+    // Process running process if exists
+    if(running_process_index != -1 && pcb[running_process_index].process_state == Running) {
+        // Check if this process has memory requests
+        if(pcb[running_process_index].num_requests > 0) {
+            request current_request = pcb[running_process_index].memory_requests[0];
+            
+            // Check if request should be processed at current time
+            if(current_request.time == pcb[running_process_index].execution_time) {
+                printf("Process %d requesting memory at time %d (address=%d, rw=%c)\n", 
+                       pcb[running_process_index].process_id, getClk(), 
+                       current_request.address, current_request.rw);
                 
-                    // Log the starting of the process
+                int virtual_page = get_vpn(current_request.address);
+                int page_fault = Request(pcb, process_count, 
+                                        pcb[running_process_index].process_id, 
+                                        virtual_page, current_request.rw);
+                
+                // Remove this request from the list
+                for(int i = 1; i < pcb[running_process_index].num_requests; i++) {
+                    pcb[running_process_index].memory_requests[i - 1] = 
+                        pcb[running_process_index].memory_requests[i];
+                }
+                pcb[running_process_index].num_requests--;
+                
+                // If page fault occurred, block the process
+                if(page_fault == 1) {
+                    printf("Page fault! Blocking process %d\n", pcb[running_process_index].process_id);
+                    
+                    // Move to blocked queue
+                    process_Node* process_node = dequeue(&READY_QUEUE);
+                    enqueue(&BLOCKED_QUEUE, process_node->Process);
+                    
+                    // Update PCB state
+                    pcb[running_process_index].process_state = Blocked;
+                    pcb[running_process_index].LAST_EXECUTED_TIME = getClk();
+                    pcb[running_process_index].blocked_time = DISK_ACCESS_TIME;
+                    
+                    // Stop the running process
+                    kill(pcb[running_process_index].process_pid, SIGSTOP);
+                    
+                    // Log blocking
                     pFile = fopen("scheduler.log", "a");
-                    if (pFile) {
-                        fprintf(pFile, "At time %-5d process %-5d started arr %-5d total %-5d remain %-5d wait %-5d\n",
-                                getClk(),
-                                pcb[running_process_index].process_id,
+                    if(pFile) {
+                        fprintf(pFile, "At time %-5d process %-5d blocked arr %-5d total %-5d remain %-5d wait %-5d\n",
+                                getClk(), pcb[running_process_index].process_id,
                                 pcb[running_process_index].arrival_time,
                                 pcb[running_process_index].RUNNING_TIME,
                                 pcb[running_process_index].REMAINING_TIME,
                                 pcb[running_process_index].WAITING_TIME);
                         fclose(pFile);
                     }
+                    
+                    // Clear running process to trigger scheduling
+                    running_process_index = -1;
                 }
             }
-    
-  
+        }
+        
+        // Only decrement remaining time if process is still running (not blocked)
+        if(running_process_index != -1 && pcb[running_process_index].process_state == Running) {
+            pcb[running_process_index].REMAINING_TIME--;
+            pcb[running_process_index].execution_time++;
+            total_running_times++;
+        }
+    }           
+                if(peek_front(&READY_QUEUE) == NULL) {
+                    if(finished_process >= total_process) {
+                        printf("All processes finished at time %d\n", getClk());
+                        }
+                    continue;  
+                }
+
+                // increment waiting time for ready processes
+               // FIXED: Increment waiting time for processes in ready queue
+// This should be placed AFTER blocked queue processing and BEFORE running process handling
+
+if(peek_front(&READY_QUEUE) == NULL) {
+    if(finished_process >= total_process) {
+        // All processes finished
+    }
+    continue;
+}
+
+// Increment waiting time for ready processes
+                process_Node* temp = READY_QUEUE.front;
+                while(temp != NULL) {
+                    int index = get_pcb_index(pcb, process_count, temp->Process.ID);
+                    if(index != -1 && pcb[index].process_state == Ready) {
+                        pcb[index].WAITING_TIME++;
+                    }
+                    temp = temp->next;
+                    if(temp == READY_QUEUE.rear->next)
+                        break;
+                }
+                
+                // Also increment waiting time for blocked processes
+                process_Node* temp_blocked = BLOCKED_QUEUE.front;
+                while(temp_blocked != NULL) {
+                    int index = get_pcb_index(pcb, process_count, temp_blocked->Process.ID);
+                    if(index != -1 && pcb[index].process_state == Blocked) {
+                        // Blocked processes are also waiting (just not in ready queue)
+                        pcb[index].WAITING_TIME++;
+                    }
+                    temp_blocked = temp_blocked->next;
+                    if(temp_blocked == BLOCKED_QUEUE.rear->next)
+                        break;
+                }
+
+
+                // FIXED: Initial Process Loading - Handles page faults on first load
+                running_process_index = get_pcb_index(pcb, process_count, peek_front(&READY_QUEUE)->Process.ID);
+
+                if(running_process_index == -1 && peek_front(&READY_QUEUE)->Process.first_time) {
+
+                    process* proc = &peek_front(&READY_QUEUE)->Process;
+
+                    printf("Initializing new process %d at time %d\n", proc->ID, getClk());
+
+                    // Initialize PCB fields
+                    pcb[process_count].process_id = proc->ID;
+                    pcb[process_count].arrival_time = proc->ARRIVAL_TIME;
+                    pcb[process_count].RUNNING_TIME = proc->RUNNING_TIME;
+                    pcb[process_count].REMAINING_TIME = proc->RUNNING_TIME;
+                    pcb[process_count].WAITING_TIME = 0;
+                    pcb[process_count].START_TIME = -1;  // Will be set when actually starts
+                    pcb[process_count].LAST_EXECUTED_TIME = getClk();
+                    pcb[process_count].execution_time = 0;
+                    pcb[process_count].process_pid = -1;  // Not forked yet
+                    pcb[process_count].blocked_time = 0;
+
+                    // Initialize memory-related fields
+                    pcb[process_count].disk_base = proc->disk_base;
+                    pcb[process_count].limit = proc->limit;
+                    pcb[process_count].num_pages = (proc->limit + PAGE_SIZE - 1) / PAGE_SIZE;
+                    pcb[process_count].num_requests = proc->num_requests;
+
+                    // Copy memory requests
+                    for(int i = 0; i < proc->num_requests; i++) {
+                        pcb[process_count].memory_requests[i] = proc->memory_requests[i];
+                    }
+
+                    printf("Process %d: needs %d pages, has %d memory requests\n", 
+                           proc->ID, pcb[process_count].num_pages, pcb[process_count].num_requests);
+                    
+                    // Initialize page table
+                    int pt_result = init_process_page_table(&pcb[process_count]);
+                    if(pt_result == -1) {
+                        printf("ERROR: Failed to initialize page table for process %d\n", proc->ID);
+                        dequeue(&READY_QUEUE);
+                        // Continue to next iteration without incrementing process_count
+                        continue;
+                    }
+
+                    int pt_page = allocate_process_page_table(&pcb[process_count], pcb, process_count);
+                    if(pt_page == -1) {
+                        printf("ERROR: Failed to allocate page table for process %d\n", proc->ID);
+                        dequeue(&READY_QUEUE);
+                        continue;
+                    }
+
+                    printf("Process %d: Page table allocated at physical frame %d\n", proc->ID, pt_page);
+
+                    // Try to load first page (page 0) - this may cause a page fault
+                    int page_fault = Request(pcb, process_count, pcb[process_count].process_id, 0, 'R');
+
+                    proc->first_time = false;
+
+                    if(page_fault == 1) {
+                        // PAGE FAULT on first load - block the process without forking
+                        printf("Page fault on first load for process %d - blocking\n", proc->ID);
+
+                        process_Node* process_node = dequeue(&READY_QUEUE);
+                        enqueue(&BLOCKED_QUEUE, process_node->Process);
+
+                        pcb[process_count].process_state = Blocked;
+                        pcb[process_count].blocked_time = DISK_ACCESS_TIME;
+
+                        // Log blocking (not started yet, so use "blocked on arrival")
+                        pFile = fopen("scheduler.log", "a");
+                        if(pFile) {
+                            fprintf(pFile, "At time %-5d process %-5d blocked on first load arr %-5d total %-5d remain %-5d wait %-5d\n",
+                                    getClk(), pcb[process_count].process_id,
+                                    pcb[process_count].arrival_time,
+                                    pcb[process_count].RUNNING_TIME,
+                                    pcb[process_count].REMAINING_TIME,
+                                    pcb[process_count].WAITING_TIME);
+                            fclose(pFile);
+                        }
+
+                        running_process_index = -1;
+                        process_count++;
+
+                    } else {
+                        // NO PAGE FAULT - start process immediately
+                        printf("No page fault for process %d - starting immediately\n", proc->ID);
+
+                        pcb[process_count].process_state = Running;
+                        pcb[process_count].START_TIME = getClk();
+
+                        char str_rem_time[20];
+                        sprintf(str_rem_time, "%d", pcb[process_count].REMAINING_TIME);
+
+                        int pid = fork();
+                        if(pid == 0) {
+                            execl("./process.out", "./process.out", str_rem_time, NULL);
+                            perror("Error in execl");
+                            exit(1);
+                        }
+
+                        pcb[process_count].process_pid = pid;
+                        running_process_index = process_count;
+                        process_count++;
+
+                        // Log start
+                        pFile = fopen("scheduler.log", "a");
+                        if(pFile) {
+                            fprintf(pFile, "At time %-5d process %-5d started arr %-5d total %-5d remain %-5d wait %-5d\n",
+                                    getClk(), pcb[running_process_index].process_id,
+                                    pcb[running_process_index].arrival_time,
+                                    pcb[running_process_index].RUNNING_TIME,
+                                    pcb[running_process_index].REMAINING_TIME,
+                                    pcb[running_process_index].WAITING_TIME);
+                            fclose(pFile);
+                        }
+                    }
+                }
+                
                 if(running_process_index == -1) // if there are no ready processes
                 continue;
     
    
-                if(running_process_index != -1 && 
-                   pcb[running_process_index].process_state == Running &&
-                   pcb[running_process_index].REMAINING_TIME <= 0) { // if process finished
-                  
-                  
-                    pcb[running_process_index].process_state = Finished;
-                    pcb[running_process_index].FINISH_TIME = getClk();
-                    pcb[running_process_index].is_completed = true;
-                    pcb[running_process_index].REMAINING_TIME = 0; 
-                  
-                  
-                    int turnaround_time = pcb[running_process_index].FINISH_TIME - 
-                                          pcb[running_process_index].arrival_time;
-                    float wta = (float)turnaround_time / pcb[running_process_index].RUNNING_TIME;
-                  
-                  
-                    pFile = fopen("scheduler.log", "a");
-                    if(pFile) {
-                        fprintf(pFile, "At time %-5d process %-5d finished arr %-5d total %-5d remain %-5d wait %-5d TA %-5d WTA %.2f\n",
-                                getClk(), pcb[running_process_index].process_id,
-                                pcb[running_process_index].arrival_time,
-                                pcb[running_process_index].RUNNING_TIME,
-                                pcb[running_process_index].REMAINING_TIME,
-                                pcb[running_process_index].WAITING_TIME,
-                                turnaround_time,
-                                wta);
-                        fclose(pFile);
-                    }
-        
-        
-        WTA[count] = wta;
-        wait_time[count] = pcb[running_process_index].WAITING_TIME;
-        count++;
-        
-        
-        process_Node* removed = dequeue(&READY_QUEUE);
-        kill(pcb[running_process_index].process_pid, SIGUSR2);
-        remove_pcb(pcb, &process_count, pcb[running_process_index].process_id);
-        finished_process++;
-        
-       
-        if(finished_process == total_process) {
-            continue;  
-        }
-        
-        
-        if(peek_front(&READY_QUEUE) != NULL) {
-            running_process_index = get_pcb_index(pcb, process_count, peek_front(&READY_QUEUE)->Process.ID);
-            
-            
+              // FIXED: Process Termination - Add memory cleanup
             if(running_process_index != -1 && 
-               pcb[running_process_index].process_state == Ready) {
+               pcb[running_process_index].process_state == Running &&
+               pcb[running_process_index].REMAINING_TIME <= 0) {
                 
-                kill(pcb[running_process_index].process_pid, SIGCONT);
-                pcb[running_process_index].process_state = Running;
-                pcb[running_process_index].LAST_EXECUTED_TIME = getClk();
+                printf("Process %d finishing at time %d\n", pcb[running_process_index].process_id, getClk());
                 
-               
+                // Update PCB state
+                pcb[running_process_index].process_state = Finished;
+                pcb[running_process_index].FINISH_TIME = getClk();
+                pcb[running_process_index].is_completed = true;
+                pcb[running_process_index].REMAINING_TIME = 0;
+                
+                // Calculate metrics
+                int turnaround_time = pcb[running_process_index].FINISH_TIME - 
+                                      pcb[running_process_index].arrival_time;
+                float wta = (float)turnaround_time / pcb[running_process_index].RUNNING_TIME;
+                
+                // Log finished
                 pFile = fopen("scheduler.log", "a");
                 if(pFile) {
-                    fprintf(pFile, "At time %-5d process %-5d resumed arr %-5d total %-5d remain %-5d wait %-5d\n",
+                    fprintf(pFile, "At time %-5d process %-5d finished arr %-5d total %-5d remain %-5d wait %-5d TA %-5d WTA %.2f\n",
                             getClk(), pcb[running_process_index].process_id,
                             pcb[running_process_index].arrival_time,
                             pcb[running_process_index].RUNNING_TIME,
                             pcb[running_process_index].REMAINING_TIME,
-                            pcb[running_process_index].WAITING_TIME);
+                            pcb[running_process_index].WAITING_TIME,
+                            turnaround_time,
+                            wta);
                     fclose(pFile);
                 }
-            }
-            
-            else if(running_process_index == -1 && 
-                    peek_front(&READY_QUEUE)->Process.first_time) {
                 
-                peek_front(&READY_QUEUE)->Process.first_time = false;
+                // Store metrics
+                WTA[count] = wta;
+                wait_time[count] = pcb[running_process_index].WAITING_TIME;
+                count++;
                 
-              
-                pcb[process_count].process_state = Running;
-                pcb[process_count].process_id = peek_front(&READY_QUEUE)->Process.ID;
-                pcb[process_count].RUNNING_TIME = peek_front(&READY_QUEUE)->Process.RUNNING_TIME;
-                pcb[process_count].arrival_time = peek_front(&READY_QUEUE)->Process.ARRIVAL_TIME;
-                pcb[process_count].REMAINING_TIME = peek_front(&READY_QUEUE)->Process.RUNNING_TIME;
-                pcb[process_count].START_TIME = getClk();
-                pcb[process_count].LAST_EXECUTED_TIME = getClk();
-                pcb[process_count].WAITING_TIME = getClk() - pcb[process_count].arrival_time;
+                // **CRITICAL FIX: Free memory resources**
+                printf("Freeing memory for process %d\n", pcb[running_process_index].process_id);
+                free_process_pages(pcb[running_process_index].process_id, &pcb[running_process_index]);
                 
+                // Remove from ready queue
+                process_Node* removed = dequeue(&READY_QUEUE);
                 
-                char str_rem_time[20];
-                sprintf(str_rem_time, "%d", peek_front(&READY_QUEUE)->Process.RUNNING_TIME);
-                int pid = fork();
+                // Terminate the process
+                kill(pcb[running_process_index].process_pid, SIGUSR2);
                 
-                if(pid == 0) {
-                    execl("./process.out", "./process.out", str_rem_time, NULL);
-                    perror("Error in execl\n");
-                    exit(1);
+                // Remove from PCB array
+                int finished_id = pcb[running_process_index].process_id;
+                remove_pcb(pcb, &process_count, finished_id);
+                finished_process++;
+                
+                printf("Process %d cleaned up. Finished processes: %d/%d\n", 
+                       finished_id, finished_process, total_process);
+                
+                // Check if all processes finished
+                if(finished_process == total_process) {
+                    continue;
                 }
                 
-                pcb[process_count].process_pid = pid;
-                running_process_index = process_count;
-                process_count++;
-                
-             
-                pFile = fopen("scheduler.log", "a");
-                if(pFile) {
-                    fprintf(pFile, "At time %-5d process %-5d started arr %-5d total %-5d remain %-5d wait %-5d\n", 
-                            getClk(), pcb[running_process_index].process_id,
-                            pcb[running_process_index].arrival_time,
-                            pcb[running_process_index].RUNNING_TIME,
-                            pcb[running_process_index].REMAINING_TIME,
-                            pcb[running_process_index].WAITING_TIME);
-                    fclose(pFile);
+                // Schedule next process
+                if(peek_front(&READY_QUEUE) != NULL) {
+                    running_process_index = get_pcb_index(pcb, process_count, 
+                                                           peek_front(&READY_QUEUE)->Process.ID);
+                    
+                    // If process exists and is ready, resume it
+                    if(running_process_index != -1 && 
+                       pcb[running_process_index].process_state == Ready) {
+                        
+                        kill(pcb[running_process_index].process_pid, SIGCONT);
+                        pcb[running_process_index].process_state = Running;
+                        pcb[running_process_index].LAST_EXECUTED_TIME = getClk();
+                        
+                        pFile = fopen("scheduler.log", "a");
+                        if(pFile) {
+                            fprintf(pFile, "At time %-5d process %-5d resumed arr %-5d total %-5d remain %-5d wait %-5d\n",
+                                    getClk(), pcb[running_process_index].process_id,
+                                    pcb[running_process_index].arrival_time,
+                                    pcb[running_process_index].RUNNING_TIME,
+                                    pcb[running_process_index].REMAINING_TIME,
+                                    pcb[running_process_index].WAITING_TIME);
+                            fclose(pFile);
+                        }
+                    }
+                    // Handle new process arrival (first_time = true)
+                    else if(running_process_index == -1 && 
+                            peek_front(&READY_QUEUE)->Process.first_time) {
+                        // This will be handled in the next iteration by the initial load logic
+                    }
                 }
             }
-        }
-    }
-    
-    
+
+
     if(running_process_index != -1 && 
        pcb[running_process_index].process_state == Running &&
        pcb[running_process_index].REMAINING_TIME > 0) {
         
         int time_executed = getClk() - pcb[running_process_index].LAST_EXECUTED_TIME;
         
-        if(time_executed >= TIME_QUANTUM) {
+        if(time_executed >= TIME_QUANTUM) 
+        {
           
             kill(pcb[running_process_index].process_pid, SIGSTOP);
             pcb[running_process_index].process_state = Ready;
@@ -1042,65 +1169,124 @@ int main(int argc, char * argv[])
           
             if(running_process_index == -1 && 
                peek_front(&READY_QUEUE)->Process.first_time) {
-                
-                peek_front(&READY_QUEUE)->Process.first_time = false;
-                
-               
-                pcb[process_count].arrival_time = peek_front(&READY_QUEUE)->Process.ARRIVAL_TIME;
-                pcb[process_count].process_id = peek_front(&READY_QUEUE)->Process.ID;
-                pcb[process_count].RUNNING_TIME = peek_front(&READY_QUEUE)->Process.RUNNING_TIME;
-                pcb[process_count].REMAINING_TIME = peek_front(&READY_QUEUE)->Process.RUNNING_TIME;
-                pcb[process_count].START_TIME = getClk();
-                pcb[process_count].LAST_EXECUTED_TIME = getClk();
-                pcb[process_count].process_state = Running;
-                pcb[process_count].WAITING_TIME = getClk() - pcb[process_count].arrival_time;
-                
-              
-                char str_rem_time[20];
-                sprintf(str_rem_time, "%d", peek_front(&READY_QUEUE)->Process.RUNNING_TIME);
-                int pid = fork();
-                
-                if(pid == 0) {
-                    execl("./process.out", "./process.out", str_rem_time, NULL);
-                    perror("Error in execl");
-                    exit(1);
-                }
-                
-                pcb[process_count].process_pid = pid;
-                running_process_index = process_count;
-                process_count++;
-                
-               
-                pFile = fopen("scheduler.log", "a");
-                if(pFile) {
-                    fprintf(pFile, "At time %-5d process %-5d started arr %-5d total %-5d remain %-5d wait %-5d\n",
-                            getClk(), pcb[running_process_index].process_id,
-                            pcb[running_process_index].arrival_time,
-                            pcb[running_process_index].RUNNING_TIME,
-                            pcb[running_process_index].REMAINING_TIME,
-                            pcb[running_process_index].WAITING_TIME);
-                    fclose(pFile);
-                }
+
+                                pcb[running_process_index].arrival_time = peek_front(&READY_QUEUE)->Process.ARRIVAL_TIME;
+                                pcb[running_process_index].process_id = peek_front(&READY_QUEUE)->Process.ID;
+                                pcb[running_process_index].RUNNING_TIME = peek_front(&READY_QUEUE)->Process.RUNNING_TIME;
+                                pcb[running_process_index].REMAINING_TIME = peek_front(&READY_QUEUE)->Process.RUNNING_TIME;
+
+                                pcb[running_process_index].process_pid = -1; 
+
+                                
+                                pcb[running_process_index].START_TIME = -1; 
+                                pcb[running_process_index].process_state = Ready; // Kept as Ready until we actually run or block
+                                pcb[running_process_index].WAITING_TIME = 0;
+
+                                pcb[running_process_index].disk_base = peek_front(&READY_QUEUE)->Process.disk_base; // Don't forget disk_base!
+                                pcb[running_process_index].limit = peek_front(&READY_QUEUE)->Process.limit;
+                                pcb[running_process_index].num_pages = (pcb[running_process_index].limit + PAGE_SIZE - 1) / PAGE_SIZE;
+
+                                init_process_page_table(&pcb[running_process_index]);
+                            
+                                //  REQUEST PAGE 0
+                                int fault = Request(pcb, process_count, pcb[running_process_index].process_id, 0, 'r');
+                            
+                                if (fault) {
+                                    pcb[running_process_index].process_state = Blocked;
+                                    pcb[running_process_index].blocked_time = DISK_ACCESS_TIME;
+                                    process_count++; 
+                                     printf("Process %d blocked due to page fault on initial request.\n", pcb[process_count - 1].process_id);
+                                    process_Node* Blocked = dequeue(&READY_QUEUE);
+                                    enqueue(&BLOCKED_QUEUE, Blocked->Process);
+                                    continue; // Skip execution
+                                }
+
+                                current_time = getClk();
+                                peek_front(&READY_QUEUE)->Process.first_time = false;
+                                pcb[running_process_index].START_TIME = current_time;
+                                pcb[running_process_index].LAST_EXECUTED_TIME = current_time;
+                                pcb[running_process_index].process_state = Running;
+                            
+                                char str_rem_time[20];
+                                sprintf(str_rem_time, "%d", peek_front(&READY_QUEUE)->Process.RUNNING_TIME);
+                                printf("forked process %d at time %d\n", peek_front(&READY_QUEUE)->Process.ID, getClk());
+
+                                int pid = fork();
+
+                                if(pid == 0) {
+                                    execl("./process.out", "./process.out", str_rem_time, NULL);
+                                    perror("Error in execl");
+                                    exit(1);
+                                }
+                            
+                                pcb[running_process_index].process_pid = pid;
+
+                                // Logging
+                                pFile = fopen("scheduler.log", "a");
+                                if(pFile) {
+                                    fprintf(pFile, "At time %-5d process %-5d started arr %-5d total %-5d remain %-5d wait %-5d\n",
+                                            current_time, pcb[running_process_index].process_id,
+                                            pcb[running_process_index].arrival_time,
+                                            pcb[running_process_index].RUNNING_TIME,
+                                            pcb[running_process_index].REMAINING_TIME,
+                                            current_time - pcb[running_process_index].arrival_time);
+                                    fclose(pFile);
+                                }
             }
          
-            else if(running_process_index != -1 && 
-                    pcb[running_process_index].REMAINING_TIME > 0) {
-                
-                kill(pcb[running_process_index].process_pid, SIGCONT);
-                pcb[running_process_index].LAST_EXECUTED_TIME = getClk();
-                pcb[running_process_index].process_state = Running;
-                
-                
-                pFile = fopen("scheduler.log", "a");
-                if(pFile) {
-                    fprintf(pFile, "At time %-5d process %-5d resumed arr %-5d total %-5d remain %-5d wait %-5d\n",
-                            getClk(), pcb[running_process_index].process_id,
-                            pcb[running_process_index].arrival_time,
-                            pcb[running_process_index].RUNNING_TIME,
-                            pcb[running_process_index].REMAINING_TIME,
-                            pcb[running_process_index].WAITING_TIME);
-                    fclose(pFile);
+            else if(running_process_index != -1 && pcb[running_process_index].REMAINING_TIME > 0) {
+                          if  (pcb[running_process_index].num_requests > 0) 
+                          {
+                                 request current_request = pcb[running_process_index].memory_requests[0];
+                                 if (current_request.time == getClk()) 
+                                 {
+                                     int Virtual_page = get_vpn(current_request.address);
+                                     int fault = Request(pcb, process_count, pcb[running_process_index].process_id, Virtual_page, current_request.rw);
+                                     for (int i = 1; i < pcb[running_process_index].num_requests; i++) {
+                                         pcb[running_process_index].memory_requests[i - 1] = pcb[running_process_index].memory_requests[i];
+                                     }
+                                     pcb[running_process_index].num_requests--;
+                                     if (fault == 1) {
+                                         process_Node* process_node = dequeue(&READY_QUEUE);
+                                         enqueue(&BLOCKED_QUEUE, process_node->Process);
+                                         printf("Process %d blocked due to page fault at time %d\n",pcb[running_process_index].process_id,getClk());
+                                         pFile = fopen("scheduler.log", "a");
+                                            if(pFile) {
+                                                fprintf(pFile, "At time %-5d process %-5d blocked arr %-5d total %-5d remain %-5d wait %-5d\n",
+                                                        getClk(), pcb[running_process_index].process_id,
+                                                        pcb[running_process_index].arrival_time,
+                                                        pcb[running_process_index].RUNNING_TIME,
+                                                        pcb[running_process_index].REMAINING_TIME,
+                                                        pcb[running_process_index].WAITING_TIME);
+                                                fclose(pFile);
+                                            }
+                                         pcb[running_process_index].process_state = Blocked;
+                                         pcb[running_process_index].LAST_EXECUTED_TIME = getClk();
+                                         pcb[running_process_index].blocked_time = DISK_ACCESS_TIME; // BLOCK TIME
+                                            kill(pcb[running_process_index].process_pid, SIGSTOP);
+                                     }
+                                 }
+
+                } 
+                else
+                {
+                    kill(pcb[running_process_index].process_pid, SIGCONT);
+                    pcb[running_process_index].process_state = Running;
+                    pcb[running_process_index].LAST_EXECUTED_TIME = getClk();
+                    pFile = fopen("scheduler.log", "a");
+                    if(pFile) 
+                    {
+                       fprintf(pFile, "At time %-5d process %-5d resumed arr %-5d total %-5d remain %-5d wait %-5d\n",
+                               getClk(), pcb[running_process_index].process_id,
+                               pcb[running_process_index].arrival_time,
+                               pcb[running_process_index].RUNNING_TIME,
+                               pcb[running_process_index].REMAINING_TIME,
+                               pcb[running_process_index].WAITING_TIME);
+                       fclose(pFile);
+                    }
                 }
+                
+                
             }
         }
     }

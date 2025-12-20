@@ -290,6 +290,7 @@ int allocate_free_page(int process_id, int virtual_page) {
     return ppn;
 }
 int second_chance_replacement() {
+    printf("test second chance replacement called\n");
     int start = mem_mgr.clock_pointer;
     
     // Search for victim (max 2 full cycles)
