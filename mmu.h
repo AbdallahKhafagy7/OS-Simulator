@@ -1,7 +1,8 @@
 #ifndef MMU_H
 #define MMU_H
 
-#include <stdbool.h>
+//#include <stdbool.h>
+typedef short bool;
 
 #define ADDRESS_BITS 10       // 10-bit address space
 #define PAGE_SIZE 16          // 16 bytes per page
