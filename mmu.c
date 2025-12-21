@@ -217,16 +217,16 @@ void free_process_pages(int process_id, PCB *pcb)
     {
         if (!mem_mgr.pages[i].is_free && mem_mgr.pages[i].process_id == process_id)
         {
-            int vpn = mem_mgr.pages[i].virtual_page_number;
+            int virtualPageNumber = mem_mgr.pages[i].virtual_page_number;
 
             if (mem_mgr.pages[i].modified)
             {
-                swap_page_to_disk(process_id, vpn, i);
+                swap_page_to_disk(process_id, virtualPageNumber, i);
             }
 
-            if (vpn >= 0 && vpn < pcb->page_table.num_pages)
+            if (virtualPageNumber >= 0 && virtualPageNumber < pcb->page_table.num_pages)
             {
-                PageTableEntry *entry = &pcb->page_table.entries[vpn];
+                PageTableEntry *entry = &pcb->page_table.entries[virtualPageNumber];
                 entry->present = false;
                 entry->physical_page_number = -1;
             }
@@ -298,7 +298,6 @@ int second_chance_replacement()
     {
         PhysicalPage *page = &mem_mgr.pages[mem_mgr.clock_pointer];
 
-        // Skip free pages, page tables, and locked pages
         if (page->is_free || page->is_page_table || page->locked)
         {
             mem_mgr.clock_pointer = (mem_mgr.clock_pointer + 1) % NUM_PHYSICAL_PAGES;
@@ -306,7 +305,6 @@ int second_chance_replacement()
             continue;
         }
 
-        // Check reference bit
         if (page->referenced)
         {
             page->referenced = false;
@@ -315,18 +313,16 @@ int second_chance_replacement()
             continue;
         }
 
-        // Found victim with reference bit 0
-        int victim = mem_mgr.clock_pointer;
+        int da7eya = mem_mgr.clock_pointer;
         mem_mgr.clock_pointer = (mem_mgr.clock_pointer + 1) % NUM_PHYSICAL_PAGES;
         mem_mgr.page_replacements++;
-        return victim;
+        return da7eya;
     }
 
-    // If we get here, all pages had reference bits set after two full cycles
-    int victim = mem_mgr.clock_pointer;
+    int da7eya = mem_mgr.clock_pointer;
     mem_mgr.clock_pointer = (mem_mgr.clock_pointer + 1) % NUM_PHYSICAL_PAGES;
     mem_mgr.page_replacements++;
-    return victim;
+    return da7eya;
 }
 
 int handle_page_fault(PCB *pcb, int process_count, int process_id,
@@ -338,7 +334,6 @@ int handle_page_fault(PCB *pcb, int process_count, int process_id,
 
     int disk_base = current_pcb->page_table.disk_base;
     
-    // Log page fault with binary address (10 bits) - WITH # at beginning
     char binary_addr[11];
     int va = virtual_page * PAGE_SIZE;
     for (int i = 9; i >= 0; i--) {
@@ -353,10 +348,8 @@ int handle_page_fault(PCB *pcb, int process_count, int process_id,
     bool used_second_chance = false;
     bool victim_modified = false;
     
-    // First try to allocate a free page
     frame_index = allocate_free_page(process_id, virtual_page);
     
-    // If no free pages, use Second Chance algorithm
     if (frame_index == -1)
     {
         used_second_chance = true;
@@ -383,7 +376,6 @@ int handle_page_fault(PCB *pcb, int process_count, int process_id,
 
             if (victim_frame->modified)
             {
-                // Log swapping (NO # at beginning)
                 print_memory_log("Swapping out page %d to disk\n", frame_index);
                 swap_page_to_disk(victim_frame->process_id,
                                   victim_frame->virtual_page_number,
@@ -392,10 +384,8 @@ int handle_page_fault(PCB *pcb, int process_count, int process_id,
         }
     }
 
-    // Load the page from disk
     load_page_from_disk(process_id, virtual_page, frame_index, disk_base);
 
-    // Update page table entry
     if (virtual_page >= 0 && virtual_page < current_pcb->page_table.num_pages)
     {
         PageTableEntry *entry = &current_pcb->page_table.entries[virtual_page];
@@ -409,22 +399,19 @@ int handle_page_fault(PCB *pcb, int process_count, int process_id,
         }
     }
 
-    // Calculate disk address (PAGE NUMBER, not byte address)
-    // According to project: "disk address X" means the page number on disk
+    
     int disk_page_number = disk_base + virtual_page;
     
-    // Log to memory.log with correct format (NO # at beginning)
     print_memory_log("At time %d disk address %d for process %d is loaded into memory page %d.\n",
                      current_time, disk_page_number, process_id, frame_index);
 
-    // Return I/O time required
     if (used_second_chance && victim_modified)
     {
-        return 20; // Modified victim: write (10) + read (10) = 20
+        return 20; 
     }
     else
     {
-        return 10; // Clean victim or free page: just read (10)
+        return 10; 
     }
 }
 
@@ -460,10 +447,10 @@ int Request(PCB *pcb, int process_count, int process_id,
                 mem_mgr.pages[pte->physical_page_number].modified = true;
             }
         }
-        return 0; // No page fault
+        return 0; 
     }
 
-    // PAGE FAULT
+    
     return handle_page_fault(pcb, process_count, process_id, virtual_page, readwrite_flag, current_time);
 }
 
@@ -477,14 +464,14 @@ int allocate_process_page_table(PCB *pcb)
         if (pt_page == -1)
             return -1;
 
-        PhysicalPage *victim = &mem_mgr.pages[pt_page];
-        if (victim->is_page_table)
+        PhysicalPage *da7eya = &mem_mgr.pages[pt_page];
+        if (da7eya->is_page_table)
             return -1;
 
-        if (victim->process_id != -1 && victim->modified)
+        if (da7eya->process_id != -1 && da7eya->modified)
         {
-            swap_page_to_disk(victim->process_id,
-                              victim->virtual_page_number,
+            swap_page_to_disk(da7eya->process_id,
+                              da7eya->virtual_page_number,
                               pt_page);
         }
     }

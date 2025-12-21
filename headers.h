@@ -36,6 +36,13 @@ struct message_buf {
     process p;
 } typedef message_buf;
 
+typedef struct {
+    int process_id;
+    int completion_time;
+    int virtual_page;
+    int io_time_remaining;
+    int io_time_elapsed;
+} DiskOperation;
 // Complete PCB Structure
 struct PCB_struct {
     int process_id;
