@@ -20,6 +20,12 @@ void INITIALIZE_PCB(PCB* pcb){
     pcb->disk_base=0;
     pcb->limit=0;
     pcb->execution_time=0;
+    
+    // Initialize page table pointers
+    pcb->page_table.entries = NULL;
+    pcb->page_table.num_pages = 0;
+    pcb->page_table.physical_page_number = -1;
+    pcb->page_table.disk_base = 0;
 }
 
 void INITIALIZE_PCB_Node(PCB_node* pcb_node){
@@ -28,9 +34,9 @@ void INITIALIZE_PCB_Node(PCB_node* pcb_node){
 }
 
 void INITIALIZE_PCB_Linked_List(PCB_linked_list* pcb_list){
-    INITIALIZE_PCB_Node(pcb_list->head);
-    INITIALIZE_PCB_Node(pcb_list->tail);
-    pcb_list->count=0;
+    pcb_list->head = NULL;
+    pcb_list->tail = NULL;
+    pcb_list->count = 0;
 }
 
 void ADD_PCB(PCB_linked_list* pcb_list, PCB pcb_entry){
@@ -42,11 +48,11 @@ void ADD_PCB(PCB_linked_list* pcb_list, PCB pcb_entry){
 
     INITIALIZE_PCB_Node(new_node);
     new_node->PCB_entry=pcb_entry;
+    new_node->next=NULL;
 
     if(pcb_list->head==NULL){
         pcb_list->head=new_node;
         pcb_list->tail=new_node;
-        new_node->next=NULL;
         pcb_list->count++;
         return;
     }else{
@@ -68,21 +74,21 @@ int Remove_PCB(PCB_linked_list* pcb_list, int process_id){
 
     while(current!=NULL){
         if(current->PCB_entry.process_id==process_id){
-            if(previous==NULL){ // if head needs to be removed
+            if(previous==NULL){
                 pcb_list->head=current->next;
-                if(pcb_list->head==NULL){ // if list became empty
+                if(pcb_list->head==NULL){
                     pcb_list->tail=NULL;
                 }
             }else{
                 previous->next=current->next;
-                if(current==pcb_list->tail){ // if tail needs to be removed
+                if(current==pcb_list->tail){
                     pcb_list->tail=previous;
                     pcb_list->tail->next=NULL;
                 }
             }
             free(current);
             pcb_list->count--;
-            return 0; // Success
+            return 0;
         }
         previous=current;
         current=current->next;
@@ -122,10 +128,10 @@ bool enqueuePriority(PcbPriorityQueue* queue, PCB* pcb) {
         current = current->next;
     }
 
-    if (!prev) { // insert at front
+    if (!prev) {
         node->next = queue->front;
         queue->front = node;
-    } else { // middle or end
+    } else {
         prev->next = node;
         node->next = current;
         if (!current) queue->rear = node;
@@ -172,9 +178,7 @@ bool removeFromQueue(PcbPriorityQueue* queue, PCB* pcb) {
 
     while (current) {
         if (current->pcb == pcb) {
-            // Found node to remove
             if (!prev) {
-                // Removing front
                 queue->front = current->next;
                 if (!queue->front) queue->rear = NULL;
             } else {
@@ -188,7 +192,6 @@ bool removeFromQueue(PcbPriorityQueue* queue, PCB* pcb) {
         current = current->next;
     }
 
-    // PCB not found in queue
     return false;
 }
 
@@ -242,7 +245,6 @@ PCB* get_PCB_entry(PCB_linked_list* pcb_list, int process_id){
     return NULL;
 }
 
-// FIXED: This function was searching in PCB array, not linked list
 PCB* get_pcb(PCB* pcb_array, int process_count, int process_id){
     for(int i = 0; i < process_count; i++){
         if(pcb_array[i].process_id == process_id){

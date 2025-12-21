@@ -44,8 +44,8 @@ typedef struct {
     int process_id;
     int completion_time;
     int virtual_page;
-    int io_time_remaining; // Total I/O time needed
-    int io_time_elapsed;   // I/O time already spent
+    int io_time_remaining;
+    int io_time_elapsed;
 } DiskOperation;
 
 DiskOperation disk_queue[100];
@@ -87,7 +87,6 @@ void handle_disk_completions(int current_time) {
     for (int i = 0; i < disk_queue_size; i++) {
         if (disk_queue[i].completion_time <= current_time && disk_queue[i].completion_time > 0) {
             int pid = disk_queue[i].process_id;
-            printf("Disk operation completed for process %d at time %d\n", pid, current_time);
             
             // Find and move process from blocked to ready
             process_Node* current_node = BLOCKED_QUEUE.front;
@@ -143,57 +142,77 @@ void add_disk_operation(int process_id, int virtual_page, int io_time, int curre
     disk_queue[disk_queue_size].io_time_elapsed = 0;
     disk_queue[disk_queue_size].completion_time = current_time + io_time;
     disk_queue_size++;
-    
-    printf("Added disk operation for process %d, VPN %d, completes at %d (IO time: %d)\n", 
-           process_id, virtual_page, disk_queue[disk_queue_size-1].completion_time, io_time);
 }
 
 /*---------------------------------Memory Request Handling--------------------------------*/
 int handle_memory_request(int process_index, int current_time) {
     PCB* p = &pcb[process_index];
     
-    if (p->num_requests == 0) return 0;
-    
-    // Check if there's a request at current execution time
+    // Check for memory requests at current execution time
     for (int i = 0; i < p->num_requests; i++) {
         if (p->memory_requests[i].time == p->execution_time) {
             int virtual_address = p->memory_requests[i].address;
             char rw = p->memory_requests[i].rw;
-            int virtual_page = virtual_address >> OFFSET_BITS;
+            int virtual_page = get_vpn(virtual_address);
             
-            printf("Process %d: Memory request at time %d, VA=%d, VPN=%d, R/W=%c\n",
-                   p->process_id, p->execution_time, virtual_address, virtual_page, rw);
+            // SPECIAL CASE: First memory request (time=1) doesn't block
+            // According to project: "allocation and first initial loading take no time"
+            if (p->execution_time == 1) {
+                printf("Process %d: First memory request at time %d - not blocking\n", 
+                       p->process_id, p->execution_time);
+                // Still call MMU to load page, but don't block
+                int io_time = Request(pcb, process_count, p->process_id, virtual_page, rw, current_time);
+                // Don't return io_time - process continues execution
+                return 0;
+            }
             
-            // Call MMU to handle request - returns I/O time if page fault
+            // Call MMU to handle request
             int io_time = Request(pcb, process_count, p->process_id, virtual_page, rw, current_time);
             
-            if (io_time > 0) { // Page fault occurred
-                printf("Process %d: PAGE FAULT on VPN %d (IO time: %d cycles)\n", 
-                       p->process_id, virtual_page, io_time);
+            if (io_time > 0) {
                 return io_time;
             }
-            break; // Only handle one request per cycle
+            break;
         }
     }
-    return 0; // No page fault
+    return 0;
 }
-
 /*---------------------------------Process Management--------------------------------*/
 void start_process(int process_index, int current_time) {
     PCB* p = &pcb[process_index];
     
     if (!p->STARTED) {
-        // Initialize page table
+        // Initialize page table if not already done
         if (p->page_table.entries == NULL) {
-            init_process_page_table(p);
+            if (init_process_page_table(p) != 0) {
+                printf("Error: Failed to initialize page table for process %d\n", p->process_id);
+                return;
+            }
+            
+            // Allocate page table (no time cost per project spec)
             allocate_process_page_table(p);
             
             // Load first page immediately (no time cost per project spec)
-            int first_page_result = Request(pcb, process_count, p->process_id, 0, 'r', current_time);
-            if (first_page_result > 0) {
-                // First page fault - load immediately without blocking
-                printf("Process %d: Loading first page without blocking (project assumption)\n", p->process_id);
-                // According to project: "allocation and first initial loading take no time"
+            // Project says: "allocation and first initial loading take no time"
+            // So we don't block for first page
+            printf("Process %d: Loading first page without blocking (project assumption)\n", p->process_id);
+            
+            // Process any memory request at time 0
+            for (int i = 0; i < p->num_requests; i++) {
+                if (p->memory_requests[i].time == 0) {
+                    int virtual_address = p->memory_requests[i].address;
+                    int virtual_page = get_vpn(virtual_address);
+                    char rw = p->memory_requests[i].rw;
+                    
+                    // Handle first request without blocking
+                    int io_time = Request(pcb, process_count, p->process_id, virtual_page, rw, current_time);
+                    if (io_time > 0) {
+                        // First page fault - load immediately without blocking
+                        printf("Process %d: First page fault occurred but not blocking (project spec)\n", p->process_id);
+                        // Still don't block - project says no time for first load
+                    }
+                    break;
+                }
             }
         }
         
@@ -212,46 +231,49 @@ void start_process(int process_index, int current_time) {
         p->START_TIME = current_time;
         p->execution_time = 0;
         
+        // Calculate waiting time up to this point
+        // Wait time = current time - arrival time (since no execution yet)
+        p->WAITING_TIME = current_time - p->arrival_time;
+        if (p->WAITING_TIME < 0) p->WAITING_TIME = 0;
+        
         // Log start
         pFile = fopen("scheduler.log", "a");
         if (pFile) {
-            int wait_time_calc = current_time - p->arrival_time;
             fprintf(pFile, "At time %-5d process %-5d started   arr %-5d total %-5d remain %-5d wait %-5d\n",
                     current_time, p->process_id,
                     p->arrival_time,
                     p->RUNNING_TIME,
                     p->REMAINING_TIME,
-                    wait_time_calc);
+                    p->WAITING_TIME);
             fclose(pFile);
         }
-        
-        printf("Process %d started at time %d\n", p->process_id, current_time);
     } else {
         // Resume process
         if (p->process_pid > 0) {
             kill(p->process_pid, SIGCONT);
         }
         
+        // Update waiting time: current time - arrival time - time spent running
+        int time_spent_running = p->RUNNING_TIME - p->REMAINING_TIME;
+        p->WAITING_TIME = current_time - p->arrival_time - time_spent_running;
+        if (p->WAITING_TIME < 0) p->WAITING_TIME = 0;
+        
         // Log resume
         pFile = fopen("scheduler.log", "a");
         if (pFile) {
-            int time_spent_running = p->RUNNING_TIME - p->REMAINING_TIME;
-            int wait_time_calc = current_time - p->arrival_time - time_spent_running;
             fprintf(pFile, "At time %-5d process %-5d resumed   arr %-5d total %-5d remain %-5d wait %-5d\n",
                     current_time, p->process_id,
                     p->arrival_time,
                     p->RUNNING_TIME,
                     p->REMAINING_TIME,
-                    wait_time_calc);
+                    p->WAITING_TIME);
             fclose(pFile);
         }
-        
-        printf("Process %d resumed at time %d\n", p->process_id, current_time);
     }
     
     p->process_state = Running;
     p->LAST_EXECUTED_TIME = current_time;
-    quantum_counter = 0; // Reset quantum counter when process starts/resumes
+    quantum_counter = 0;
 }
 
 void stop_process(int process_index, int current_time, const char* reason) {
@@ -263,21 +285,22 @@ void stop_process(int process_index, int current_time, const char* reason) {
     
     p->process_state = Ready;
     
+    // Update waiting time for the stop
+    int time_spent_running = p->RUNNING_TIME - p->REMAINING_TIME;
+    p->WAITING_TIME = current_time - p->arrival_time - time_spent_running;
+    if (p->WAITING_TIME < 0) p->WAITING_TIME = 0;
+    
     // Log stop
     pFile = fopen("scheduler.log", "a");
     if (pFile) {
-        int time_spent_running = p->RUNNING_TIME - p->REMAINING_TIME;
-        int wait_time_calc = current_time - p->arrival_time - time_spent_running;
         fprintf(pFile, "At time %-5d process %-5d stopped   arr %-5d total %-5d remain %-5d wait %-5d\n",
                 current_time, p->process_id,
                 p->arrival_time,
                 p->RUNNING_TIME,
                 p->REMAINING_TIME,
-                wait_time_calc);
+                p->WAITING_TIME);
         fclose(pFile);
     }
-    
-    printf("Process %d stopped: %s\n", p->process_id, reason);
 }
 
 void block_process(int process_index, int current_time, int io_time, const char* reason) {
@@ -290,30 +313,48 @@ void block_process(int process_index, int current_time, int io_time, const char*
     p->process_state = Blocked;
     p->blocked_time = io_time;
     
-    // Add to blocked queue
+    // Update waiting time before blocking
+    int time_spent_running = p->RUNNING_TIME - p->REMAINING_TIME;
+    p->WAITING_TIME = current_time - p->arrival_time - time_spent_running;
+    if (p->WAITING_TIME < 0) p->WAITING_TIME = 0;
+    
+    // Create process struct for blocked queue
     process temp_process;
     temp_process.ID = p->process_id;
     temp_process.ARRIVAL_TIME = p->arrival_time;
     temp_process.RUNNING_TIME = p->RUNNING_TIME;
     temp_process.PRIORITY = p->priority;
     temp_process.first_time = 0;
+    temp_process.disk_base = p->disk_base;
+    temp_process.limit = p->limit;
+    temp_process.num_requests = p->num_requests;
+    
     enqueue(&BLOCKED_QUEUE, temp_process);
     
     // Log block
     pFile = fopen("scheduler.log", "a");
     if (pFile) {
-        int time_spent_running = p->RUNNING_TIME - p->REMAINING_TIME;
-        int wait_time_calc = current_time - p->arrival_time - time_spent_running;
         fprintf(pFile, "At time %-5d process %-5d blocked   arr %-5d total %-5d remain %-5d wait %-5d\n",
                 current_time, p->process_id,
                 p->arrival_time,
                 p->RUNNING_TIME,
                 p->REMAINING_TIME,
-                wait_time_calc);
+                p->WAITING_TIME);
         fclose(pFile);
     }
     
-    printf("Process %d blocked: %s (IO time: %d cycles)\n", p->process_id, reason, io_time);
+    // Find the virtual page that caused the fault
+    int virtual_page_for_fault = -1;
+    for (int i = 0; i < p->num_requests; i++) {
+        if (p->memory_requests[i].time == p->execution_time) {
+            virtual_page_for_fault = get_vpn(p->memory_requests[i].address);
+            break;
+        }
+    }
+    
+    if (virtual_page_for_fault >= 0) {
+        add_disk_operation(p->process_id, virtual_page_for_fault, io_time, current_time);
+    }
 }
 
 void finish_process(int process_index, int current_time) {
@@ -323,9 +364,11 @@ void finish_process(int process_index, int current_time) {
     p->FINISH_TIME = current_time;
     p->is_completed = 1;
     
-    // Calculate waiting time: total time - arrival time - actual CPU time used
-    // Note: p->execution_time tracks actual CPU time spent (not including blocked time)
-    p->WAITING_TIME = current_time - p->arrival_time - p->execution_time;
+    // Calculate final waiting time
+    // Wait time = total time in system - actual CPU time used
+    int actual_cpu_time = p->RUNNING_TIME - p->REMAINING_TIME;
+    p->WAITING_TIME = current_time - p->arrival_time - actual_cpu_time;
+    if (p->WAITING_TIME < 0) p->WAITING_TIME = 0;
     
     // Free memory resources
     free_process_pages(p->process_id, p);
@@ -337,7 +380,10 @@ void finish_process(int process_index, int current_time) {
     
     // Calculate turnaround time statistics
     int TA = p->FINISH_TIME - p->arrival_time;
-    float WTA_val = (float)TA / p->RUNNING_TIME;
+    float WTA_val = 0.0;
+    if (p->RUNNING_TIME > 0) {
+        WTA_val = (float)TA / p->RUNNING_TIME;
+    }
     
     // Log finish
     pFile = fopen("scheduler.log", "a");
@@ -362,8 +408,6 @@ void finish_process(int process_index, int current_time) {
     }
     
     finished_process++;
-    printf("Process %d finished at time %d (TA=%d, WTA=%.2f)\n", 
-           p->process_id, current_time, TA, WTA_val);
 }
 
 /*---------------------------------Round Robin with MMU--------------------------------*/
@@ -378,11 +422,6 @@ void rr_mmu_tick(int current_time) {
     if (running_process_index != -1 && pcb[running_process_index].process_state == Running) {
         PCB* current_pcb = &pcb[running_process_index];
         
-        // Check memory full condition (for debugging)
-        if (get_free_page_count() == 0) {
-            printf("Memory full! %d pages in use\n", NUM_PHYSICAL_PAGES - get_free_page_count());
-        }
-        
         // Increment execution time
         current_pcb->execution_time++;
         total_running_times++;
@@ -393,12 +432,6 @@ void rr_mmu_tick(int current_time) {
         if (io_time_needed > 0) {
             // Block process due to page fault
             block_process(running_process_index, current_time, io_time_needed, "page fault");
-            
-            // Add disk operation with correct I/O time
-            int virtual_address = current_pcb->memory_requests[current_pcb->execution_time-1].address;
-            int virtual_page = virtual_address >> OFFSET_BITS;
-            add_disk_operation(current_pcb->process_id, virtual_page, io_time_needed, current_time);
-            
             running_process_index = -1;
             quantum_counter = 0;
             return;
@@ -446,6 +479,7 @@ void rr_mmu_tick(int current_time) {
             temp_process.RUNNING_TIME = current_pcb->RUNNING_TIME;
             temp_process.PRIORITY = current_pcb->priority;
             temp_process.first_time = 0;
+            
             enqueue(&READY_QUEUE, temp_process);
             
             running_process_index = -1;
@@ -473,20 +507,16 @@ void rr_mmu_tick(int current_time) {
     while (temp != NULL) {
         for (int i = 0; i < process_count; i++) {
             if (pcb[i].process_id == temp->Process.ID && pcb[i].process_state == Ready) {
-                // Increment waiting time only if process is ready but not running
-                pcb[i].WAITING_TIME++;
-                break;
-            }
-        }
-        temp = temp->next;
-    }
-    
-    // Update blocked times for processes in blocked queue
-    temp = BLOCKED_QUEUE.front;
-    while (temp != NULL) {
-        for (int i = 0; i < process_count; i++) {
-            if (pcb[i].process_id == temp->Process.ID && pcb[i].process_state == Blocked) {
-                pcb[i].blocked_time--;
+                // Only increment waiting time if process is ready but not running
+                // And hasn't started execution yet
+                if (pcb[i].START_TIME == -1) {
+                    pcb[i].WAITING_TIME++;
+                } else {
+                    // If started, wait time = current time - arrival - time spent running
+                    int time_spent_running = pcb[i].RUNNING_TIME - pcb[i].REMAINING_TIME;
+                    pcb[i].WAITING_TIME = current_time - pcb[i].arrival_time - time_spent_running;
+                }
+                if (pcb[i].WAITING_TIME < 0) pcb[i].WAITING_TIME = 0;
                 break;
             }
         }
@@ -535,7 +565,6 @@ int main(int argc, char * argv[]) {
     
     // Initialize systems
     init_memory();
-    init_free_list();
     initialize_queue(&READY_QUEUE);
     initialize_queue(&BLOCKED_QUEUE);
     
@@ -551,12 +580,6 @@ int main(int argc, char * argv[]) {
     
     process_count = 0;
     
-    printf("RR Scheduler with MMU started. Quantum: %d, Expected processes: %d\n", 
-           TIME_QUANTUM, total_process);
-    printf("Memory: %d pages (%d bytes), Page size: %d bytes\n", 
-           NUM_PHYSICAL_PAGES, RAM_SIZE, PAGE_SIZE);
-    printf("Disk access time: %d cycles\n", DISK_ACCESS_TIME);
-    
     // Main loop
     while (1) {
         current_time = getClk();
@@ -564,8 +587,6 @@ int main(int argc, char * argv[]) {
         // Check for new arrivals
         int rec_status = msgrcv(MESSAGE_ID, &PROCESS_MESSAGE, sizeof(process), 2, IPC_NOWAIT);
         if (rec_status != -1) {
-            printf("Process %d arrived at time %d\n", PROCESS_MESSAGE.p.ID, current_time);
-            
             // Create PCB
             int idx = process_count;
             pcb[idx].process_id = PROCESS_MESSAGE.p.ID;
@@ -576,7 +597,6 @@ int main(int argc, char * argv[]) {
             pcb[idx].dependency_id = PROCESS_MESSAGE.p.DEPENDENCY_ID;
             pcb[idx].disk_base = PROCESS_MESSAGE.p.disk_base;
             pcb[idx].limit = PROCESS_MESSAGE.p.limit;
-            pcb[idx].num_pages = PROCESS_MESSAGE.p.limit;
             pcb[idx].num_requests = PROCESS_MESSAGE.p.num_requests;
             pcb[idx].process_state = Ready;
             pcb[idx].STARTED = 0;
@@ -584,16 +604,25 @@ int main(int argc, char * argv[]) {
             pcb[idx].WAITING_TIME = 0;
             pcb[idx].blocked_time = 0;
             pcb[idx].execution_time = 0;
+            pcb[idx].quantum_remaining = 0;
+            pcb[idx].START_TIME = -1;
+            pcb[idx].LAST_EXECUTED_TIME = -1;
+            pcb[idx].FINISH_TIME = -1;
+            pcb[idx].process_pid = -1;
             pcb[idx].page_table.entries = NULL;
+            pcb[idx].page_table.physical_page_number = -1;
+            
+            // Calculate number of pages needed
+            pcb[idx].num_pages = pcb[idx].limit;
+            if (pcb[idx].num_pages <= 0) {
+                pcb[idx].num_pages = 1;
+            }
             
             // Copy memory requests
             int max_requests = (PROCESS_MESSAGE.p.num_requests < 100) ? PROCESS_MESSAGE.p.num_requests : 100;
             for (int i = 0; i < max_requests; i++) {
                 pcb[idx].memory_requests[i] = PROCESS_MESSAGE.p.memory_requests[i];
             }
-            
-            // Calculate number of pages needed
-            pcb[idx].num_pages = (pcb[idx].limit + PAGE_SIZE - 1) / PAGE_SIZE;
             
             // Add to ready queue
             enqueue(&READY_QUEUE, PROCESS_MESSAGE.p);
@@ -610,14 +639,6 @@ int main(int argc, char * argv[]) {
         
         // Check if all processes finished
         if (finished_process == total_process && total_process > 0) {
-            // Print final memory status
-            printf("\n=== Final Memory Status ===\n");
-            printf("Page faults: %d\n", get_page_faults());
-            printf("Page replacements: %d\n", get_page_replacements());
-            printf("Disk reads: %d\n", get_disk_reads());
-            printf("Disk writes: %d\n", get_disk_writes());
-            printf("Free pages remaining: %d\n", get_free_page_count());
-            
             // Generate performance report
             if (count > 0) {
                 float AVGWAITING = 0;
@@ -650,22 +671,15 @@ int main(int argc, char * argv[]) {
                     fprintf(pFile, "Avg Waiting = %.2f\n", AVGWAITING);
                     fprintf(pFile, "Std WTA = %.2f\n", std_dev);
                     fclose(pFile);
-                    printf("\nPerformance report generated\n");
                 }
-                
-                printf("CPU utilization: %.2f%%\n", cpu_utilization);
-                printf("Average WTA: %.2f\n", AVGWTA);
-                printf("Average Waiting Time: %.2f\n", AVGWAITING);
-                printf("Standard Deviation of WTA: %.2f\n", std_dev);
             }
             
-            printf("\nAll processes completed. Exiting.\n");
             break;
         }
         
         // Wait for next clock tick
         if (clock_timer == current_time) {
-            sleep(1);
+            usleep(100000);
         }
         clock_timer = current_time;
     }

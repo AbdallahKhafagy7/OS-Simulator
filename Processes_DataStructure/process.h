@@ -4,13 +4,8 @@
 #define false 0
 typedef short bool;
 
-struct request {
-    int time;
-    int address;
-    char rw;
-};
-
-typedef struct request request;
+// Note: request structure moved to memory_structures.h
+#include "../memory.h"
 
 typedef struct process{
     int ID;  
@@ -27,4 +22,4 @@ typedef struct process{
     int current_request;       
 } process;
 
-#endif //PROCESS_H
+#endif
