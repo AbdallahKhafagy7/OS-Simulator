@@ -640,3 +640,20 @@ void print_memory_status()
     }
     printf("====================\n");
 }
+
+void debug_second_chance(int current_time) {
+    printf("\n=== Second Chance Debug at time %d ===\n", current_time);
+    printf("Free pages: %d, Clock pointer: %d\n", 
+           get_free_page_count(), mem_mgr.clock_pointer);
+    
+    for (int i = 0; i < NUM_PHYSICAL_PAGES; i++) {
+        if (!mem_mgr.pages[i].is_free) {
+            printf("Page %2d: PID=%d, VPN=%d, R=%d, M=%d\n",
+                   i,
+                   mem_mgr.pages[i].process_id,
+                   mem_mgr.pages[i].virtual_page_number,
+                   mem_mgr.pages[i].referenced,
+                   mem_mgr.pages[i].modified);
+        }
+    }
+}

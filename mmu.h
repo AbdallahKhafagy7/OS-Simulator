@@ -89,6 +89,7 @@ int get_page_faults(void);
 int get_page_replacements(void);
 int get_disk_reads(void);
 int get_disk_writes(void);
+void debug_second_chance(int current_time);
 
 // Inline functions
 static inline int get_vpn(int virtual_address)
