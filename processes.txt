@@ -1,3 +1,4 @@
 #id   arrival    runtime    priority   dependencyId         disk_base            limit               
-1     4          7          5          -1                   0                    500                  
-2     10         2          1          1                    500                  300                  
+1     4          14         7          -1                   0                    900                  
+2     14         10         2          1                    900                  900                  
+3     22         10         7          -1                   1800                 900                  

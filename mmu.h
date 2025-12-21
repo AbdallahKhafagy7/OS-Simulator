@@ -1,7 +1,6 @@
 #ifndef MMU_H
 #define MMU_H
 
-//#include <stdbool.h>
 typedef short bool;
 
 #define ADDRESS_BITS 10       // 10-bit address space
@@ -44,16 +43,6 @@ typedef struct
     int disk_base;            // Base page number on disk
 } ProcessPageTable;
 
-// typedef struct
-// {
-//     int process_id;
-//     int virtual_page;
-//     int physical_page;
-//     int completion_time; // When I/O will complete
-//     char operation;      // 'R' for read, 'W' for write
-//     bool completed;
-// } DiskOperation;
-
 typedef struct FreePageNode
 {
     int page_number;
@@ -72,27 +61,34 @@ typedef struct
     int page_replacements;
 } MemoryManager;
 
+// Global memory manager instance
+extern MemoryManager mem_mgr;
+
 // Function declarations
 void add_to_free_list(int page_number);
 void print_free_list();
 void init_free_list();
 int remove_from_free_list();
-int Request(PCB *pcb, int process_count, int process_id, int virtual_page, char readwrite_flag);
+int Request(PCB *pcb, int process_count, int process_id, int virtual_page, char readwrite_flag, int current_time);
 void init_memory(void);
 int allocate_free_page(int process_id, int virtual_page);
 void free_process_pages(int process_id, PCB *pcb);
 int second_chance_replacement();
-void allocate_page_table(PCB *pcb);
 int translate_address(int process_id, int virtual_address, PCB *pcb, char rw_flag);
-void handle_page_fault(PCB *pcb, int process_Count, int process_id, int virtual_page, char readwrite_flag);
 void load_page_from_disk(int process_id, int virtual_page, int physical_page, int disk_base);
 void swap_page_to_disk(int process_id, int virtual_page, int physical_page);
-void update_disk_operations(int current_time);
-bool is_page_in_disk_queue(int process_id, int virtual_page);
 void print_memory_log(const char *format, ...);
+void close_memory_log(void);
 void print_memory_status(void);
 int init_process_page_table(PCB *pcb);
 int allocate_process_page_table(PCB *pcb);
+
+// Helper functions to access memory manager statistics
+int get_free_page_count(void);
+int get_page_faults(void);
+int get_page_replacements(void);
+int get_disk_reads(void);
+int get_disk_writes(void);
 
 // Inline functions
 static inline int get_vpn(int virtual_address)
