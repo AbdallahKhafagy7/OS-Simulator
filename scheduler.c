@@ -370,6 +370,33 @@ int main(int argc, char * argv[])
 
     while(1)
     {
+
+        for(int i=0;i<process_count;i++){
+            if (pcb[i].blocked_time<=0) {
+                process_Node* unblocked_process = dequeue(&BLOCKED_QUEUE);
+                if (unblocked_process != NULL) {
+                    printf("Process %d unblocking at time %d\n", pcb[i].process_id, getClk());
+                    enqueue(&READY_QUEUE, unblocked_process->Process);
+                    pcb[i].process_state = Ready;
+                    // Log unblocking
+                    pFile = fopen("scheduler.log", "a");
+                    if(pFile) {
+                        fprintf(pFile, "At time %-5d process %-5d unblocked arr %-5d total %-5d remain %-5d wait %-5d\n",
+                                getClk(), pcb[i].process_id,
+                                pcb[i].arrival_time,
+                                pcb[i].RUNNING_TIME,
+                                pcb[i].REMAINING_TIME,
+                                pcb[i].WAITING_TIME);
+                        fclose(pFile);
+                }
+            }
+          if(pcb[i].process_state==Blocked){
+            pcb[i].blocked_time--;
+          }
+
+        }
+    }
+
         int rec_status = msgrcv(MESSAGE_ID,&PROCESS_MESSAGE, sizeof(process),2,IPC_NOWAIT);
         total_running_time[running_count]=PROCESS_MESSAGE.p.RUNNING_TIME;
         if(rec_status!=-1)
@@ -484,9 +511,8 @@ int main(int argc, char * argv[])
     break;
                 case 3:{
                               enqueue(&READY_QUEUE, PROCESS_MESSAGE.p);
-                    
-                    running_process_index = get_pcb_index(pcb, process_count, 
-                                                           peek_front(&READY_QUEUE)->Process.ID);
+
+                    running_process_index = get_pcb_index(pcb, process_count, peek_front(&READY_QUEUE)->Process.ID);
 
                             if(running_process_index == -1 && peek_front(&READY_QUEUE) != NULL && peek_front(&READY_QUEUE)->Process.first_time) {
 
@@ -521,7 +547,6 @@ int main(int argc, char * argv[])
                                     enqueue(&BLOCKED_QUEUE, Blocked->Process);
                                     continue; // Skip execution
                                 }
-
                                 current_time = getClk();
                                 peek_front(&READY_QUEUE)->Process.first_time = false;
                                 pcb[process_count].START_TIME = current_time;
@@ -751,7 +776,7 @@ int main(int argc, char * argv[])
                 clock_timer = getClk();
                 printf("Clock Timer : %d \n", clock_timer);
 
-                  process_Node* temp_process = BLOCKED_QUEUE.front;
+            process_Node* temp_process = BLOCKED_QUEUE.front;
     while(temp_process != NULL) {
         int index = get_pcb_index(pcb, process_count, temp_process->Process.ID);
         
