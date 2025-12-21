@@ -44,15 +44,15 @@ typedef struct
     int disk_base;            // Base page number on disk
 } ProcessPageTable;
 
-typedef struct
-{
-    int process_id;
-    int virtual_page;
-    int physical_page;
-    int completion_time; // When I/O will complete
-    char operation;      // 'R' for read, 'W' for write
-    bool completed;
-} DiskOperation;
+// typedef struct
+// {
+//     int process_id;
+//     int virtual_page;
+//     int physical_page;
+//     int completion_time; // When I/O will complete
+//     char operation;      // 'R' for read, 'W' for write
+//     bool completed;
+// } DiskOperation;
 
 typedef struct FreePageNode
 {

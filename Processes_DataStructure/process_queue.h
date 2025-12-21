@@ -1,43 +1,24 @@
-// ***************************abdelrahman tarek *********************************//
-
 #ifndef PROCESS_QUEUE_H
 #define PROCESS_QUEUE_H
 
-#include "process.h" 
+#include "process.h"
 
-// Node definition for the standard queue
-typedef struct process_Node
-{
+typedef struct process_Node {
     process Process;
     struct process_Node* next;
 } process_Node;
 
-// Queue definition
-typedef struct process_queue
-{
+typedef struct {
     process_Node* front;
     process_Node* rear;
+    int count;
 } process_queue;
 
-void initialize_queue(process_queue* queue);
-
-/**
- *  Checks if the queue is empty.
- *  1 (true) if the queue is NULL or has no nodes, 0 (false) otherwise.
- */
-bool is_queue_empty(process_queue* queue);
-
-/**
- *  0 on success, -1 on memory allocation failure, -4 on invalid queue pointer.
- */
-bool enqueue(process_queue* queue, process Process);
-
-
-process_Node* dequeue(process_queue* queue);
-
-
-void free_queue(process_queue* queue);
-
-process_Node* peek_front(process_queue* queue);
+void initialize_queue(process_queue* q);
+int is_empty_queue(process_queue* q);  // Renamed to avoid conflict
+void enqueue(process_queue* q, process p);
+process dequeue(process_queue* q);
+process peek_front(process_queue* q);
+int queue_size(process_queue* q);
 
 #endif // PROCESS_QUEUE_H
