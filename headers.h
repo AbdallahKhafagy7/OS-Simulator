@@ -53,6 +53,7 @@ struct PCB_struct {
     bool STARTED;
     int REMAINING_TIME;
     int RUNNING_TIME;
+    int RUNTIME;
     int START_TIME;
     int LAST_EXECUTED_TIME;
     int FINISH_TIME;

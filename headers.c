@@ -123,7 +123,7 @@ bool enqueuePriority(PcbPriorityQueue* queue, PCB* pcb) {
     PcbNode* current = queue->front;
     PcbNode* prev = NULL;
 
-    while (current && current->pcb->priority <= pcb->priority) {
+    while (current && current->pcb->priority >= pcb->priority) {
         prev = current;
         current = current->next;
     }
