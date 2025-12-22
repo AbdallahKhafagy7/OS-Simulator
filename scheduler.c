@@ -985,6 +985,8 @@ int main(int argc, char * argv[]) {
 }
 
         if (selected_Algorithm_NUM == 3 && clock_timer != getClk()) { // RR
+            clock_timer = getClk();
+            printf("Clock Timer : %d\n",clock_timer);
             Robin_Robin_timestep(current_time);
         }
         
@@ -1024,9 +1026,6 @@ int main(int argc, char * argv[]) {
             break;
         }
         
-        // Wait for next clock tick
-      
-        clock_timer = current_time;
     }
     
     free(wait_time);
