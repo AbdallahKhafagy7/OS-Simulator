@@ -20,6 +20,7 @@ void INITIALIZE_PCB(PCB* pcb){
     pcb->disk_base=0;
     pcb->limit=0;
     pcb->execution_time=0;
+    pcb->total_blocked_time=0;
     
     // Initialize page table pointers
     pcb->page_table.entries = NULL;
@@ -123,7 +124,7 @@ bool enqueuePriority(PcbPriorityQueue* queue, PCB* pcb) {
     PcbNode* current = queue->front;
     PcbNode* prev = NULL;
 
-    while (current && current->pcb->priority <= pcb->priority) {
+    while (current && current->pcb->priority >= pcb->priority) {
         prev = current;
         current = current->next;
     }
