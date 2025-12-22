@@ -288,6 +288,73 @@ int allocate_free_page(int process_id, int virtual_page)
     return ppn;
 }
 
+
+
+
+
+
+
+
+int LRU_replacement()
+{
+    int page_to_be_removed = -1;
+
+   for(int i = 0; i < NUM_PHYSICAL_PAGES; i++)    {
+     
+    
+    if (mem_mgr.pages[i].is_free){
+        int j;
+    for(j = 0; j < NUM_PHYSICAL_PAGES; j++)
+    {
+        if (mem_mgr.pages[j].is_free)
+        {
+            mem_mgr.pages[j].LRU_counter = 1;
+             //free page avilable  
+             page_to_be_removed = j;
+        }
+        else
+        {
+            mem_mgr.pages[j].LRU_counter++;
+        }
+    }
+    return page_to_be_removed; 
+    }
+    }
+
+    
+    int min_lru=NUM_PHYSICAL_PAGES;
+    
+
+        for(int i = 0; i < NUM_PHYSICAL_PAGES; i++)
+    {
+        mem_mgr.pages[i].LRU_counter++;
+    }
+
+
+    for(int i = 0; i < NUM_PHYSICAL_PAGES; i++)
+    {
+        if (mem_mgr.pages[i].LRU_counter == 32)
+        {
+            min_lru = mem_mgr.pages[i].LRU_counter;
+            page_to_be_removed = i;
+            mem_mgr.page_replacements++;
+            
+        }
+    }
+
+return page_to_be_removed;
+}
+
+
+
+
+
+
+
+
+
+
+
 int second_chance_replacement()
 {
     int start = mem_mgr.clock_pointer;

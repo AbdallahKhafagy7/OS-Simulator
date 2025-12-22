@@ -15,6 +15,9 @@ int selected_Algorithm_NUM=-1;
 string selected_Algorithm=NULL;
 int time_quantum;
 int MESSAGE_ID;
+int selected_Page_Replacement_NUM = -1;
+string selected_Page_Replacement=NULL;
+
 
 int main(int argc, char * argv[])
 {
@@ -133,7 +136,31 @@ int main(int argc, char * argv[])
             break;
         }
     }
+   
     
+
+ printf("1.Second Chance\n2.LRU\n");
+    selected_Page_Replacement = malloc(10 * sizeof(char));
+ while(selected_Page_Replacement_NUM==-1)
+    {
+        printf("Enter The No. of page replacement Technique : ");
+        scanf("%d", &selected_Page_Replacement_NUM);
+        switch (selected_Page_Replacement_NUM)
+        {
+            case 1:
+            strcpy(selected_Page_Replacement,"Second Chance");
+            break;
+            case 2:
+            strcpy(selected_Page_Replacement,"LRU");
+            break;
+            
+        default:
+        selected_Algorithm_NUM=-1;
+        printf("Invalid Algorithm\n");
+            break;
+        }
+    }
+
     int clk_pid = fork();
     if (clk_pid == 0)
     {
@@ -148,11 +175,13 @@ int main(int argc, char * argv[])
         char selected_Algorithm_NUM_str[100];
         char time_quantum_str[100];
         char total_process[20];
+        char selected_Page_Replacement_NUM_str[100];
         sprintf(total_process, "%d", count);
         sprintf(selected_Algorithm_NUM_str, "%d", selected_Algorithm_NUM);
         sprintf(time_quantum_str, "%d", time_quantum);
+        sprintf(selected_Page_Replacement_NUM_str, "%d", selected_Page_Replacement_NUM);
         execl("./scheduler.out", "scheduler.out", 
-              selected_Algorithm_NUM_str, time_quantum_str, total_process, NULL);
+              selected_Algorithm_NUM_str, time_quantum_str, total_process, selected_Page_Replacement_NUM_str, NULL);
         perror("Error in executing scheduler process");
         exit(0);
     }
