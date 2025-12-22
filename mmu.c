@@ -9,7 +9,16 @@
 // Global memory manager instance
 MemoryManager mem_mgr;
 FILE *memory_log_file = NULL;
-bool algo_replacement = -1; // 1 for Second Chance, 2 for LRU
+int selected_Page_Replacement_NUM_mmu = -1;
+
+void set_page_replacement_algorithm(int algo_num)
+{
+    selected_Page_Replacement_NUM_mmu=algo_num;
+    printf("Page Replacement Algorithm set to %d\n", selected_Page_Replacement_NUM_mmu);
+
+}
+
+
 // Helper functions to access memory manager statistics
 int get_free_page_count(void) {
     return mem_mgr.free_page_count;
@@ -433,7 +442,7 @@ int handle_page_fault(PCB *pcb, int process_count, int process_id,
     if (frame_index == -1)
     {
         used_replacement = true;
-        if (algo_replacement==2){
+        if (selected_Page_Replacement_NUM_mmu==2){
             frame_index = LRU_replacement();
         }
         else{
@@ -544,12 +553,48 @@ int allocate_process_page_table(PCB *pcb)
 
     if (pt_page == -1)
     {
-        if (algo_replacement==2){
+        if (selected_Page_Replacement_NUM_mmu==2){
             pt_page = LRU_replacement();
         }
         else{
         pt_page = second_chance_replacement();
         }
+        if (pt_page == -1)
+            return -1;
+
+        PhysicalPage *da7eya = &mem_mgr.pages[pt_page];
+        if (da7eya->is_page_table)
+            return -1;
+
+        if (da7eya->process_id != -1 && da7eya->modified)
+        {
+            swap_page_to_disk(da7eya->process_id,
+                              da7eya->virtual_page_number,
+                              pt_page);
+        }
+    }
+
+    pcb->page_table.physical_page_number = pt_page;
+    mem_mgr.pages[pt_page].is_page_table = true;
+    mem_mgr.pages[pt_page].virtual_page_number = -1;
+    mem_mgr.pages[pt_page].process_id = pcb->process_id;
+    mem_mgr.pages[pt_page].is_free = false;
+    mem_mgr.pages[pt_page].locked = true;
+
+    return pt_page;
+}
+
+
+int allocate_process_page_table_LRU(PCB *pcb)
+{
+    int pt_page = allocate_free_page(pcb->process_id, -1);
+
+    if (pt_page == -1)
+    {
+       
+            pt_page = LRU_replacement();
+        
+       
         if (pt_page == -1)
             return -1;
 
@@ -607,7 +652,7 @@ int initiate_page_fault(PCB *pcb, int process_count, int process_id,
     
     if (frame_index == -1) {
         // Need to use second chance
-        if (algo_replacement==2){
+        if (selected_Page_Replacement_NUM_mmu==2){
             frame_index = LRU_replacement();
         }
         else{

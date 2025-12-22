@@ -1,0 +1,2 @@
+#time       #addressInBinary #r/w       
+1         	1101100010	w         

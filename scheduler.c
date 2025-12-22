@@ -26,7 +26,6 @@ int running_count = 0;
 float std_dev_sqr = 0;
 int count = 0;
 int selected_Algorithm_NUM = -1;
-int selected_Page_Replacement_NUM = -1;
 process_queue READY_QUEUE;
 process_priority_queue READY_PRIORITY_QUEUE;
 process_queue BLOCKED_QUEUE;
@@ -39,7 +38,7 @@ int quantum_counter = 0;
 DiskOperation disk_queue[100];
 int disk_queue_size = 0;
 
-
+int page_replacement_algo = -1; // 1 for Second Chance, 2 for LRU   
 // Function declarations
 void start_process(int process_index, int current_time);
 void stop_process(int process_index, int current_time);
@@ -592,7 +591,8 @@ int main(int argc, char * argv[]) {
     
     total_process = atoi(argv[3]);
     
-    selected_Page_Replacement_NUM = atoi(argv[4]);
+    page_replacement_algo = atoi(argv[4]);
+    set_page_replacement_algorithm(page_replacement_algo);
     wait_time = malloc(sizeof(int) * total_process);
     WTA = malloc(sizeof(float) * total_process);
     total_running_time = malloc(sizeof(int) * total_process);

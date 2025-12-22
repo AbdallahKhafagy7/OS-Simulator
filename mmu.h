@@ -71,5 +71,6 @@ int get_page_replacements(void);
 int get_disk_reads(void);
 int get_disk_writes(void);
 void debug_second_chance(int current_time);
+void set_page_replacement_algorithm(int algo_num);
 
 #endif
