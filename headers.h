@@ -40,8 +40,8 @@ typedef struct {
     int process_id;
     int completion_time;
     int virtual_page;
-    int io_time_remaining;
-    int io_time_elapsed;
+    int frame_number;  // ADD THIS - the frame allocated for this page
+    char rw_flag;      // ADD THIS - read/write flag
 } DiskOperation;
 // Complete PCB Structure
 struct PCB_struct {
@@ -63,6 +63,8 @@ struct PCB_struct {
     int WAITING_TIME;
     int blocked_time;
     int execution_time;
+    int total_blocked_time;   // initialize to 0
+
     
     // Memory management fields
     ProcessPageTable page_table;

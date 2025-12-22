@@ -497,3 +497,145 @@ int allocate_process_page_table(PCB *pcb)
 
     return pt_page;
 }
+
+// CRITICAL FIX: Split page fault handling into initiate and complete
+
+// Step 1: Initiate page fault - returns the frame to use and disk time needed
+// This should NOT load the page yet, just prepare for it
+int initiate_page_fault(PCB *pcb, int process_count, int process_id,
+                        int virtual_page, char readwrite_flag, int current_time,
+                        int *frame_out, bool *needs_writeback) {
+    PCB *current_pcb = get_pcb(pcb, process_count, process_id);
+    if (!current_pcb)
+        return 0;
+
+    int disk_base = current_pcb->page_table.disk_base;
+    
+    // Log the page fault
+    char binary_addr[11];
+    int va = virtual_page * PAGE_SIZE;
+    for (int i = 9; i >= 0; i--) {
+        binary_addr[9-i] = ((va >> i) & 1) ? '1' : '0';
+    }
+    binary_addr[10] = '\0';
+    
+    print_memory_log("PageFault upon VA %s from process %d\n", binary_addr, process_id);
+    mem_mgr.page_faults++;
+
+    int frame_index = -1;
+    bool victim_modified = false;
+    
+    // Try to get a free page first
+    frame_index = allocate_free_page(process_id, virtual_page);
+    
+    if (frame_index == -1) {
+        // Need to use second chance
+        frame_index = second_chance_replacement();
+        
+        if (frame_index == -1)
+            return 0;
+
+        PhysicalPage *victim_frame = &mem_mgr.pages[frame_index];
+        victim_modified = victim_frame->modified;
+        
+        // Update victim's page table entry
+        if (victim_frame->process_id != -1) {
+            PCB *victim_pcb = get_pcb(pcb, process_count, victim_frame->process_id);
+            if (victim_pcb && victim_frame->virtual_page_number >= 0) {
+                if (victim_frame->virtual_page_number < victim_pcb->page_table.num_pages) {
+                    PageTableEntry *victim_pte = &victim_pcb->page_table.entries[victim_frame->virtual_page_number];
+                    victim_pte->present = false;
+                    victim_pte->physical_page_number = -1;
+                }
+            }
+
+            if (victim_frame->modified) {
+                print_memory_log("Swapping out page %d to disk\n", frame_index);
+            }
+        }
+    }
+
+    *frame_out = frame_index;
+    *needs_writeback = victim_modified;
+    
+    // Return disk time needed
+    if (victim_modified) {
+        return 20; // Write old page (10) + Read new page (10)
+    } else {
+        return 10; // Just read new page
+    }
+}
+
+// Step 2: Complete page fault - called after disk I/O finishes
+void complete_page_fault(PCB *pcb, int process_count, int process_id,
+                         int virtual_page, int frame_index, 
+                         char readwrite_flag, int current_time) {
+    PCB *current_pcb = get_pcb(pcb, process_count, process_id);
+    if (!current_pcb)
+        return;
+
+    int disk_base = current_pcb->page_table.disk_base;
+    
+    // NOW actually load the page
+    load_page_from_disk(process_id, virtual_page, frame_index, disk_base);
+
+    // Update page table entry
+    if (virtual_page >= 0 && virtual_page < current_pcb->page_table.num_pages) {
+        PageTableEntry *entry = &current_pcb->page_table.entries[virtual_page];
+        entry->physical_page_number = frame_index;
+        entry->present = true;
+        entry->referenced = true;
+        entry->modified = (readwrite_flag == 'W' || readwrite_flag == 'w');
+        
+        if (entry->modified) {
+            mem_mgr.pages[frame_index].modified = true;
+        }
+    }
+
+    int disk_page_number = disk_base + virtual_page;
+    print_memory_log("At time %d disk address %d for process %d is loaded into memory page %d.\n",
+                     current_time, disk_page_number, process_id, frame_index);
+}
+
+// Modified Request function - returns frame number and disk time via pointers
+int Request_New(PCB *pcb, int process_count, int process_id,
+                int virtual_page, char readwrite_flag, int current_time,
+                int *frame_out, bool *is_page_fault) {
+    PCB *current_pcb = get_pcb(pcb, process_count, process_id);
+    if (!current_pcb)
+        return 0;
+
+    if (virtual_page < 0 || virtual_page >= current_pcb->page_table.num_pages)
+        return 0;
+
+    PageTableEntry *pte = &current_pcb->page_table.entries[virtual_page];
+
+    // Page HIT
+    if (pte->present) {
+        *is_page_fault = false;
+        pte->referenced = true;
+
+        if (pte->physical_page_number >= 0 &&
+            pte->physical_page_number < NUM_PHYSICAL_PAGES) {
+            mem_mgr.pages[pte->physical_page_number].referenced = true;
+        }
+
+        if (readwrite_flag == 'W' || readwrite_flag == 'w') {
+            pte->modified = true;
+            if (pte->physical_page_number >= 0 &&
+                pte->physical_page_number < NUM_PHYSICAL_PAGES) {
+                mem_mgr.pages[pte->physical_page_number].modified = true;
+            }
+        }
+        return 0; // No disk I/O needed
+    }
+
+    // Page FAULT - initiate but don't complete yet
+    *is_page_fault = true;
+    bool needs_writeback;
+    int disk_time = initiate_page_fault(pcb, process_count, process_id, 
+                                        virtual_page, readwrite_flag, 
+                                        current_time, frame_out, &needs_writeback);
+    
+    return disk_time;
+}
