@@ -623,7 +623,7 @@ void Robin_Robin_timestep(int current_time) {
             
             running_process_index = -1;
             quantum_counter = 0;
-            return;
+            // return;
         }
         
         // Check if process finished
