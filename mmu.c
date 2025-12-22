@@ -319,10 +319,22 @@ int second_chance_replacement()
         return da7eya;
     }
 
+    int limit = 0;
+    
+    while (mem_mgr.pages[mem_mgr.clock_pointer].is_page_table || mem_mgr.pages[mem_mgr.clock_pointer].locked)
+    {
+        mem_mgr.clock_pointer = (mem_mgr.clock_pointer + 1) % NUM_PHYSICAL_PAGES;
+        limit++;
+        if (limit > NUM_PHYSICAL_PAGES) {
+            return -1; // All pages are page tables
+        }
+    }
+    
     int da7eya = mem_mgr.clock_pointer;
     mem_mgr.clock_pointer = (mem_mgr.clock_pointer + 1) % NUM_PHYSICAL_PAGES;
     mem_mgr.page_replacements++;
     return da7eya;
+
 }
 
 int handle_page_fault(PCB *pcb, int process_count, int process_id,
