@@ -49,6 +49,7 @@ PCB* runningPcb = NULL;
 PcbPriorityQueue readyPriorityQueue;
 int timer = 0;
 int childFinished = 0;
+int finished_PCB = 0;
 
 PCB* getPcbById(int processId) {
     for (int i = 0; i < pcbCount; i++)
@@ -279,6 +280,13 @@ void myHandler(int signum){
 
     childFinished = 1;
     printPCB(finished);
+}
+
+PCB* findPCBByID(int id) {
+    for (int i = 0; i < pcbCount; i++) {
+        if (pcbArray[i]->process_id == id) return pcbArray[i];
+    }
+    return NULL;
 }
 //////////////////////////*/////////////////////////////
 
@@ -803,13 +811,134 @@ int main(int argc, char * argv[]) {
             running_count++;
         }
 
-
-        if ((selected_Algorithm_NUM == 1 && timer != getClk()) || childFinished) {
+        if (selected_Algorithm_NUM == 1 && timer != getClk()) { // HPF
             timer = getClk();
+            printf("Clock Timer : %d \n",getClk());
+            printPriorityQueue(&readyPriorityQueue);
+            for (int i = 0; i < pcbCount; i++)
+            {
+                printf("process%d waiting=%d\n", pcbArray[i]->process_id, pcbArray[i]->WAITING_TIME);
+            }
+            
+            // to stop a process if remaining time = 0
+            if (runningPcb != NULL && runningPcb->REMAINING_TIME == 0) {
+                kill(runningPcb->process_pid, SIGSTOP);
+                runningPcb->FINISH_TIME = timer;
+                runningPcb->is_completed = true;
 
-            hpfLoop(timer);
+                // printLog(runningPcb, "finished");
+                pFile = fopen("scheduler.log", "a");
+                if (pFile) {
+                    fprintf(pFile,
+                            "At time %-5d process %-5d finished arr %-5d total %-5d remain %-5d wait %-5d TA %-5d WTA %.2f\n",
+                            timer,
+                            runningPcb->process_id,
+                            runningPcb->arrival_time,
+                            runningPcb->RUNTIME,
+                            runningPcb->REMAINING_TIME,
+                            runningPcb->WAITING_TIME,
+                            runningPcb->FINISH_TIME - runningPcb->arrival_time,
+                            (float)(runningPcb->FINISH_TIME - runningPcb->arrival_time)/runningPcb->RUNNING_TIME);
+                    fclose(pFile);
+                }
 
-            childFinished = 0;
+                runningPcb = NULL;
+                finished_PCB++;
+            }
+
+            // if a higher priority process in queue
+            if (runningPcb != NULL && !isPriorityQueueEmpty(&readyPriorityQueue)) {
+                PCB *temp = peekPriorityFront(&readyPriorityQueue);
+                if (temp->priority > runningPcb->priority) {
+                    kill(runningPcb->process_pid, SIGUSR2);
+                    enqueuePriority(&readyPriorityQueue, runningPcb);
+
+                    // printLog(runningPcb, "stopped");
+                    pFile = fopen("scheduler.log", "a");
+                    if (pFile) {
+                        fprintf(pFile, "At time %-5d process %-5d stopped arr %-5d total %-5d remain %-5d wait %-5d\n",
+                                timer,
+                                runningPcb->process_id,
+                                runningPcb->arrival_time,
+                                runningPcb->RUNTIME,
+                                runningPcb->REMAINING_TIME,
+                                (timer - runningPcb->arrival_time));
+                        fclose(pFile);
+                    }
+
+                    runningPcb = NULL;
+                }
+            }
+            
+            // if no process running, run the highest priority process either continue or start
+            if (runningPcb == NULL && !isPriorityQueueEmpty(&readyPriorityQueue)) {
+                PCB *p = dequeuePriority(&readyPriorityQueue);
+                if (p == NULL) printf("Error in getting process from priority queue\n");
+                else {
+                    p->LAST_EXECUTED_TIME = timer;
+                    if (p->STARTED) {
+                        kill(p->process_pid, SIGCONT);
+                    }
+                    else {
+                        int pid = fork();
+                        if (pid == 0) {
+                            execl("./process.out", "./process.out", p->RUNTIME, NULL);
+                            exit(1);
+                        }
+                        else if (pid > 0) {
+                            p->process_pid = pid;
+                        }
+                        else {
+                            printf("error in creating a process\n");
+                            exit(1);
+                        }
+                        p->STARTED = true;
+                    }
+                    runningPcb = p;
+
+                    pFile = fopen("scheduler.log", "a");
+                    if (pFile) {
+                        fprintf(pFile, "At time %-5d process %-5d started arr %-5d total %-5d remain %-5d wait %-5d\n",
+                                timer,
+                                runningPcb->process_id,
+                                runningPcb->arrival_time,
+                                runningPcb->RUNTIME,
+                                runningPcb->REMAINING_TIME,
+                                (timer - runningPcb->arrival_time));
+                        fclose(pFile);
+                    }
+                }
+            }
+
+            // increase waiting time for all started processes
+            if (!isPriorityQueueEmpty(&readyPriorityQueue)) {
+                int count = 0;   // just for safety, avoid infinite loops
+                int max_iterations = 1000; // adjust based on expected max queue size
+
+                PCB *tempQueue[max_iterations]; // temporary array to hold PCBs
+                int tempCount = 0;
+
+                // Dequeue all elements
+                while (!isPriorityQueueEmpty(&readyPriorityQueue) && count < max_iterations) {
+                    PCB *p = dequeuePriority(&readyPriorityQueue);
+                    if (p->STARTED && p->REMAINING_TIME > 0) {
+                        p->WAITING_TIME++;
+                    }
+                    tempQueue[tempCount++] = p; // store temporarily
+                    count++;
+                }
+
+                // Re-enqueue all back
+                for (int i = 0; i < tempCount; i++) {
+                    enqueuePriority(&readyPriorityQueue, tempQueue[i]);
+                }
+            }
+
+            // to decrease remaining time each second
+            if (runningPcb != NULL) {
+                runningPcb->REMAINING_TIME--;
+                runningPcb->RUNNING_TIME++;
+            }
         }
 
         if (selected_Algorithm_NUM == 2 && clock_timer != getClk()) { // SRTN
