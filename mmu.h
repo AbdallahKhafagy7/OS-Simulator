@@ -21,6 +21,7 @@ typedef struct
     bool modified;
     bool locked;
     bool is_page_table;
+    int LRU_counter;
 } PhysicalPage;
 
 typedef struct

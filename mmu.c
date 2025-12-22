@@ -9,7 +9,7 @@
 // Global memory manager instance
 MemoryManager mem_mgr;
 FILE *memory_log_file = NULL;
-
+bool algo_replacement = -1; // 1 for Second Chance, 2 for LRU
 // Helper functions to access memory manager statistics
 int get_free_page_count(void) {
     return mem_mgr.free_page_count;
@@ -288,6 +288,73 @@ int allocate_free_page(int process_id, int virtual_page)
     return ppn;
 }
 
+
+
+
+
+
+
+
+int LRU_replacement()
+{
+    int page_to_be_removed = -1;
+
+   for(int i = 0; i < NUM_PHYSICAL_PAGES; i++)    {
+     
+    
+    if (mem_mgr.pages[i].is_free){
+        int j;
+    for(j = 0; j < NUM_PHYSICAL_PAGES; j++)
+    {
+        if (mem_mgr.pages[j].is_free)
+        {
+            mem_mgr.pages[j].LRU_counter = 1;
+             //free page avilable  
+             page_to_be_removed = j;
+        }
+        else
+        {
+            mem_mgr.pages[j].LRU_counter++;
+        }
+    }
+    return page_to_be_removed; 
+    }
+    }
+
+    
+    int min_lru=NUM_PHYSICAL_PAGES;
+    
+
+        for(int i = 0; i < NUM_PHYSICAL_PAGES; i++)
+    {
+        mem_mgr.pages[i].LRU_counter++;
+    }
+
+
+    for(int i = 0; i < NUM_PHYSICAL_PAGES; i++)
+    {
+        if (mem_mgr.pages[i].LRU_counter == 32)
+        {
+            min_lru = mem_mgr.pages[i].LRU_counter;
+            page_to_be_removed = i;
+            mem_mgr.page_replacements++;
+            
+        }
+    }
+
+return page_to_be_removed;
+}
+
+
+
+
+
+
+
+
+
+
+
 int second_chance_replacement()
 {
     int start = mem_mgr.clock_pointer;
@@ -357,16 +424,21 @@ int handle_page_fault(PCB *pcb, int process_count, int process_id,
     mem_mgr.page_faults++;
 
     int frame_index = -1;
-    bool used_second_chance = false;
+    bool used_replacement = false;
     bool victim_modified = false;
+    
     
     frame_index = allocate_free_page(process_id, virtual_page);
     
     if (frame_index == -1)
     {
-        used_second_chance = true;
+        used_replacement = true;
+        if (algo_replacement==2){
+            frame_index = LRU_replacement();
+        }
+        else{
         frame_index = second_chance_replacement();
-        
+        }
         if (frame_index == -1)
             return 0;
 
@@ -417,7 +489,7 @@ int handle_page_fault(PCB *pcb, int process_count, int process_id,
     print_memory_log("At time %d disk address %d for process %d is loaded into memory page %d.\n",
                      current_time, disk_page_number, process_id, frame_index);
 
-    if (used_second_chance && victim_modified)
+    if (used_replacement && victim_modified)
     {
         return 20; 
     }
@@ -472,7 +544,12 @@ int allocate_process_page_table(PCB *pcb)
 
     if (pt_page == -1)
     {
+        if (algo_replacement==2){
+            pt_page = LRU_replacement();
+        }
+        else{
         pt_page = second_chance_replacement();
+        }
         if (pt_page == -1)
             return -1;
 
@@ -530,7 +607,12 @@ int initiate_page_fault(PCB *pcb, int process_count, int process_id,
     
     if (frame_index == -1) {
         // Need to use second chance
+        if (algo_replacement==2){
+            frame_index = LRU_replacement();
+        }
+        else{
         frame_index = second_chance_replacement();
+        }
         
         if (frame_index == -1)
             return 0;

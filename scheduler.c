@@ -26,7 +26,7 @@ int running_count = 0;
 float std_dev_sqr = 0;
 int count = 0;
 int selected_Algorithm_NUM = -1;
-
+int selected_Page_Replacement_NUM = -1;
 process_queue READY_QUEUE;
 process_priority_queue READY_PRIORITY_QUEUE;
 process_queue BLOCKED_QUEUE;
@@ -783,7 +783,7 @@ int main(int argc, char * argv[]) {
     int current_time;
     message_buf PROCESS_MESSAGE;
     
-    if (argc < 4) {
+    if (argc < 5) {
         printf("Usage: scheduler.out <algorithm> <quantum> <process_count>\n");
         return 1;
     }
@@ -799,6 +799,7 @@ int main(int argc, char * argv[]) {
     
     total_process = atoi(argv[3]);
     
+    selected_Page_Replacement_NUM = atoi(argv[4]);
     wait_time = malloc(sizeof(int) * total_process);
     WTA = malloc(sizeof(float) * total_process);
     total_running_time = malloc(sizeof(int) * total_process);
