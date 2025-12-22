@@ -621,7 +621,8 @@ void block_process(int process_index, int current_time, int io_time) {
 void Robin_Robin_timestep(int current_time) {
     process next;
     process_Node* temp;
-    
+      printf("[DEBUG] RR timestep at time %d, running_process_index = %d, ready_queue_empty = %d\n",
+           current_time, running_process_index, is_empty_queue(&READY_QUEUE));
     handle_disk_completions(current_time);
     
     if (running_process_index != -1 && pcb[running_process_index].process_state == Running) { // If a process is currently running
@@ -770,6 +771,8 @@ int main(int argc, char * argv[]) {
         
         int rec_status = msgrcv(MESSAGE_ID, &PROCESS_MESSAGE, sizeof(process), 2, IPC_NOWAIT);
         if (rec_status != -1) {
+              printf("[DEBUG] Received process %d at clock %d (arrival time in message: %d)\n",
+           PROCESS_MESSAGE.p.ID, current_time, PROCESS_MESSAGE.p.ARRIVAL_TIME);
             int index = process_count;
             pcb[index].process_id = PROCESS_MESSAGE.p.ID;
             pcb[index].arrival_time = PROCESS_MESSAGE.p.ARRIVAL_TIME;
@@ -1115,8 +1118,8 @@ int main(int argc, char * argv[]) {
     }
 }
 
-        if (selected_Algorithm_NUM == 3 && clock_timer != getClk()) { // RR
-            clock_timer = getClk();
+        if (selected_Algorithm_NUM == 3 && clock_timer != current_time) { // RR
+            clock_timer = current_time;
             printf("Clock Timer : %d\n",clock_timer);
             Robin_Robin_timestep(current_time);
         }
