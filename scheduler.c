@@ -497,7 +497,12 @@ void block_process(int process_index, int current_time, int io_time) {
     if (p->process_pid > 0) {
         kill(p->process_pid, SIGSTOP);
     }
-    
+    if (p->REMAINING_TIME <= 0) {
+        printf("[ERROR] Trying to block process with no CPU time left!\n");
+        finish_process(process_index, current_time);
+        return;
+    }
+
     p->process_state = Blocked;
     p->blocked_time = io_time;
     p->total_blocked_time += io_time;  
@@ -594,40 +599,9 @@ void Robin_Robin_timestep(int current_time) {
     if (running_process_index != -1 && pcb[running_process_index].process_state == Running) {
         PCB* current_pcb = &pcb[running_process_index];
         
-        // CRITICAL FIX: Check for memory request BEFORE incrementing execution_time
-        int frame_allocated = -1;
-        int vpage_faulted = -1;
-        char rw_flag = 'r';
-        
-        int io_time_needed = handle_memory_request(running_process_index, 
-                                                   current_time,
-                                                   &frame_allocated,
-                                                   &vpage_faulted,
-                                                   &rw_flag);
-        
-        // ALWAYS increment execution_time and decrement remaining_time
-        // Even if we're about to block, we consumed 1 time unit
-        current_pcb->execution_time++;
-        current_pcb->REMAINING_TIME--;
-        quantum_counter++;
-        total_running_times++;
-        
-        if (io_time_needed > 0) {
-            // Page fault occurred - BLOCK the process AFTER consuming the time unit
-            block_process(running_process_index, current_time, io_time_needed);
-            
-            // Add to disk queue (I/O will complete after io_time_needed cycles)
-            add_disk_operation(current_pcb->process_id, vpage_faulted,
-                              frame_allocated, rw_flag, io_time_needed, 
-                              current_time);
-            
-            running_process_index = -1;
-            quantum_counter = 0;
-            // return;
-        }
-        
-        // Check if process finished
+        // FIRST: Check if process has any CPU time left
         if (current_pcb->REMAINING_TIME <= 0) {
+            // Process finished - no memory accesses should happen
             finish_process(running_process_index, current_time);
             
             // Remove from PCB array
@@ -653,7 +627,38 @@ void Robin_Robin_timestep(int current_time) {
             return;
         }
         
-        // Check if quantum expired
+        // Process HAS CPU time - check memory request
+        int frame_allocated = -1;
+        int vpage_faulted = -1;
+        char rw_flag = 'r';
+        
+        int io_time_needed = handle_memory_request(running_process_index, 
+                                                   current_time,
+                                                   &frame_allocated,
+                                                   &vpage_faulted,
+                                                   &rw_flag);
+        
+        if (io_time_needed > 0) {
+            // PAGE FAULT - block WITHOUT executing
+            block_process(running_process_index, current_time, io_time_needed);
+            
+            // Add to disk queue
+            add_disk_operation(current_pcb->process_id, vpage_faulted,
+                              frame_allocated, rw_flag, io_time_needed, 
+                              current_time);
+            
+            running_process_index = -1;
+            quantum_counter = 0;
+            return;  // CRITICAL: Process didn't execute this cycle
+        }
+        
+        // NO PAGE FAULT - execute normally
+        current_pcb->execution_time++;
+        current_pcb->REMAINING_TIME--;
+        quantum_counter++;
+        total_running_times++;
+        
+        // Check if quantum expired (AFTER successful execution)
         if (quantum_counter >= TIME_QUANTUM) {
             stop_process(running_process_index, current_time);
             
@@ -684,6 +689,8 @@ void Robin_Robin_timestep(int current_time) {
         }
     }
 }
+    
+   
 
 // ALSO FIX start_process to handle ANY initial request time:
 void start_process(int process_index, int current_time) {
