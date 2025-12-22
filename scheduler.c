@@ -277,7 +277,7 @@ void myHandler(int signum){
             pcbArray[i]->dependency_id = -1;
     }
 
-    childFinished = 1; // main loop will handle next scheduling
+    childFinished = 1;
     printPCB(finished);
 }
 //////////////////////////*/////////////////////////////
@@ -424,7 +424,7 @@ void start_process(int process_index, int current_time) {
                     int io_time = Request(pcb, process_count, p->process_id, virtual_page, rw, current_time);
                     if (io_time > 0) {
 
-                        printf("Process %d: First page fault occurred but not blocking (project spec)\n", p->process_id);
+                        printf("Process %d: First page fault occurred but not blocking (first request)\n", p->process_id);
                     }
                     break;
                 }
@@ -510,7 +510,7 @@ void stop_process(int process_index, int current_time, const char* reason) {
     }
 }
 
-void block_process(int process_index, int current_time, int io_time, const char* reason) {
+void block_process(int process_index, int current_time, int io_time) {
     PCB* p = &pcb[process_index];
     
     if (p->process_pid > 0) {
@@ -624,7 +624,7 @@ void Robin_Robin_timestep(int current_time) {
         int io_time_needed = handle_memory_request(running_process_index, current_time);
         
         if (io_time_needed > 0) {
-            block_process(running_process_index, current_time, io_time_needed, "page fault");
+            block_process(running_process_index, current_time, io_time_needed);
             running_process_index = -1;
             quantum_counter = 0;
             return;
@@ -740,6 +740,7 @@ int main(int argc, char * argv[]) {
     
     init_memory();
     initialize_queue(&READY_QUEUE);
+    initialize_priority_queue(&READY_PRIORITY_QUEUE);
     initialize_queue(&BLOCKED_QUEUE);
     
     selected_Algorithm_NUM = atoi(argv[1]);
