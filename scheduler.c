@@ -511,7 +511,6 @@ void stop_process(int process_index, int current_time) {
         fclose(pFile);
     }
 }
-
 void block_process(int process_index, int current_time, int io_time) {
     PCB* p = &pcb[process_index];
     
@@ -563,7 +562,7 @@ void block_process(int process_index, int current_time, int io_time) {
     }
 }
 
-void finish_process(int process_index, int current_time) {
+  void finish_process(int process_index, int current_time) {
     PCB* p = &pcb[process_index];
     
     p->process_state = Finished;
