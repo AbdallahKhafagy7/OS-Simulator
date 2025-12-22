@@ -619,10 +619,9 @@ void Robin_Robin_timestep(int current_time) {
         PCB* current_pcb = &pcb[running_process_index];
         
         
-        
-        int io_time_needed = handle_memory_request(running_process_index, current_time);
         current_pcb->execution_time++;
         total_running_times++;
+        int io_time_needed = handle_memory_request(running_process_index, current_time);
         
         if (io_time_needed > 0) {
             block_process(running_process_index, current_time, io_time_needed, "page fault");
