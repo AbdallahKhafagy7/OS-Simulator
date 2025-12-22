@@ -92,7 +92,8 @@ void init_free_list()
     mem_mgr.free_list_head = NULL;
     mem_mgr.free_page_count = 0;
 
-    for (int i = NUM_PHYSICAL_PAGES - 1; i >= 0; i--)
+    // Add pages in reverse order so we allocate from 0 to 31
+    for (int i = 0; i < NUM_PHYSICAL_PAGES; i++)  // Changed from descending to ascending
     {
         add_to_free_list(i);
     }
@@ -278,9 +279,24 @@ int init_process_page_table(PCB *pcb)
 
 int allocate_free_page(int process_id, int virtual_page)
 {
-    int ppn = remove_from_free_list();
-    if (ppn == -1)
+    if (mem_mgr.free_list_head == NULL)
         return -1;
+    
+    FreePageNode *node = mem_mgr.free_list_head;
+    int ppn = node->page_number;
+    
+    if (ppn < 0 || ppn >= NUM_PHYSICAL_PAGES)
+    {
+        mem_mgr.free_list_head = node->next;
+        free(node);
+        return -1;
+    }
+
+    mem_mgr.free_list_head = node->next;
+    free(node);
+
+    mem_mgr.pages[ppn].is_free = false;
+    mem_mgr.free_page_count--;
 
     PhysicalPage *p = &mem_mgr.pages[ppn];
 
@@ -296,7 +312,6 @@ int allocate_free_page(int process_id, int virtual_page)
 
     return ppn;
 }
-
 
 
 
@@ -647,16 +662,63 @@ int initiate_page_fault(PCB *pcb, int process_count, int process_id,
     int frame_index = -1;
     bool victim_modified = false;
     
-    // Try to get a free page first
-    frame_index = allocate_free_page(process_id, virtual_page);
+    // CRITICAL FIX: Check if we actually have free pages first
+    // Get the current free page count
+    int free_pages = mem_mgr.free_page_count;
     
+    if (free_pages > 0) {
+        // Try to get a free page - this should work if free pages exist
+        frame_index = allocate_free_page(process_id, virtual_page);
+        
+        if (frame_index == -1) {
+            // Debug: This shouldn't happen if free_pages > 0
+            printf("[DEBUG] allocate_free_page failed but free_pages = %d\n", free_pages);
+            // Try to manually find a free page
+            for (int i = 0; i < NUM_PHYSICAL_PAGES; i++) {
+                if (mem_mgr.pages[i].is_free) {
+                    frame_index = i;
+                    // Remove from free list manually
+                    FreePageNode* prev = NULL;
+                    FreePageNode* curr = mem_mgr.free_list_head;
+                    while (curr != NULL) {
+                        if (curr->page_number == frame_index) {
+                            if (prev == NULL) {
+                                mem_mgr.free_list_head = curr->next;
+                            } else {
+                                prev->next = curr->next;
+                            }
+                            free(curr);
+                            mem_mgr.free_page_count--;
+                            break;
+                        }
+                        prev = curr;
+                        curr = curr->next;
+                    }
+                    
+                    PhysicalPage *p = &mem_mgr.pages[frame_index];
+                    p->process_id = process_id;
+                    p->virtual_page_number = virtual_page;
+                    p->referenced = true;
+                    p->modified = false;
+                    p->locked = false;
+                    p->is_page_table = false;
+                    p->is_free = false;
+                    
+                    print_memory_log("Free Physical page %d allocated (manual)\n", frame_index);
+                    break;
+                }
+            }
+        }
+    }
+    
+    // Only use replacement if we couldn't find any free pages
     if (frame_index == -1) {
         // Need to use second chance
         if (selected_Page_Replacement_NUM_mmu==2){
             frame_index = LRU_replacement();
         }
         else{
-        frame_index = second_chance_replacement();
+            frame_index = second_chance_replacement();
         }
         
         if (frame_index == -1)

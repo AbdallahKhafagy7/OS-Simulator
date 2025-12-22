@@ -1,4 +1,0 @@
-#time       #addressInBinary #r/w       
-1         	0111100011	w         
-3         	1101010010	r         
-10        	0001001100	r         
