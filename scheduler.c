@@ -618,10 +618,11 @@ void Robin_Robin_timestep(int current_time) {
     if (running_process_index != -1 && pcb[running_process_index].process_state == Running) {
         PCB* current_pcb = &pcb[running_process_index];
         
-        current_pcb->execution_time++;
-        total_running_times++;
+        
         
         int io_time_needed = handle_memory_request(running_process_index, current_time);
+        current_pcb->execution_time++;
+        total_running_times++;
         
         if (io_time_needed > 0) {
             block_process(running_process_index, current_time, io_time_needed);
@@ -755,6 +756,7 @@ int main(int argc, char * argv[]) {
     process_count = 0;
     
     while (1) {
+         
         current_time = getClk();
         
         int rec_status = msgrcv(MESSAGE_ID, &PROCESS_MESSAGE, sizeof(process), 2, IPC_NOWAIT);
@@ -983,7 +985,9 @@ int main(int argc, char * argv[]) {
     }
 }
 
-        if (selected_Algorithm_NUM == 3) { // RR
+        if (selected_Algorithm_NUM == 3 && clock_timer != getClk()) { // RR
+            clock_timer = getClk();
+            printf("Clock Timer : %d\n",clock_timer);
             Robin_Robin_timestep(current_time);
         }
         
@@ -1023,11 +1027,6 @@ int main(int argc, char * argv[]) {
             break;
         }
         
-        // Wait for next clock tick
-        if (clock_timer == current_time) {
-            usleep(100000);
-        }
-        clock_timer = current_time;
     }
     
     free(wait_time);
