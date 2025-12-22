@@ -485,7 +485,8 @@ void start_process(int process_index, int current_time) {
     quantum_counter = 0;
 }
 
-void stop_process(int process_index, int current_time, const char* reason) {
+void stop_process(int process_index, int current_time) {
+
     PCB* p = &pcb[process_index];
     
     if (p->process_pid > 0) {
@@ -496,7 +497,8 @@ void stop_process(int process_index, int current_time, const char* reason) {
     
     int time_spent_running = p->RUNNING_TIME - p->REMAINING_TIME;
     p->WAITING_TIME = current_time - p->arrival_time - time_spent_running;
-    if (p->WAITING_TIME < 0) p->WAITING_TIME = 0;
+    if (p->WAITING_TIME < 0) 
+        p->WAITING_TIME = 0;
     
     pFile = fopen("scheduler.log", "a");
     if (pFile) {
@@ -615,7 +617,7 @@ void Robin_Robin_timestep(int current_time) {
     
     handle_disk_completions(current_time);
     
-    if (running_process_index != -1 && pcb[running_process_index].process_state == Running) {
+    if (running_process_index != -1 && pcb[running_process_index].process_state == Running) { // If a process is currently running
         PCB* current_pcb = &pcb[running_process_index];
         
         
@@ -659,7 +661,7 @@ void Robin_Robin_timestep(int current_time) {
         }
         
         if (quantum_counter >= TIME_QUANTUM) {
-            stop_process(running_process_index, current_time, "quantum expiry");
+            stop_process(running_process_index, current_time);
             
             process temp_process;
             temp_process.ID = current_pcb->process_id;
