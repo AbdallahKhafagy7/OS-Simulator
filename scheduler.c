@@ -387,7 +387,7 @@ int handle_memory_request(int process_index, int current_time) {
             int virtual_page = get_vpn(virtual_address);
             
            
-            if (p->execution_time == 1) {
+            if (p->execution_time == 0) {
                 printf("Process %d: First memory request at time %d - not blocking\n", 
                        p->process_id, p->execution_time);
                 int io_time = Request(pcb, process_count, p->process_id, virtual_page, rw, current_time);
@@ -420,7 +420,7 @@ void start_process(int process_index, int current_time) {
             allocate_process_page_table(p);
             
             
-            printf("Process %d: Loading first page without blocking (project assumption)\n", p->process_id);
+            printf("Process %d: Loading first page without blocking\n", p->process_id);
             
 
             for (int i = 0; i < p->num_requests; i++) {
@@ -630,15 +630,15 @@ void Robin_Robin_timestep(int current_time) {
         
         
         
-        int io_time_needed = handle_memory_request(running_process_index, current_time);
         current_pcb->execution_time++;
+        int io_time_needed = handle_memory_request(running_process_index, current_time);
         total_running_times++;
         
         if (io_time_needed > 0) {
             block_process(running_process_index, current_time, io_time_needed);
             running_process_index = -1;
             quantum_counter = 0;
-            return;
+            // return;
         }
         
         current_pcb->REMAINING_TIME--;
@@ -646,7 +646,6 @@ void Robin_Robin_timestep(int current_time) {
         
         if (current_pcb->REMAINING_TIME <= 0) {
             finish_process(running_process_index, current_time);
-            
             for (int i = running_process_index; i < process_count - 1; i++) {
                 pcb[i] = pcb[i + 1];
             }
