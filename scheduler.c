@@ -554,6 +554,23 @@ bool isRunnable(PCB *p) {
     return false;
 }
 
+void printPriorityQueue(PcbPriorityQueue* queue) {
+    if (!queue || isPriorityQueueEmpty(queue)) {
+        printf("Priority Queue is empty.\n");
+        return;
+    }
+
+    printf("Priority Queue (front -> rear):\n");
+    PcbNode* current = queue->front;
+    while (current) {
+        PCB* p = current->pcb;
+        printf("P%d [prio=%d, dep=%d, remaining=%d, waiting=%d] -> ",
+               p->process_id, p->priority, p->dependency_id, p->REMAINING_TIME, p->WAITING_TIME);
+        current = current->next;
+    }
+    printf("NULL\n");
+}
+
 int main(int argc, char * argv[]) {
     int clock_timer = 0;
     int current_time;
@@ -610,61 +627,86 @@ int main(int argc, char * argv[]) {
         // Receive messages
         int rec_status = msgrcv(MESSAGE_ID, &PROCESS_MESSAGE, sizeof(process), 2, IPC_NOWAIT);
         if (rec_status != -1) {
-        printf("[DEBUG] Received process %d at clock %d (arrival time in message: %d)\n",
-               PROCESS_MESSAGE.p.ID, current_time, PROCESS_MESSAGE.p.ARRIVAL_TIME);
-        int index = process_count;
-            pcb[index].process_id = PROCESS_MESSAGE.p.ID;
-            pcb[index].arrival_time = PROCESS_MESSAGE.p.ARRIVAL_TIME;
-            pcb[index].RUNNING_TIME = PROCESS_MESSAGE.p.RUNNING_TIME;
-            pcb[index].REMAINING_TIME = PROCESS_MESSAGE.p.RUNNING_TIME;
-            pcb[index].priority = PROCESS_MESSAGE.p.PRIORITY;
-            pcb[index].dependency_id = PROCESS_MESSAGE.p.DEPENDENCY_ID;
-            pcb[index].disk_base = PROCESS_MESSAGE.p.disk_base;
-            pcb[index].limit = PROCESS_MESSAGE.p.limit;
-            pcb[index].num_requests = PROCESS_MESSAGE.p.num_requests;
-            pcb[index].process_state = Ready;
-            pcb[index].STARTED = 0;
-            pcb[index].is_completed = 0;
-            pcb[index].WAITING_TIME = 0;
-            pcb[index].blocked_time = 0;
-            pcb[index].execution_time = 0;
-            pcb[index].quantum_remaining = 0;
-            pcb[index].START_TIME = -1;
-            pcb[index].LAST_EXECUTED_TIME = -1;
-            pcb[index].FINISH_TIME = -1;
-            pcb[index].process_pid = -1;
-            pcb[index].page_table.entries = NULL;
-            pcb[index].page_table.physical_page_number = -1;
-            
-            pcb[index].num_pages = pcb[index].limit;
-            if (pcb[index].num_pages <= 0) {
-                pcb[index].num_pages = 1;
-            }
-            
-            int max_requests = (PROCESS_MESSAGE.p.num_requests < 100) ? PROCESS_MESSAGE.p.num_requests : 100;
-            for (int i = 0; i < max_requests; i++) {
-                pcb[index].memory_requests[i] = PROCESS_MESSAGE.p.memory_requests[i];
-            }
-            
-            enqueue(&READY_QUEUE, PROCESS_MESSAGE.p);
-            process_count++;
-            
-        
-        if (selected_Algorithm_NUM == 3) {
-        
-            if (running_process_index == -1 && !is_empty_queue(&READY_QUEUE)) {
-                process next = dequeue(&READY_QUEUE);
-                for (int i = 0; i < process_count; i++) {
-                    if (pcb[i].process_id == next.ID) {
-                        running_process_index = i;
-                        start_process(i, current_time);  
-                        break;
-                    }
+            switch(selected_Algorithm_NUM) {
+                case 1: {
+                    PCB* p = malloc(sizeof(PCB));
+                    p->process_id = PROCESS_MESSAGE.p.ID;
+                    p->priority = PROCESS_MESSAGE.p.PRIORITY;
+                    p->dependency_id = PROCESS_MESSAGE.p.DEPENDENCY_ID;
+                    p->REMAINING_TIME = PROCESS_MESSAGE.p.RUNNING_TIME;
+                    p->RUNTIME = PROCESS_MESSAGE.p.RUNNING_TIME;
+                    p->RUNNING_TIME = 0;
+                    p->arrival_time = PROCESS_MESSAGE.p.ARRIVAL_TIME;
+                    p->STARTED = false;
+                    p->is_completed = false;
+                    p->process_state = Ready;
+                    p->WAITING_TIME = 0;
+                    p->START_TIME = -1;
+
+                    pcbArray[pcbCount++] = p;
+                    enqueuePriority(&readyPriorityQueue, p);
+                    break;
                 }
+                case 3: {
+                    printf("[DEBUG] Received process %d at clock %d (arrival time in message: %d)\n",
+                    PROCESS_MESSAGE.p.ID, current_time, PROCESS_MESSAGE.p.ARRIVAL_TIME);
+                    int index = process_count;
+                    pcb[index].process_id = PROCESS_MESSAGE.p.ID;
+                    pcb[index].arrival_time = PROCESS_MESSAGE.p.ARRIVAL_TIME;
+                    pcb[index].RUNNING_TIME = PROCESS_MESSAGE.p.RUNNING_TIME;
+                    pcb[index].REMAINING_TIME = PROCESS_MESSAGE.p.RUNNING_TIME;
+                    pcb[index].priority = PROCESS_MESSAGE.p.PRIORITY;
+                    pcb[index].dependency_id = PROCESS_MESSAGE.p.DEPENDENCY_ID;
+                    pcb[index].disk_base = PROCESS_MESSAGE.p.disk_base;
+                    pcb[index].limit = PROCESS_MESSAGE.p.limit;
+                    pcb[index].num_requests = PROCESS_MESSAGE.p.num_requests;
+                    pcb[index].process_state = Ready;
+                    pcb[index].STARTED = 0;
+                    pcb[index].is_completed = 0;
+                    pcb[index].WAITING_TIME = 0;
+                    pcb[index].blocked_time = 0;
+                    pcb[index].execution_time = 0;
+                    pcb[index].quantum_remaining = 0;
+                    pcb[index].START_TIME = -1;
+                    pcb[index].LAST_EXECUTED_TIME = -1;
+                    pcb[index].FINISH_TIME = -1;
+                    pcb[index].process_pid = -1;
+                    pcb[index].page_table.entries = NULL;
+                    pcb[index].page_table.physical_page_number = -1;
+                    
+                    pcb[index].num_pages = pcb[index].limit;
+                    if (pcb[index].num_pages <= 0) {
+                        pcb[index].num_pages = 1;
+                    }
+                    
+                    int max_requests = (PROCESS_MESSAGE.p.num_requests < 100) ? PROCESS_MESSAGE.p.num_requests : 100;
+                    for (int i = 0; i < max_requests; i++) {
+                        pcb[index].memory_requests[i] = PROCESS_MESSAGE.p.memory_requests[i];
+                    }
+                    
+                    enqueue(&READY_QUEUE, PROCESS_MESSAGE.p);
+                    process_count++;
+                    
+                
+                    if (selected_Algorithm_NUM == 3) {
+                    
+                        if (running_process_index == -1 && !is_empty_queue(&READY_QUEUE)) {
+                            process next = dequeue(&READY_QUEUE);
+                            for (int i = 0; i < process_count; i++) {
+                                if (pcb[i].process_id == next.ID) {
+                                    running_process_index = i;
+                                    start_process(i, current_time);  
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    total_running_time[running_count] = PROCESS_MESSAGE.p.RUNNING_TIME;
+                    running_count++;
+                    break;
+                }
+                default: break;
             }
-        }
-            total_running_time[running_count] = PROCESS_MESSAGE.p.RUNNING_TIME;
-            running_count++;
         }
 
         if (selected_Algorithm_NUM == 1 && timer != getClk()) { // HPF
