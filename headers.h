@@ -40,10 +40,11 @@ typedef struct {
     int process_id;
     int completion_time;
     int virtual_page;
-    int frame_number;  // ADD THIS - the frame allocated for this page
-    char rw_flag;      // ADD THIS - read/write flag
+    int frame_number;  
+    char rw_flag;      
 } DiskOperation;
-// Complete PCB Structure
+
+
 struct PCB_struct {
     int process_id;
     int process_pid;
@@ -63,10 +64,9 @@ struct PCB_struct {
     int WAITING_TIME;
     int blocked_time;
     int execution_time;
-    int total_blocked_time;   // initialize to 0
+    int total_blocked_time;   
 
     
-    // Memory management fields
     ProcessPageTable page_table;
     request memory_requests[100];
     int num_requests;
@@ -86,7 +86,6 @@ typedef struct PCB_linked_list {
     int count;
 } PCB_linked_list;
 
-// Function declarations
 void INITIALIZE_PCB(PCB* pcb);
 void INITIALIZE_PCB_Node(PCB_node* pcb_node);
 void INITIALIZE_PCB_Linked_List(PCB_linked_list* pcb_list);
@@ -98,7 +97,6 @@ PCB* get_pcb(PCB* pcb_array, int process_count, int process_id);
 int get_pcb_index(PCB* pcb_array, int process_count, int process_id);
 void remove_pcb(PCB* pcb_array, int *process_count, int process_id);
 
-// PcbPriorityQueue functions
 typedef struct PcbNode {
     PCB* pcb;
     struct PcbNode* next;
@@ -118,12 +116,10 @@ void freePriorityQueue(PcbPriorityQueue* queue);
 bool removeFromQueue(PcbPriorityQueue* queue, PCB* pcb);
 bool updatePriority(PcbPriorityQueue* queue, PCB* pcb, int newPriority);
 
-// Clock functions
 int getClk();
 void initClk();
 void destroyClk(bool terminateAll);
 
-// MMU helper functions
 static inline int get_vpn(int virtual_address) {
     return virtual_address >> OFFSET_BITS;
 }

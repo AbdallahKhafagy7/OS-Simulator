@@ -55,7 +55,6 @@ int main(int argc, char * argv[])
     }
     fclose(input_File);
 
-    // Read memory request files for each process
     for(int i = 0; i < count; i++) {
         char filename[50];
         sprintf(filename, "requests_%d.txt", process_list[i].ID);
@@ -70,7 +69,6 @@ int main(int argc, char * argv[])
         }
         
         char req_line[200];
-        // Skip header line
         fgets(req_line, sizeof(req_line), request_file);
         
         process_list[i].num_requests = 0;
@@ -84,12 +82,10 @@ int main(int argc, char * argv[])
             char binary_addr[20];
             char rw;
             
-            // Parse line
             if(sscanf(req_line, "%d %s %c", &time, binary_addr, &rw) != 3) {
                 continue;
             }
             
-            // Convert 10-bit binary string to integer
             int address = 0;
             for(int bit = 0; bit < 10 && binary_addr[bit] != '\0'; bit++) {
                 address <<= 1;
@@ -98,7 +94,6 @@ int main(int argc, char * argv[])
                 }
             }
             
-            // Store request
             int idx = process_list[i].num_requests;
             if(idx < 100) {
                 process_list[i].memory_requests[idx].time = time;

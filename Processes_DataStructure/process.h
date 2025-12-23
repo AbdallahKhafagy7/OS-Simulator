@@ -4,7 +4,6 @@
 #define false 0
 typedef short bool;
 
-// Note: request structure moved to memory_structures.h
 #include "../memory.h"
 
 typedef struct process{

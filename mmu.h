@@ -3,7 +3,6 @@
 
 #include "headers.h"
 
-// Forward declaration
 typedef struct PCB_struct PCB;
 
 typedef struct FreePageNode
@@ -57,10 +56,10 @@ int allocate_process_page_table(PCB *pcb);
 int Request_New(PCB *pcb, int process_count, int process_id,
                 int virtual_page, char readwrite_flag, int current_time,
                 int *frame_out, bool *is_page_fault) ;
-                void complete_page_fault(PCB *pcb, int process_count, int process_id,
+void complete_page_fault(PCB *pcb, int process_count, int process_id,
                          int virtual_page, int frame_index, 
                          char readwrite_flag, int current_time);
-                         int initiate_page_fault(PCB *pcb, int process_count, int process_id,
+int initiate_page_fault(PCB *pcb, int process_count, int process_id,
                         int virtual_page, char readwrite_flag, int current_time,
                         int *frame_out, bool *needs_writeback);
 

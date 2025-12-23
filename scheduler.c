@@ -39,7 +39,6 @@ DiskOperation disk_queue[100];
 int disk_queue_size = 0;
 
 int page_replacement_algo = -1; // 1 for Second Chance, 2 for LRU   
-// Function declarations
 void start_process(int process_index, int current_time);
 void stop_process(int process_index, int current_time);
 void block_process(int process_index, int current_time, int io_time);
@@ -49,7 +48,6 @@ void handle_disk_completions(int current_time);
 int handle_memory_request(int process_index, int current_time, int *frame_out, int *vpage_out, char *rw_out);
 void add_disk_operation(int process_id, int virtual_page, int frame_number, char rw_flag, int io_time, int current_time);
 
-// -------------------------
 
 void PRINT_READY_QUEUE() {
     if (READY_QUEUE.front == NULL) {
@@ -91,28 +89,25 @@ void handle_disk_completions(int current_time) {
             
             printf("Completing disk I/O for P%d at time %d\n", pid, current_time);
             
-            // NOW complete the page fault (load the page)
             complete_page_fault(pcb, process_count, pid, vpage, frame, rw, current_time);
             
-            // Move process from BLOCKED to READY
             process_Node* current_node = BLOCKED_QUEUE.front;
             process_Node* prev = NULL;
             
             while (current_node != NULL) {
                 if (current_node->Process.ID == pid) {
-                    // Remove from blocked queue
                     if (prev == NULL) {
                         BLOCKED_QUEUE.front = current_node->next;
                     } else {
                         prev->next = current_node->next;
                     }
                     
-                    // Add to ready queue
                     enqueue(&READY_QUEUE, current_node->Process);
                     
-                    // Update PCB state
                     for (int j = 0; j < process_count; j++) {
                         if (pcb[j].process_id == pid) {
+                            int completed_io = pcb[j].blocked_time;
+                            pcb[j].total_blocked_time += completed_io;
                             pcb[j].process_state = Ready;
                             pcb[j].blocked_time = 0;
                             printf("Process %d moved from BLOCKED to READY\n", pid);
@@ -127,7 +122,6 @@ void handle_disk_completions(int current_time) {
                 current_node = current_node->next;
             }
             
-            // Remove from disk queue
             for (int j = i; j < disk_queue_size - 1; j++) {
                 disk_queue[j] = disk_queue[j + 1];
             }
@@ -165,8 +159,7 @@ int handle_memory_request(int process_index, int current_time,
             char rw = p->memory_requests[i].rw;
             int virtual_page = get_vpn(virtual_address);
             
-            // FIRST page load at process start (execution_time == 0)
-            // This happens instantly per project spec
+           
             if (p->execution_time == 0) {
                 printf("Process %d: Initial page load - instant (no blocking)\n", p->process_id);
                 
@@ -177,14 +170,12 @@ int handle_memory_request(int process_index, int current_time,
                                            &frame, &is_page_fault);
                 
                 if (is_page_fault) {
-                    // Complete immediately (no delay for first page)
                     complete_page_fault(pcb, process_count, p->process_id, 
                                        virtual_page, frame, rw, current_time);
                 }
-                return 0;  // Don't block
+                return 0;  
             }
             
-            // All subsequent memory accesses
             bool is_page_fault = false;
             int frame = -1;
             int disk_time = Request_New(pcb, process_count, p->process_id, 
@@ -192,7 +183,6 @@ int handle_memory_request(int process_index, int current_time,
                                        &frame, &is_page_fault);
             
             if (is_page_fault && disk_time > 0) {
-                // Page fault occurred - need to block
                 *frame_out = frame;
                 *vpage_out = virtual_page;
                 *rw_out = rw;
@@ -219,8 +209,8 @@ void stop_process(int process_index, int current_time) {
     int time_spent_running = p->RUNNING_TIME - p->REMAINING_TIME;
     p->WAITING_TIME =  current_time - p->arrival_time - p->execution_time - p->total_blocked_time;
 
-    if (p->WAITING_TIME < 0)
-     p->WAITING_TIME = 0;
+    // if (p->WAITING_TIME < 0)
+    //  p->WAITING_TIME = 0;
 
    
     
@@ -235,7 +225,6 @@ void stop_process(int process_index, int current_time) {
         fclose(pFile);
     }
 }
-// Replace the block_process function with this:
 
 void block_process(int process_index, int current_time, int io_time) {
     PCB* p = &pcb[process_index];
@@ -251,12 +240,12 @@ void block_process(int process_index, int current_time, int io_time) {
 
     p->process_state = Blocked;
     p->blocked_time = io_time;
-    p->total_blocked_time += io_time;  
+    //p->total_blocked_time += io_time;  
 
     
     int time_spent_running = p->RUNNING_TIME - p->REMAINING_TIME;
     p->WAITING_TIME = current_time - p->arrival_time - p->execution_time - p->total_blocked_time;
-    if (p->WAITING_TIME < 0) p->WAITING_TIME = 0;
+    // if (p->WAITING_TIME < 0) p->WAITING_TIME = 0;
     
     process temp_process;
     temp_process.ID = p->process_id;
@@ -281,12 +270,10 @@ void block_process(int process_index, int current_time, int io_time) {
         fclose(pFile);
     }
     
-    // Disk operation is now added by the caller (Robin_Robin_timestep)
-    // Don't add it here
+
 }
 
-// Keep Robin_Robin_timestep as is (it already has the correct call to add_disk_operation)
-// Just make sure it's called Robin_Robin_timestep, not Robin_Robin_timestep_fixed
+
 
 void finish_process(int process_index, int current_time) {
     PCB* p = &pcb[process_index];
@@ -339,18 +326,14 @@ void finish_process(int process_index, int current_time) {
 void Robin_Robin_timestep(int current_time) {
     process next;
     
-    // First, check if any disk operations completed
     handle_disk_completions(current_time);
     
     if (running_process_index != -1 && pcb[running_process_index].process_state == Running) {
         PCB* current_pcb = &pcb[running_process_index];
         
-        // FIRST: Check if process has any CPU time left
         if (current_pcb->REMAINING_TIME <= 0) {
-            // Process finished - no memory accesses should happen
             finish_process(running_process_index, current_time);
             
-            // Remove from PCB array
             for (int i = running_process_index; i < process_count - 1; i++) {
                 pcb[i] = pcb[i + 1];
             }
@@ -359,7 +342,6 @@ void Robin_Robin_timestep(int current_time) {
             running_process_index = -1;
             quantum_counter = 0;
             
-            // Start next process if available
             if (!is_empty_queue(&READY_QUEUE)) {
                 next = dequeue(&READY_QUEUE);
                 for (int i = 0; i < process_count; i++) {
@@ -373,7 +355,6 @@ void Robin_Robin_timestep(int current_time) {
             return;
         }
         
-        // Process HAS CPU time - check memory request
         int frame_allocated = -1;
         int vpage_faulted = -1;
         char rw_flag = 'r';
@@ -385,26 +366,21 @@ void Robin_Robin_timestep(int current_time) {
                                                    &rw_flag);
         
         if (io_time_needed > 0) {
-            // PAGE FAULT - block WITHOUT executing
             block_process(running_process_index, current_time, io_time_needed);
-            
-            // Add to disk queue
             add_disk_operation(current_pcb->process_id, vpage_faulted,
                               frame_allocated, rw_flag, io_time_needed, 
                               current_time);
             
             running_process_index = -1;
             quantum_counter = 0;
-            return;  // CRITICAL: Process didn't execute this cycle
+            return; 
         }
         
-        // NO PAGE FAULT - execute normally
         current_pcb->execution_time++;
         current_pcb->REMAINING_TIME--;
         quantum_counter++;
         total_running_times++;
         
-        // Check if quantum expired (AFTER successful execution)
         if (quantum_counter >= TIME_QUANTUM) {
             stop_process(running_process_index, current_time);
             
@@ -422,7 +398,6 @@ void Robin_Robin_timestep(int current_time) {
         }
     }
     
-    // If no process running and ready queue has processes, start next
     if (running_process_index == -1 && !is_empty_queue(&READY_QUEUE)) {
         next = dequeue(&READY_QUEUE);
         
@@ -436,12 +411,10 @@ void Robin_Robin_timestep(int current_time) {
     }
 }
     
-// ALSO FIX start_process to handle ANY initial request time:
 void start_process(int process_index, int current_time) {
     PCB* p = &pcb[process_index];
     
     if (!p->STARTED) {
-        // Initialize page table BEFORE forking
         if (p->page_table.entries == NULL) {
             if (init_process_page_table(p) != 0) {
                 printf("Error: Failed to initialize page table for process %d\n", p->process_id);
@@ -450,18 +423,15 @@ void start_process(int process_index, int current_time) {
             
             allocate_process_page_table(p);
             
-            // Handle FIRST memory request (at execution_time == 0)
-            // This happens instantly per project spec
+            
             printf("Process %d: Loading first page without blocking (project assumption)\n", p->process_id);
             
-            // Find the request at time 0 (if any)
             for (int i = 0; i < p->num_requests; i++) {
                 if (p->memory_requests[i].time == 0) {
                     int virtual_address = p->memory_requests[i].address;
                     int virtual_page = get_vpn(virtual_address);
                     char rw = p->memory_requests[i].rw;
                     
-                    // Use the old Request function that loads immediately
                     Request(pcb, process_count, p->process_id, virtual_page, rw, current_time);
                     break;
                 }
@@ -480,7 +450,7 @@ void start_process(int process_index, int current_time) {
         p->process_pid = pid;
         p->STARTED = 1;
         p->START_TIME = current_time;
-        p->execution_time = 0;  // Start at 0, will increment when process runs
+        p->execution_time = 0;  
 
         p->WAITING_TIME =  current_time - p->arrival_time - p->execution_time - p->total_blocked_time;
         if (p->WAITING_TIME < 0) p->WAITING_TIME = 0;
@@ -496,7 +466,6 @@ void start_process(int process_index, int current_time) {
             fclose(pFile);
         }
     } else {
-        // Resume existing process
         if (p->process_pid > 0) {
             kill(p->process_pid, SIGCONT);
         }
@@ -522,7 +491,6 @@ void start_process(int process_index, int current_time) {
     quantum_counter = 0;
 }
 
-// hpf
 PCB* pcbArray[max];
 int pcbCount = 0;
 PCB* runningPcb = NULL;
@@ -534,22 +502,18 @@ int finished_PCB = 0;
 bool isRunnable(PCB *p) {
     if (p == NULL) return false;
 
-    // already finished → never runnable
     if (p->is_completed)
         return false;
 
-    // no dependency
     if (p->dependency_id == -1)
         return true;
 
-    // search for the depended process
     for (int i = 0; i < pcbCount; i++) {
         if (pcbArray[i]->process_id == p->dependency_id) {
             return pcbArray[i]->is_completed;
         }
     }
 
-    // dependency has not arrived yet
     return false;
 }
 
@@ -624,7 +588,6 @@ int main(int argc, char * argv[]) {
     while (1) {
         current_time = getClk();
     
-        // Receive messages
         int rec_status = msgrcv(MESSAGE_ID, &PROCESS_MESSAGE, sizeof(process), 2, IPC_NOWAIT);
         if (rec_status != -1) {
             switch(selected_Algorithm_NUM) {
@@ -647,7 +610,7 @@ int main(int argc, char * argv[]) {
                     enqueuePriority(&readyPriorityQueue, p);
                     break;
                 }
-                case 2:{// SRTN - Keep your existing SRTN code
+                case 2:{
                     enqueue_priority_SRTN(&READY_PRIORITY_QUEUE, PROCESS_MESSAGE.p);
                     running_process_index = get_pcb_index(pcb, process_count, peek_priority_front(&READY_PRIORITY_QUEUE)->ID);
                     
@@ -798,12 +761,11 @@ int main(int argc, char * argv[]) {
             }
         }
 
-        if (selected_Algorithm_NUM == 1 && timer != getClk()) { // HPF
+        if (selected_Algorithm_NUM == 1 && timer != getClk()) { // Hpf
             timer = getClk();
             printf("Clock Timer: %d\n",timer);
             printPriorityQueue(&readyPriorityQueue);
             
-            // to stop a process if remaining time = 0
             if (runningPcb != NULL && runningPcb->REMAINING_TIME == 0) {
                 kill(runningPcb->process_pid, SIGSTOP);
                 runningPcb->FINISH_TIME = timer;
@@ -828,11 +790,9 @@ int main(int argc, char * argv[]) {
                 finished_PCB++;
             }
 
-            // if a higher priority process in queue
             if (runningPcb != NULL && !isPriorityQueueEmpty(&readyPriorityQueue)) {
-                // Find the highest priority runnable process in the queue
                 PCB *bestRunnable = NULL;
-                PCB *tempQueue[1000]; // temporary storage
+                PCB *tempQueue[1000];
                 int tempCount = 0;
 
                 while (!isPriorityQueueEmpty(&readyPriorityQueue)) {
@@ -844,15 +804,15 @@ int main(int argc, char * argv[]) {
                         }
                     }
 
-                    tempQueue[tempCount++] = p; // keep all processes to restore later
+                    tempQueue[tempCount++] = p; 
                 }
 
-                // restore queue
+                
                 for (int i = 0; i < tempCount; i++) {
                     enqueuePriority(&readyPriorityQueue, tempQueue[i]);
                 }
 
-                // preempt only if there is a runnable higher-priority process
+
                 if (runningPcb != NULL && bestRunnable != NULL &&
                     bestRunnable->priority > runningPcb->priority) {
                     kill(runningPcb->process_pid, SIGUSR2);
@@ -874,29 +834,26 @@ int main(int argc, char * argv[]) {
                 }
             }
 
-            // if no process running, run the highest priority process either continue or start
             if (runningPcb == NULL && !isPriorityQueueEmpty(&readyPriorityQueue)) {
                 PCB *selected = NULL;
                 PCB *tempQueue[1000];
                 int tempCount = 0;
 
-                // find highest priority runnable process
                 while (!isPriorityQueueEmpty(&readyPriorityQueue)) {
                     PCB *p = dequeuePriority(&readyPriorityQueue);
 
                     if (isRunnable(p) && selected == NULL) {
-                        selected = p; // pick first runnable (highest priority)
+                        selected = p; 
                     } else {
-                        tempQueue[tempCount++] = p; // store blocked or lower priority
+                        tempQueue[tempCount++] = p; 
                     }
                 }
 
-                // restore skipped processes
+                
                 for (int i = 0; i < tempCount; i++) {
                     enqueuePriority(&readyPriorityQueue, tempQueue[i]);
                 }
 
-                // run the selected process if any
                 if (runningPcb == NULL && selected != NULL) {
                     PCB *p = selected;
                     p->LAST_EXECUTED_TIME = timer;
@@ -932,38 +889,36 @@ int main(int argc, char * argv[]) {
                 }
             }
 
-            // increase waiting time for all started processes
             if (!isPriorityQueueEmpty(&readyPriorityQueue)) {
-                int count = 0;   // just for safety, avoid infinite loops
-                int max_iterations = 1000; // adjust based on expected max queue size
+                int count = 0;   
+                int max_iterations = 1000; 
 
-                PCB *tempQueue[max_iterations]; // temporary array to hold PCBs
+                PCB *tempQueue[max_iterations]; 
                 int tempCount = 0;
 
-                // Dequeue all elements
+
                 while (!isPriorityQueueEmpty(&readyPriorityQueue) && count < max_iterations) {
                     PCB *p = dequeuePriority(&readyPriorityQueue);
                     if (p->STARTED && p->REMAINING_TIME > 0) {
                         p->WAITING_TIME++;
                     }
-                    tempQueue[tempCount++] = p; // store temporarily
+                    tempQueue[tempCount++] = p; 
                     count++;
                 }
 
-                // Re-enqueue all back
+                
                 for (int i = 0; i < tempCount; i++) {
                     enqueuePriority(&readyPriorityQueue, tempQueue[i]);
                 }
             }
 
-            // to decrease remaining time each second
             if (runningPcb != NULL) {
                 runningPcb->REMAINING_TIME--;
                 runningPcb->RUNNING_TIME++;
             }
         }
         
-        if (selected_Algorithm_NUM == 2 && clock_timer != getClk()) { // SRTN
+        if (selected_Algorithm_NUM == 2 && clock_timer != getClk()) { 
     clock_timer = getClk();
     printf("Clock Timer : %d \n",getClk());
 
