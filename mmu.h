@@ -3,7 +3,6 @@
 
 #include "headers.h"
 
-// Forward declaration
 typedef struct PCB_struct PCB;
 
 typedef struct FreePageNode
@@ -36,7 +35,7 @@ typedef struct
     int page_replacements;
 } MemoryManager;
 
-// Function declarations
+
 void add_to_free_list(int page_number);
 void print_free_list();
 void init_free_list();
@@ -54,17 +53,9 @@ void close_memory_log(void);
 void print_memory_status(void);
 int init_process_page_table(PCB *pcb);
 int allocate_process_page_table(PCB *pcb);
-int Request_New(PCB *pcb, int process_count, int process_id,
-                int virtual_page, char readwrite_flag, int current_time,
-                int *frame_out, bool *is_page_fault) ;
-                void complete_page_fault(PCB *pcb, int process_count, int process_id,
-                         int virtual_page, int frame_index, 
-                         char readwrite_flag, int current_time);
-                         int initiate_page_fault(PCB *pcb, int process_count, int process_id,
-                        int virtual_page, char readwrite_flag, int current_time,
-                        int *frame_out, bool *needs_writeback);
-
-// Helper functions to access memory manager statistics
+int Request_New(PCB *pcb, int process_count, int process_id,int virtual_page, char readwrite_flag, int current_time,int *frame_out, bool *is_page_fault) ;
+void complete_page_fault(PCB *pcb, int process_count, int process_id,int virtual_page, int frame_index,  char readwrite_flag, int current_time);
+int initiate_page_fault(PCB *pcb, int process_count, int process_id,int virtual_page, char readwrite_flag, int current_time,int *frame_out, bool *needs_writeback);
 int get_free_page_count(void);
 int get_page_faults(void);
 int get_page_replacements(void);
