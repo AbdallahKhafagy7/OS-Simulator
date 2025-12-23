@@ -1,2 +1,6 @@
 #id   arrival    runtime    priority   dependencyId         disk_base            limit               
+<<<<<<< HEAD
 1     6          23         2          -1                   0                    800                  
+=======
+1     1          16         0          -1                   0                    100                  
+>>>>>>> ea066c6d4b810a9f62bcc0fb1079d4f25ab49582

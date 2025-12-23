@@ -145,11 +145,10 @@ void print_memory_log(const char *format, ...)
 
     va_list args;
     va_start(args, format);
-    
+
     int is_comment = 0;
     const char *temp = format;
     
-
     if (strstr(format, "PageFault") != NULL) {
         fprintf(memory_log_file, "#");
         is_comment = 1;
@@ -295,7 +294,6 @@ int allocate_free_page(int process_id, int virtual_page)
     p->modified = false;
     p->locked = false;
     p->is_page_table = false;
-
     print_memory_log("Free Physical page %d allocated\n", ppn);
 
     return ppn;
@@ -415,8 +413,7 @@ int second_chance_replacement()
 
 }
 
-int handle_page_fault(PCB *pcb, int process_count, int process_id,
-                      int virtual_page, char readwrite_flag, int current_time)
+int handle_page_fault(PCB *pcb, int process_count, int process_id,  int virtual_page, char readwrite_flag, int current_time)
 {
     PCB *current_pcb = get_pcb(pcb, process_count, process_id);
     if (!current_pcb)
@@ -510,8 +507,7 @@ int handle_page_fault(PCB *pcb, int process_count, int process_id,
     }
 }
 
-int Request(PCB *pcb, int process_count, int process_id,
-            int virtual_page, char readwrite_flag, int current_time)
+int Request(PCB *pcb, int process_count, int process_id,  int virtual_page, char readwrite_flag, int current_time)
 {
     PCB *current_pcb = get_pcb(pcb, process_count, process_id);
     if (!current_pcb)
@@ -570,9 +566,7 @@ int allocate_process_page_table(PCB *pcb)
 
         if (da7eya->process_id != -1 && da7eya->modified)
         {
-            swap_page_to_disk(da7eya->process_id,
-                              da7eya->virtual_page_number,
-                              pt_page);
+            swap_page_to_disk(da7eya->process_id, da7eya->virtual_page_number, pt_page);
         }
     }
 
@@ -622,7 +616,6 @@ int allocate_process_page_table_LRU(PCB *pcb)
     return pt_page;
 }
 
-
 int initiate_page_fault(PCB *pcb, int process_count, int process_id,
                         int virtual_page, char readwrite_flag, int current_time,
                         int *frame_out, bool *needs_writeback) {
@@ -645,7 +638,6 @@ int initiate_page_fault(PCB *pcb, int process_count, int process_id,
     int frame_index = -1;
     bool victim_modified = false;
     
-   
     int free_pages = mem_mgr.free_page_count;
     
     if (free_pages > 0) {
@@ -729,6 +721,7 @@ int initiate_page_fault(PCB *pcb, int process_count, int process_id,
     }
 }
 
+
 void complete_page_fault(PCB *pcb, int process_count, int process_id,
                          int virtual_page, int frame_index, 
                          char readwrite_flag, int current_time) {
@@ -757,6 +750,7 @@ void complete_page_fault(PCB *pcb, int process_count, int process_id,
                      current_time, disk_page_number, process_id, frame_index);
 }
 
+
 int Request_New(PCB *pcb, int process_count, int process_id,
                 int virtual_page, char readwrite_flag, int current_time,
                 int *frame_out, bool *is_page_fault) {
@@ -769,6 +763,7 @@ int Request_New(PCB *pcb, int process_count, int process_id,
 
     PageTableEntry *pte = &current_pcb->page_table.entries[virtual_page];
 
+    
     if (pte->present) {
         *is_page_fault = false;
         pte->referenced = true;
@@ -788,11 +783,10 @@ int Request_New(PCB *pcb, int process_count, int process_id,
         return 0; 
     }
 
+    
     *is_page_fault = true;
     bool needs_writeback;
-    int disk_time = initiate_page_fault(pcb, process_count, process_id, 
-                                        virtual_page, readwrite_flag, 
-                                        current_time, frame_out, &needs_writeback);
+    int disk_time = initiate_page_fault(pcb, process_count, process_id, virtual_page, readwrite_flag, current_time, frame_out, &needs_writeback);
     
     return disk_time;
 }

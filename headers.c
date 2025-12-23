@@ -21,8 +21,6 @@ void INITIALIZE_PCB(PCB* pcb){
     pcb->limit=0;
     pcb->execution_time=0;
     pcb->total_blocked_time=0;
-    
-    // Initialize page table pointers
     pcb->page_table.entries = NULL;
     pcb->page_table.num_pages = 0;
     pcb->page_table.physical_page_number = -1;

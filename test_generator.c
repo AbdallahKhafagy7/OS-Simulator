@@ -4,7 +4,7 @@
 #include <string.h>
 
 #define null 0
-#define PAGE_SIZE 16  // 16 bytes per page
+#define PAGE_SIZE 16  
 
 struct processData
 {
@@ -25,13 +25,9 @@ void initializeProcessData(struct processData *processes, int* lastArrival, int 
     processes[i].priority = rand() % 11;
     processes[i].dependencyId = -1;
     processes[i].base = *nextDiskPage;
+    processes[i].limit = 100 + (rand() % 10) * 100;  
     
-    // Generate limit as NUMBER OF PAGES
-    // Project spec shows numbers like 1000, 2000
-    // These are virtual pages, can be more than physical memory (32 pages)
-    processes[i].limit = 100 + (rand() % 10) * 100;  // 100-1000 pages
     
-    // Update next disk page
     *nextDiskPage = processes[i].base + processes[i].limit;
 }
 
@@ -88,29 +84,29 @@ void createMemoryAccessFiles(struct processData *processes, int count) {
             continue;
         }
         
-        // Write header
+        
         fprintf(memFile, "#%-10s #%-10s #%-10s\n", "time", "addressInBinary", "r/w");
         
-        // Get process details
+        
         int runtime = processes[p].runningtime;
         int total_pages = processes[p].limit;
         
-        // If runtime is too short for any requests, skip
+       
         if (runtime <= 1) {
             fclose(memFile);
-            remove(filename);  // Delete empty file
+            remove(filename); 
             continue;
         }
         
-        // Generate number of requests (3-10, but within runtime)
-        int max_requests = runtime - 1;  // Can't have request at time 0 or at runtime
+       
+        int max_requests = runtime - 1;  
         if (max_requests <= 0) {
             fclose(memFile);
             remove(filename);
             continue;
         }
         
-        int num_requests = 3 + rand() % 8;  // Target 3-10 requests
+        int num_requests = 3 + rand() % 8;  
         if (num_requests > max_requests) {
             num_requests = max_requests;
         }
@@ -121,22 +117,22 @@ void createMemoryAccessFiles(struct processData *processes, int count) {
             continue;
         }
         
-        // Create array for request times
+        
         int *request_times = malloc(num_requests * sizeof(int));
         if (!request_times) {
             fclose(memFile);
             continue;
         }
         
-        // Generate unique request times (1 to runtime-1)
+      
         for (int a = 0; a < num_requests; a++) {
             int valid_time = 0;
             while (!valid_time) {
-                // Generate time between 1 and runtime-1 inclusive
+                
                 request_times[a] = 1 + rand() % (runtime - 1);
                 valid_time = 1;
                 
-                // Check for uniqueness
+        
                 for (int b = 0; b < a; b++) {
                     if (request_times[a] == request_times[b]) {
                         valid_time = 0;
@@ -145,8 +141,7 @@ void createMemoryAccessFiles(struct processData *processes, int count) {
                 }
             }
         }
-        
-        // Sort request times
+  
         for (int a = 0; a < num_requests - 1; a++) {
             for (int b = 0; b < num_requests - a - 1; b++) {
                 if (request_times[b] > request_times[b + 1]) {
@@ -157,12 +152,12 @@ void createMemoryAccessFiles(struct processData *processes, int count) {
             }
         }
         
-        // Generate each request
+  
         for (int a = 0; a < num_requests; a++) {
             int time = request_times[a];
             
-            // Generate a valid virtual address within process space
-            // Process has total_pages virtual pages, each of PAGE_SIZE bytes
+           
+           
             int max_virtual_page = total_pages - 1;
             int virtual_page;
             
@@ -175,13 +170,7 @@ void createMemoryAccessFiles(struct processData *processes, int count) {
             int offset = rand() % PAGE_SIZE;
             int address = (virtual_page * PAGE_SIZE) + offset;
             
-            // Convert to 10-bit binary (for 10-bit address bus)
-            // If address is larger than 1023, we need to handle it
-            // According to project, virtual addresses can be large
-            // But memory system uses 10-bit addresses, so we need to map
-            // large virtual addresses to 10-bit representation
-            // For simplicity, we'll use the lower 10 bits
-            int address_10bit = address & 0x3FF;  // Mask to 10 bits
+            int address_10bit = address & 0x3FF;  
             
             char binary[11];
             for (int b = 9; b >= 0; b--) {

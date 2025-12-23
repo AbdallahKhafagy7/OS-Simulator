@@ -44,7 +44,6 @@ typedef struct {
     char rw_flag;      
 } DiskOperation;
 
-
 struct PCB_struct {
     int process_id;
     int process_pid;
@@ -65,8 +64,6 @@ struct PCB_struct {
     int blocked_time;
     int execution_time;
     int total_blocked_time;   
-
-    
     ProcessPageTable page_table;
     request memory_requests[100];
     int num_requests;
@@ -86,6 +83,7 @@ typedef struct PCB_linked_list {
     int count;
 } PCB_linked_list;
 
+
 void INITIALIZE_PCB(PCB* pcb);
 void INITIALIZE_PCB_Node(PCB_node* pcb_node);
 void INITIALIZE_PCB_Linked_List(PCB_linked_list* pcb_list);
@@ -96,6 +94,7 @@ PCB* get_PCB_entry(PCB_linked_list* pcb_list, int process_id);
 PCB* get_pcb(PCB* pcb_array, int process_count, int process_id);
 int get_pcb_index(PCB* pcb_array, int process_count, int process_id);
 void remove_pcb(PCB* pcb_array, int *process_count, int process_id);
+
 
 typedef struct PcbNode {
     PCB* pcb;
@@ -116,9 +115,11 @@ void freePriorityQueue(PcbPriorityQueue* queue);
 bool removeFromQueue(PcbPriorityQueue* queue, PCB* pcb);
 bool updatePriority(PcbPriorityQueue* queue, PCB* pcb, int newPriority);
 
+
 int getClk();
 void initClk();
 void destroyClk(bool terminateAll);
+
 
 static inline int get_vpn(int virtual_address) {
     return virtual_address >> OFFSET_BITS;
@@ -131,7 +132,7 @@ static inline int get_offset(int virtual_address) {
 static inline int get_physical_address(int physical_page, int offset) {
     return (physical_page << OFFSET_BITS) | offset;
 }
-// Add to headers.h
+
 PCB* get_pcb(PCB* pcb_array, int process_count, int process_id);
 
 #endif

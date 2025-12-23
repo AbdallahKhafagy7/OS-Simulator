@@ -20,10 +20,6 @@ int main(int argc, char * argv[])
     
     while (remainingtime > 0 && flag == 0)
     {
-        // Waste CPU cycles to simulate work
-        for (volatile int i = 0; i < 1000000; i++);
-        
-        // Check if time has advanced
         int current = getClk();
         if (current > start_time) {
             int elapsed = current - start_time;
