@@ -13,8 +13,6 @@ clean:
 	rm -f *.out  *.txt  *.log *.perf
 	rm -f *.o   *.txt   *.log *.perf
 
-all: clean build
-
 run:
 	./test_generator.out 
 	./process_generator.out processes.txt 

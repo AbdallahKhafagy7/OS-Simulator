@@ -1,17 +1,99 @@
-## headers.h contains clk functions, it should be included anywhere the clock functions are used.
+# Operating System Scheduling & Memory Simulator
 
-## To get time call:
+This project is a university-level Operating System simulator implemented in **C**.
+It demonstrates CPU scheduling, process lifecycle management, and paging-based memory management (for Round Robin scheduling) in a simulated environment, including **Second Chance** and **LRU** page replacement algorithms.
 
-getClk();
+---
 
-## You can use Makefile to build and run your project
+## Features & Contributions
 
-# To compile your project, use the command:
-make
+* **CPU Scheduling Algorithms:**
 
-# To run your project, use the command:
+  * Highest Priority First (HPF) with dependency handling
+  * Shortest Remaining Time Next (SRTN)
+  * Round Robin (RR) with paging-based memory management (Second Chance & LRU)
+
+* **Process Lifecycle Management:**
+
+  * Handles process states: New, Ready, Running, Blocked, Finished
+  * Context switching and preemption logic
+  * Process arrival and termination handling
+
+* **Enhancements Added:**
+
+  * Improved project documentation and setup instructions
+  * Added usage examples
+  * Cleaned up code structure and file organization
+
+---
+
+## Build & Run Instructions
+
+The project uses a **Makefile** for building and running.
+
+### 1. Build the project
+
+```bash
+make build
+```
+
+This will:
+
+* Clean old builds and temporary files
+* Compile all source files into the corresponding executables
+
+### 2. Run the simulator
+
+```bash
 make run
+```
 
-# If you added a file to your project add it to the build section in the Makefile
+This will:
 
-# Always start the line with a tab in Makefile, it is its syntax
+* Generate test data
+* Run the process generator to create `processes.txt`
+* Run the scheduler simulation
+
+### 3. Clean up generated files
+
+```bash
+make clean
+```
+
+Removes all `.out`, `.txt`, `.log`, `.perf`, and object files.
+
+---
+
+## Output Files
+
+* `scheduler.log` → Logs scheduler execution details
+* `memory.log` → Logs memory management operations
+* `scheduler.perf` → Stores performance statistics
+
+---
+
+## Executables
+
+* `process_generator.out` → Generates the process data file
+* `clk.out` → Simulates the system clock
+* `scheduler.out` → Runs the scheduling simulation
+* `test_generator.out` → Runs tests for the system
+* `process.out` → Auxiliary executable for process operations
+
+---
+
+## Technologies Used
+
+* C
+* Makefile for build automation
+* Linux environment
+* Data structures: queues and priority queues
+* OS concepts: CPU scheduling (HPF with dependencies, SRTN, RR with Second Chance & LRU), process management, memory management
+
+---
+
+## Summary
+
+This project demonstrates my ability to implement core OS algorithms in C, manage processes and memory using **Second Chance and LRU page replacement** for RR scheduling, and handle **dependencies in HPF scheduling**, along with structuring a multi-file project with automated building and testing.
+It also includes logging and performance measurement through `scheduler.log`, `memory.log`, and `scheduler.perf`.
+It reflects both understanding of OS fundamentals and professional coding practices in C.
