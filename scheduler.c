@@ -13,7 +13,7 @@
 #include <unistd.h>
 #include "mmu.h"
 
-/*---------------------------------Global Variables------------------------------------*/
+// Global Variables
 int MESSAGE_ID;
 int finished_process = 0;
 PCB pcb[max];
@@ -37,8 +37,16 @@ int total_process = 0;
 int quantum_counter = 0;
 DiskOperation disk_queue[100];
 int disk_queue_size = 0;
+PCB* pcbArray[max];
+int pcbCount = 0;
+PCB* runningPcb = NULL;
+PcbPriorityQueue readyPriorityQueue;
+int timer = 0;
+int childFinished = 0;
+int finished_PCB = 0;
 
-int page_replacement_algo = -1; // 1 for Second Chance, 2 for LRU   
+// Memory Managment
+int page_replacement_algo = -1; // 1 for Second Chance, 2 for LRU
 void start_process(int process_index, int current_time);
 void stop_process(int process_index, int current_time);
 void block_process(int process_index, int current_time, int io_time);
@@ -48,7 +56,7 @@ void handle_disk_completions(int current_time);
 int handle_memory_request(int process_index, int current_time, int *frame_out, int *vpage_out, char *rw_out);
 void add_disk_operation(int process_id, int virtual_page, int frame_number, char rw_flag, int io_time, int current_time);
 
-
+// Scheduling
 void PRINT_READY_QUEUE() {
     if (READY_QUEUE.front == NULL) {
         printf("Ready Queue: EMPTY\n");
@@ -131,8 +139,7 @@ void handle_disk_completions(int current_time) {
     }
 }
 
-void add_disk_operation(int process_id, int virtual_page, int frame_number,
-                               char rw_flag, int io_time, int current_time) {
+void add_disk_operation(int process_id, int virtual_page, int frame_number, char rw_flag, int io_time, int current_time) {
     if (disk_queue_size >= 100) {
         printf("Error: Disk queue full!\n");
         return;
@@ -149,8 +156,7 @@ void add_disk_operation(int process_id, int virtual_page, int frame_number,
            process_id, virtual_page, current_time + io_time);
 }
 
-int handle_memory_request(int process_index, int current_time, 
-                                 int *frame_out, int *vpage_out, char *rw_out) {
+int handle_memory_request(int process_index, int current_time, int *frame_out, int *vpage_out, char *rw_out) {
     PCB* p = &pcb[process_index];
     
     for (int i = 0; i < p->num_requests; i++) {
@@ -272,8 +278,6 @@ void block_process(int process_index, int current_time, int io_time) {
     
 
 }
-
-
 
 void finish_process(int process_index, int current_time) {
     PCB* p = &pcb[process_index];
@@ -491,14 +495,6 @@ void start_process(int process_index, int current_time) {
     quantum_counter = 0;
 }
 
-PCB* pcbArray[max];
-int pcbCount = 0;
-PCB* runningPcb = NULL;
-PcbPriorityQueue readyPriorityQueue;
-int timer = 0;
-int childFinished = 0;
-int finished_PCB = 0;
-
 bool isRunnable(PCB *p) {
     if (p == NULL) return false;
 
@@ -568,7 +564,6 @@ int main(int argc, char * argv[]) {
     }
     
     initClk();
-    
     init_memory();
     initialize_queue(&READY_QUEUE);
     initialize_priority_queue(&READY_PRIORITY_QUEUE);
@@ -577,7 +572,7 @@ int main(int argc, char * argv[]) {
     selected_Algorithm_NUM = atoi(argv[1]);
     TIME_QUANTUM = atoi(argv[2]);
     
-    key_t key_msg_process = ftok("keyfile", 'A');
+    int key_msg_process = ftok("keyfile", 'A');
     MESSAGE_ID = msgget(key_msg_process, 0666 | IPC_CREAT);
     if (MESSAGE_ID == -1) {
         printf("Error creating message queue\n");
@@ -610,7 +605,7 @@ int main(int argc, char * argv[]) {
                     enqueuePriority(&readyPriorityQueue, p);
                     break;
                 }
-                case 2:{
+                case 2: {
                     enqueue_priority_SRTN(&READY_PRIORITY_QUEUE, PROCESS_MESSAGE.p);
                     running_process_index = get_pcb_index(pcb, process_count, peek_priority_front(&READY_PRIORITY_QUEUE)->ID);
                     
@@ -761,11 +756,12 @@ int main(int argc, char * argv[]) {
             }
         }
 
-        if (selected_Algorithm_NUM == 1 && timer != getClk()) { // Hpf
+        if (selected_Algorithm_NUM == 1 && timer != getClk()) { // HPF
             timer = getClk();
             printf("Clock Timer: %d\n",timer);
             printPriorityQueue(&readyPriorityQueue);
             
+            // to stop a process if remaining time = 0
             if (runningPcb != NULL && runningPcb->REMAINING_TIME == 0) {
                 kill(runningPcb->process_pid, SIGSTOP);
                 runningPcb->FINISH_TIME = timer;
@@ -790,9 +786,11 @@ int main(int argc, char * argv[]) {
                 finished_PCB++;
             }
 
+            // if a higher priority process in queue
             if (runningPcb != NULL && !isPriorityQueueEmpty(&readyPriorityQueue)) {
+                // Find the highest priority runnable process in the queue
                 PCB *bestRunnable = NULL;
-                PCB *tempQueue[1000];
+                PCB *tempQueue[1000]; // temporary storage
                 int tempCount = 0;
 
                 while (!isPriorityQueueEmpty(&readyPriorityQueue)) {
@@ -804,15 +802,15 @@ int main(int argc, char * argv[]) {
                         }
                     }
 
-                    tempQueue[tempCount++] = p; 
+                    tempQueue[tempCount++] = p; // keep all processes to restore later
                 }
 
-                
+                // restore queue
                 for (int i = 0; i < tempCount; i++) {
                     enqueuePriority(&readyPriorityQueue, tempQueue[i]);
                 }
 
-
+                // preempt only if there is a runnable higher-priority process
                 if (runningPcb != NULL && bestRunnable != NULL &&
                     bestRunnable->priority > runningPcb->priority) {
                     kill(runningPcb->process_pid, SIGUSR2);
@@ -826,7 +824,7 @@ int main(int argc, char * argv[]) {
                                 runningPcb->arrival_time,
                                 runningPcb->RUNTIME,
                                 runningPcb->REMAINING_TIME,
-                                (timer - runningPcb->arrival_time));
+                                runningPcb->WAITING_TIME);
                         fclose(pFile);
                     }
 
@@ -834,26 +832,29 @@ int main(int argc, char * argv[]) {
                 }
             }
 
+            // if no process running, run the highest priority process either continue or start
             if (runningPcb == NULL && !isPriorityQueueEmpty(&readyPriorityQueue)) {
                 PCB *selected = NULL;
                 PCB *tempQueue[1000];
                 int tempCount = 0;
 
+                // find highest priority runnable process
                 while (!isPriorityQueueEmpty(&readyPriorityQueue)) {
                     PCB *p = dequeuePriority(&readyPriorityQueue);
 
                     if (isRunnable(p) && selected == NULL) {
-                        selected = p; 
+                        selected = p; // pick first runnable (highest priority)
                     } else {
-                        tempQueue[tempCount++] = p; 
+                        tempQueue[tempCount++] = p; // store blocked or lower priority
                     }
                 }
 
-                
+                // restore skipped processes
                 for (int i = 0; i < tempCount; i++) {
                     enqueuePriority(&readyPriorityQueue, tempQueue[i]);
                 }
 
+                // run the selected process if any
                 if (runningPcb == NULL && selected != NULL) {
                     PCB *p = selected;
                     p->LAST_EXECUTED_TIME = timer;
@@ -872,6 +873,7 @@ int main(int argc, char * argv[]) {
                             exit(1);
                         }
                         p->STARTED = true;
+                        p->START_TIME = timer;
                     }
                     runningPcb = p;
 
@@ -883,42 +885,44 @@ int main(int argc, char * argv[]) {
                                 runningPcb->arrival_time,
                                 runningPcb->RUNTIME,
                                 runningPcb->REMAINING_TIME,
-                                (timer - runningPcb->arrival_time));
+                                runningPcb->WAITING_TIME);
                         fclose(pFile);
                     }
                 }
             }
 
+            // increase waiting time for all started processes
             if (!isPriorityQueueEmpty(&readyPriorityQueue)) {
-                int count = 0;   
-                int max_iterations = 1000; 
+                int count = 0;   // just for safety, avoid infinite loops
+                int max_iterations = 1000; // adjust based on expected max queue size
 
-                PCB *tempQueue[max_iterations]; 
+                PCB *tempQueue[max_iterations]; // temporary array to hold PCBs
                 int tempCount = 0;
 
-
+                // Dequeue all elements
                 while (!isPriorityQueueEmpty(&readyPriorityQueue) && count < max_iterations) {
                     PCB *p = dequeuePriority(&readyPriorityQueue);
-                    if (p->STARTED && p->REMAINING_TIME > 0) {
+                    if (p != runningPcb && p->REMAINING_TIME > 0) {
                         p->WAITING_TIME++;
                     }
-                    tempQueue[tempCount++] = p; 
+                    tempQueue[tempCount++] = p; // store temporarily
                     count++;
                 }
 
-                
+                // Re-enqueue all back
                 for (int i = 0; i < tempCount; i++) {
                     enqueuePriority(&readyPriorityQueue, tempQueue[i]);
                 }
             }
 
+            // to decrease remaining time each second
             if (runningPcb != NULL) {
                 runningPcb->REMAINING_TIME--;
                 runningPcb->RUNNING_TIME++;
             }
         }
         
-        if (selected_Algorithm_NUM == 2 && clock_timer != getClk()) { 
+        if (selected_Algorithm_NUM == 2 && clock_timer != getClk()) { // STRN
     clock_timer = getClk();
     printf("Clock Timer : %d \n",getClk());
 
@@ -1171,7 +1175,7 @@ int main(int argc, char * argv[]) {
                     std_dev
                 );
                 fclose(pFile);
-                printf("\nPerformance File Has Been Generated!\n");
+                printf("\nPerformance File Has Been Generated!\n\n");
             }
 
             finished_PCB = 0;
