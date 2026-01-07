@@ -1,7 +1,5 @@
 # 🖥️ Operating System Scheduling & Memory Simulator
 
-![C](https://img.shields.io/badge/language-C-blue) ![Makefile](https://img.shields.io/badge/Makefile-automation-green)
-
 Welcome to my **OS Simulator** project! This university-level project, implemented in **C**, brings classic operating system concepts to life. It simulates CPU scheduling, process lifecycle management, and paging-based memory management (for Round Robin), including **Second Chance** and **LRU** page replacement algorithms.
 
 ---
@@ -32,7 +30,7 @@ Welcome to my **OS Simulator** project! This university-level project, implement
 
 The project uses a **Makefile** for building and running.
 
-### Build the project
+### 1. Build the project
 
 ```bash
 make build
@@ -40,7 +38,7 @@ make build
 
 Cleans old builds and compiles all source files into executables.
 
-### Run the simulator
+### 2. Run the simulator
 
 ```bash
 make run
@@ -48,7 +46,7 @@ make run
 
 Generates test data and runs the process scheduler simulation.
 
-### Clean up generated files
+### 3. Clean up generated files
 
 ```bash
 make clean
@@ -68,7 +66,7 @@ Removes `.out`, `.txt`, `.log`, `.perf`, and object files.
 
 ## ⚙️ Executables
 
-* `process_generator.out` → Generates the process data file
+* `process_generator.out` → Generates process data file
 * `clk.out` → Simulates system clock
 * `scheduler.out` → Runs scheduling simulation
 * `test_generator.out` → Runs tests
@@ -90,4 +88,4 @@ Removes `.out`, `.txt`, `.log`, `.perf`, and object files.
 
 This project showcases my ability to implement core OS algorithms in C, handle **dependencies in HPF scheduling**, manage memory using **Second Chance and LRU for RR**, and structure a multi-file project with automated building and testing. It includes logging and performance measurements through `scheduler.log`, `memory.log`, and `scheduler.perf`.
 
-The simulator demonstrates a clear understanding of OS fundamentals and professional coding practices in C.
+The simulator demonstrates a clear understanding of OS fundamentals and professional coding practices
