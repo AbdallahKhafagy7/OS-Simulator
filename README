@@ -1,33 +1,32 @@
-# Operating System Scheduling & Memory Simulator
+# 🖥️ Operating System Scheduling & Memory Simulator
 
-This project is a university-level Operating System simulator implemented in **C**.
-It demonstrates CPU scheduling, process lifecycle management, and paging-based memory management (for Round Robin scheduling) in a simulated environment, including **Second Chance** and **LRU** page replacement algorithms.
-
----
-
-## Features & Contributions
-
-* **CPU Scheduling Algorithms:**
-
-  * Highest Priority First (HPF) with dependency handling
-  * Shortest Remaining Time Next (SRTN)
-  * Round Robin (RR) with paging-based memory management (Second Chance & LRU)
-
-* **Process Lifecycle Management:**
-
-  * Handles process states: New, Ready, Running, Blocked, Finished
-  * Context switching and preemption logic
-  * Process arrival and termination handling
-
-* **Enhancements Added:**
-
-  * Improved project documentation and setup instructions
-  * Added usage examples
-  * Cleaned up code structure and file organization
+Welcome to my **OS Simulator** project! This university-level project, implemented in **C**, brings classic operating system concepts to life. It simulates CPU scheduling, process lifecycle management, and paging-based memory management (for Round Robin), including **Second Chance** and **LRU** page replacement algorithms.
 
 ---
 
-## Build & Run Instructions
+## 🚀 Features & Contributions
+
+### CPU Scheduling Algorithms
+
+* **Highest Priority First (HPF)** with dependency handling
+* **Shortest Remaining Time Next (SRTN)**
+* **Round Robin (RR)** with paging-based memory management (Second Chance & LRU)
+
+### Process Lifecycle Management
+
+* Tracks process states: New, Ready, Running, Blocked, Finished
+* Implements context switching and preemption logic
+* Handles process arrival and termination
+
+### Project Enhancements
+
+* Detailed documentation and setup instructions
+* Usage examples and walkthroughs
+* Refactored code for clarity and maintainability
+
+---
+
+## 🛠️ Build & Run Instructions
 
 The project uses a **Makefile** for building and running.
 
@@ -37,10 +36,7 @@ The project uses a **Makefile** for building and running.
 make build
 ```
 
-This will:
-
-* Clean old builds and temporary files
-* Compile all source files into the corresponding executables
+Cleans old builds and compiles all source files into executables.
 
 ### 2. Run the simulator
 
@@ -48,11 +44,7 @@ This will:
 make run
 ```
 
-This will:
-
-* Generate test data
-* Run the process generator to create `processes.txt`
-* Run the scheduler simulation
+Generates test data and runs the process scheduler simulation.
 
 ### 3. Clean up generated files
 
@@ -60,40 +52,40 @@ This will:
 make clean
 ```
 
-Removes all `.out`, `.txt`, `.log`, `.perf`, and object files.
+Removes `.out`, `.txt`, `.log`, `.perf`, and object files.
 
 ---
 
-## Output Files
+## 📂 Output Files
 
-* `scheduler.log` → Logs scheduler execution details
-* `memory.log` → Logs memory management operations
-* `scheduler.perf` → Stores performance statistics
-
----
-
-## Executables
-
-* `process_generator.out` → Generates the process data file
-* `clk.out` → Simulates the system clock
-* `scheduler.out` → Runs the scheduling simulation
-* `test_generator.out` → Runs tests for the system
-* `process.out` → Auxiliary executable for process operations
+* `scheduler.log` → Scheduler execution details
+* `memory.log` → Memory management operations
+* `scheduler.perf` → Performance statistics
 
 ---
 
-## Technologies Used
+## ⚙️ Executables
 
-* C
+* `process_generator.out` → Generates process data file
+* `clk.out` → Simulates system clock
+* `scheduler.out` → Runs scheduling simulation
+* `test_generator.out` → Runs tests
+* `process.out` → Auxiliary process operations
+
+---
+
+## 🧰 Technologies Used
+
+* C (C99)
 * Makefile for build automation
 * Linux environment
-* Data structures: queues and priority queues
-* OS concepts: CPU scheduling (HPF with dependencies, SRTN, RR with Second Chance & LRU), process management, memory management
+* Data structures: queues & priority queues
+* OS concepts: CPU scheduling (HPF w/ dependencies, SRTN, RR w/ Second Chance & LRU), process management, memory management
 
 ---
 
-## Summary
+## 📖 Summary
 
-This project demonstrates my ability to implement core OS algorithms in C, manage processes and memory using **Second Chance and LRU page replacement** for RR scheduling, and handle **dependencies in HPF scheduling**, along with structuring a multi-file project with automated building and testing.
-It also includes logging and performance measurement through `scheduler.log`, `memory.log`, and `scheduler.perf`.
-It reflects both understanding of OS fundamentals and professional coding practices in C.
+This project showcases my ability to implement core OS algorithms in C, handle **dependencies in HPF scheduling**, manage memory using **Second Chance and LRU for RR**, and structure a multi-file project with automated building and testing. It includes logging and performance measurements through `scheduler.log`, `memory.log`, and `scheduler.perf`.
+
+The simulator demonstrates a clear understanding of OS fundamentals and professional coding practices
